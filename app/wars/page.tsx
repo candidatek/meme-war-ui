@@ -54,7 +54,7 @@ const Home: React.FC = () => {
       setMintA(memeWarReg?.mint_a)
       setMintB(memeWarReg?.mint_b)
     }
-    router.push('meme-wars/' + memeWarState)
+    router.push('war/' + memeWarState)
   }
 
   const {timeLeft, warEnded, endedTimeAgo} = useCountdown(dashboardWar?.end_time)
