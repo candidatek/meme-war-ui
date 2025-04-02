@@ -8,8 +8,8 @@ import {
   PublicKey,
 } from '@solana/web3.js';
 
+import { PROGRAM_ID } from '../lib/constants';
 import MemeWar from './hooks/idl.json';
-import { PROGRAM_ID } from './lib/constants';
 
 dotenv.config();
 
