@@ -7,6 +7,10 @@ import { ConnectionProvider, WalletProvider } from "@solana/wallet-adapter-react
 import { WalletModalProvider } from "@solana/wallet-adapter-react-ui"
 import { PhantomWalletAdapter } from "@solana/wallet-adapter-wallets"
 import { clusterApiUrl } from "@solana/web3.js"
+import { MemeWarProvider } from "./context/memeWarStateContext"
+import { SolanaProvider } from "@/components/solana/solana-provider"
+import { ClusterProvider } from "@/components/cluster/cluster-data-access"
+import { ReactQueryProvider } from "./react-query-provider"
 
 // Can be set to 'devnet', 'testnet', or 'mainnet-beta'
 const network = WalletAdapterNetwork.Devnet
@@ -19,20 +23,28 @@ export function LayoutClient({
   children: React.ReactNode
 }) {
   return (
-    <ConnectionProvider endpoint={endpoint}>
-      <WalletProvider wallets={wallets} autoConnect>
-        <WalletModalProvider>
-          <div className="flex flex-col min-h-screen">
-            <Header />
-            <LiveFeedCarousel />
-            <main className="flex-1">
-              <div className="min-h-screen bg-background/95 backdrop-blur-sm">
-                {children}
-              </div>
-            </main>
-          </div>
-        </WalletModalProvider>
-      </WalletProvider>
-    </ConnectionProvider>
+    <ReactQueryProvider>
+      <ClusterProvider>
+        <SolanaProvider>
+          <MemeWarProvider>
+            <ConnectionProvider endpoint={endpoint}>
+              <WalletProvider wallets={wallets} autoConnect>
+                <WalletModalProvider>
+                  <div className="flex flex-col min-h-screen">
+                    <Header />
+                    <LiveFeedCarousel />
+                    <main className="flex-1">
+                      <div className="min-h-screen bg-background/95 backdrop-blur-sm">
+                        {children}
+                      </div>
+                    </main>
+                  </div>
+                </WalletModalProvider>
+              </WalletProvider>
+            </ConnectionProvider>
+          </MemeWarProvider>
+        </SolanaProvider>
+      </ClusterProvider>
+    </ReactQueryProvider>
   )
 } 

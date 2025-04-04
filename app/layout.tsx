@@ -1,6 +1,6 @@
 import { LayoutClient } from "./layout-client"
 import "./globals.css"
-// import "@solana/wallet-adapter-react-ui/styles.css"
+import "@solana/wallet-adapter-react-ui/styles.css"
 import { Inter } from "next/font/google"
 import type React from "react"
 import { ReactQueryProvider } from "./react-query-provider"

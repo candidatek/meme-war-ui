@@ -30,7 +30,7 @@ export const MemeWarProvider: React.FC<MemeWarProviderProps> = ({ children }) =>
   const [mintB, setMintB] = useState<string | null>(null);
   const [userState, setUserState] = useState<string | null>(null);
   const { publicKey } = useWalletInfo()
-
+  
   useEffect(() => {
     const getMemeWarState = async () => {
       if (memeWarState && publicKey) {

@@ -24,6 +24,7 @@
     "@tanstack/react-query": "^5.67.1",
     "@tanstack/react-query-next-experimental": "^5.71.5",
     "axios": "^1.8.3",
+    "bn.js": "^5.2.1",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dotenv": "^16.4.7",
@@ -40,6 +41,7 @@
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
+    "@types/bn.js": "^5.1.6",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
