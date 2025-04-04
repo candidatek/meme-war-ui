@@ -1,3 +1,6 @@
+import * as anchor from "@coral-xyz/anchor";
+import { PROGRAM_ID } from "./constants";
+import { PublicKey } from '@solana/web3.js';
 import {
   type ClassValue,
   clsx,
@@ -24,6 +27,27 @@ export function formatTimeAgo(date: Date): string {
   const hours = Math.floor(minutes / 60)
   if (hours < 24) return `${hours}h ago`
   return `${Math.floor(hours / 24)}d ago`
+}
+
+export const formatPublicKey = (publicKey: string) => {
+  return `${publicKey?.slice(0, 4)}...${publicKey?.slice(-4)}`;
+};
+
+export const validateSolanaAddress = (address: string): boolean => {
+  try {
+    new PublicKey(address); // This will throw an error if the address is invalid
+    return true;
+  } catch (e) {
+    return false;
+  }
+};
+
+export const getProgramDerivedAddressForPair = (seed1: PublicKey, seed2: PublicKey) => {
+  const pda = anchor.web3.PublicKey.findProgramAddressSync(
+    [seed1.toBuffer(), seed2.toBuffer()],
+    PROGRAM_ID
+  );
+  return pda[0];
 }
 
 export async function getAssetFromMint(assetId:string) {
