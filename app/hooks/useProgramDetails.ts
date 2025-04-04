@@ -7,7 +7,7 @@ import { PROGRAM_ID } from '@/lib/constants';
 import {
   getConnection,
   getProgramDerivedAddress,
-} from '@/utils';
+} from '@/lib/utils';
 import { AnchorProvider } from '@coral-xyz/anchor';
 import { Program } from '@project-serum/anchor';
 import {
