@@ -140,6 +140,7 @@ export default function StartWarPage() {
   };
 
   // Debounce function to prevent too many API calls
+  
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (coin1Data.mintAddress && coin1Data.mintAddress.length >= 32) {
