@@ -21,7 +21,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { getAssetFromMint } from '@/lib/utils';
 import { useWallet } from '@solana/wallet-adapter-react'; // Import wallet hook
 
-import { useGetMemeWarRegistry } from '../hooks/useGetMemeWarRegistry';
+// import { useGetMemeWarRegistry } from '../hooks/useGetMemeWarRegistry';
 
 interface WarData {
   description: string;
@@ -37,7 +37,7 @@ interface CoinData {
   emoji: string;
   image: string;
   isLoading: boolean;
-  error: string;
+  error: string | null;
 }
 
 interface TokenResponse {
@@ -56,6 +56,18 @@ interface TokenResponse {
   id: string;
 }
 
+const createDefaultCoinData = (overrides: Partial<CoinData> = {}): CoinData => {
+  return {
+    mintAddress: "",
+    ticker: "",
+    name: "",
+    emoji: "💰",
+    image: "",
+    isLoading: false,
+    error: null,
+    ...overrides // This allows customizing specific fields if needed
+  };
+};
 export default function StartWarPage() {
 
 
@@ -63,10 +75,15 @@ export default function StartWarPage() {
   const [newMemeWarState, setNewMemeWarState] = useState<string | null>(null);
   const [disableCreateWarBtn, setDisableCreateWarBtn] = useState<boolean>(false);
   const [showRedirect, setShowRedirect] = useState<boolean>(false);
-  
+  const [coin1Data, setCoin1Data] = useState<CoinData>(createDefaultCoinData());
+  const [coin2Data, setCoin2Data] = useState<CoinData>(createDefaultCoinData());
+
+  // const { data: mwrData } = useGetMemeWarRegistry(mintAddress, coin1Data.mintAddress === mintAddress ? coin2Data.mintAddress : coin1Data.mintAddress);
+  // const { data: memeWarRegistry } = useGetMemeWarRegistry(coin1Data.mintAddress, coin2Data.mintAddress);
+
 
   const { publicKey } = useWallet(); // Get public key from wallet
-  
+
   const [warData, setWarData] = useState<WarData>({
     description: "",
     twitter: "",
@@ -74,55 +91,33 @@ export default function StartWarPage() {
     website: "",
   })
 
-  const [coin1Data, setCoin1Data] = useState<CoinData>({
-    mintAddress: "",
-    ticker: "",
-    name: "",
-    emoji: "💰",
-    image: "",
-    isLoading: false,
-    error: "",
-  })
-
-  const [coin2Data, setCoin2Data] = useState<CoinData>({
-    mintAddress: "",
-    ticker: "",
-    name: "",
-    emoji: "💰",
-    image: "",
-    isLoading: false,
-    error: "",
-  })
-
-
   const fetchTokenData = async (
-    mintAddress: string, 
-    setCoinData: React.Dispatch<React.SetStateAction<CoinData>>, 
+    mintAddress: string,
+    setCoinData: React.Dispatch<React.SetStateAction<CoinData>>,
     currentData: CoinData
   ): Promise<void> => {
     if (!mintAddress || mintAddress.length < 32) return;
-    
+
     try {
-      setCoinData({ ...currentData, isLoading: true, error: "" });
+      // setCoinData({ ...currentData, isLoading: true, error: "" });
       // Check if war already exists for these tokens
 
-      const data = await getAssetFromMint(mintAddress) as TokenResponse;      
+      const data = await getAssetFromMint(mintAddress) as TokenResponse;
       if (!data.result) {
         throw new Error("Invalid response from API");
       }
-      const { data: mwrData } = useGetMemeWarRegistry(mintAddress, coin1Data.mintAddress === mintAddress ? coin2Data.mintAddress : coin1Data.mintAddress);
 
-      if (mwrData && !mwrData.war_ended) {
-        throw new Error("A meme war already exists for these tokens");
-      }
+      // if (mwrData && !mwrData.war_ended) {
+      //   throw new Error("A meme war already exists for these tokens");
+      // }
 
-    
-      
+
+
       const tokenData = data.result;
       const tokenImage = tokenData.content?.links?.image || "";
       const tokenName = tokenData.content?.metadata?.name || "";
       const tokenSymbol = tokenData.content?.metadata?.symbol || "";
-      
+
       setCoinData({
         ...currentData,
         mintAddress,
@@ -130,9 +125,12 @@ export default function StartWarPage() {
         ticker: tokenSymbol,
         image: tokenImage,
         isLoading: false,
+        error: ''
       });
     } catch (error) {
       console.error("Error fetching token data:", error);
+      await setCoinData(createDefaultCoinData())
+      console.log(' **** ', currentData)
       setCoinData({
         ...currentData,
         isLoading: false,
@@ -162,30 +160,29 @@ export default function StartWarPage() {
 
   const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
-    
+
     // Log the public key when the user clicks "Start War"
     console.log("User public key:", publicKey ? publicKey.toString() : "Not connected");
-    
+
     // Check if meme war registry exists
-    const { data: memeWarRegistry } = useGetMemeWarRegistry(coin1Data.mintAddress, coin2Data.mintAddress);
 
-    console.log({ memeWarRegistry });
-    
-    if (memeWarRegistry && !memeWarRegistry.war_ended) {
-      toast.error("A meme war already exists for these tokens. Please wait for it to end.");
-      return;
-    }
+    // console.log({ memeWarRegistry });
 
-    console.log({ 
+    // if (memeWarRegistry && !memeWarRegistry.war_ended) {
+    //   toast.error("A meme war already exists for these tokens. Please wait for it to end.");
+    //   return;
+    // }
+
+    console.log({
       userPublicKey: publicKey ? publicKey.toString() : null,
-      warData, 
+      warData,
       coin1: {
         mintAddress: coin1Data.mintAddress,
         name: coin1Data.name,
         ticker: coin1Data.ticker,
         emoji: coin1Data.emoji,
         image: coin1Data.image
-      }, 
+      },
       coin2: {
         mintAddress: coin2Data.mintAddress,
         name: coin2Data.name,
@@ -202,10 +199,10 @@ export default function StartWarPage() {
     title: string;
   }
 
-  const CoinForm: React.FC<CoinFormProps> = ({ 
-    data, 
-    setData, 
-    title 
+  const CoinForm: React.FC<CoinFormProps> = ({
+    data,
+    setData,
+    title
   }) => (
     <Card>
       <CardHeader>
@@ -219,10 +216,13 @@ export default function StartWarPage() {
             id={`${title}-mint`}
             placeholder="Enter token mint address"
             value={data.mintAddress}
-            onChange={(e) => setData({ 
-              ...data, 
-              mintAddress: e.target.value,
-            })}
+            onChange={(e) => {
+              const inputValue = e.target.value.trim();
+              setData({
+                ...(inputValue ? data : createDefaultCoinData()),
+                mintAddress: inputValue ? inputValue : '',
+              });
+            }}
           />
           {data.isLoading && <p className="text-sm text-muted-foreground">Loading token data...</p>}
           {data.error && <p className="text-sm text-red-500">{data.error}</p>}
@@ -231,9 +231,9 @@ export default function StartWarPage() {
         {data.image && (
           <div className="flex justify-center mb-4">
             <div className="relative w-24 h-24 rounded-full overflow-hidden">
-              <img 
-                src={data.image} 
-                alt={`${data.name} logo`} 
+              <img
+                src={data.image}
+                alt={`${data.name} logo`}
                 className="object-cover"
                 width={96}
                 height={96}
@@ -242,36 +242,24 @@ export default function StartWarPage() {
           </div>
         )}
 
-        <div className="grid grid-cols-2 gap-4">
-          <div className="space-y-2">
+        <div className="flex w-full border gap-4 ">
+          {data.ticker && <div className="flex justify-between border w-fit">
             <Label htmlFor={`${title}-ticker`}>Ticker Symbol</Label>
             <Input
               id={`${title}-ticker`}
               placeholder="e.g. DOGE"
               value={data.ticker}
-              onChange={(e) => setData({ ...data, ticker: e.target.value.toUpperCase() })}
               maxLength={10}
             />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor={`${title}-emoji`}>Emoji</Label>
-            <Input
-              id={`${title}-emoji`}
-              placeholder="Select emoji"
-              value={data.emoji}
-              onChange={(e) => setData({ ...data, emoji: e.target.value })}
-            />
-          </div>
-        </div>
-
-        <div className="space-y-2">
-          <Label htmlFor={`${title}-name`}>Coin Name</Label>
+             <Label htmlFor={`${title}-name`}>Coin Name</Label>
           <Input
-            id={`${title}-name`}
+            id={`${title}-ticker`}
             placeholder="e.g. Dogecoin"
             value={data.name}
             onChange={(e) => setData({ ...data, name: e.target.value })}
           />
+         
+          </div>}
         </div>
       </CardContent>
     </Card>
@@ -284,7 +272,7 @@ export default function StartWarPage() {
         <p className="text-muted-foreground mb-8">
           Create an epic battle between two meme coins and let the community decide the winner!
         </p>
-        
+
         {/* Display wallet connection status */}
         <div className="mb-4 text-sm">
           {publicKey ? (
@@ -296,15 +284,15 @@ export default function StartWarPage() {
 
         <form onSubmit={handleSubmit} className="space-y-8">
           <div className="grid grid-cols-2 gap-8">
-            <CoinForm 
-              data={coin1Data} 
-              setData={setCoin1Data} 
-              title="First Coin" 
+            <CoinForm
+              data={coin1Data}
+              setData={setCoin1Data}
+              title="First Coin"
             />
-            <CoinForm 
-              data={coin2Data} 
-              setData={setCoin2Data} 
-              title="Second Coin" 
+            <CoinForm
+              data={coin2Data}
+              setData={setCoin2Data}
+              title="Second Coin"
             />
           </div>
 
@@ -365,9 +353,9 @@ export default function StartWarPage() {
           </Card>
 
           <div className="flex justify-center">
-            <Button 
-              type="submit" 
-              size="lg" 
+            <Button
+              type="submit"
+              size="lg"
               className="px-8"
               disabled={!publicKey} // Disable button if wallet not connected
             >
