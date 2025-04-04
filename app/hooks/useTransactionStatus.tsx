@@ -1,19 +1,14 @@
-import {
-  Dispatch,
-  SetStateAction,
-  useEffect,
-  useState,
-} from 'react';
-
+import { useState, useEffect, Dispatch, SetStateAction } from 'react';
 import { toast } from 'sonner';
-
 import { useConnection } from '@solana/wallet-adapter-react';
 import { type TransactionSignature } from '@solana/web3.js';
+
+ 
 
 type TransactionDetails = {
   signature: TransactionSignature;
   action: string;
-  setIsLoading: Dispatch<SetStateAction<any>>; 
+  setIsLoading: Dispatch<SetStateAction<boolean | number>>; 
   refresh?: () => void;
   stopLoadingWithInteger?: boolean;
 };

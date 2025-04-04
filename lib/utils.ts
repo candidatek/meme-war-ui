@@ -1,21 +1,83 @@
 import * as anchor from "@coral-xyz/anchor";
 import { PROGRAM_ID } from "./constants";
-import { PublicKey } from '@solana/web3.js';
+import { Connection, PublicKey } from '@solana/web3.js';
 import {
   type ClassValue,
   clsx,
 } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import {
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
+} from "@solana/spl-token";
+import { toast } from "sonner";
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
+
+export const getConnection = () => {
+  if(!process.env.NEXT_PUBLIC_SOLANA_CLUSTER_URL) {
+    throw new Error('Solana cluster URL is not defined');
+  }
+  return new Connection(process.env.NEXT_PUBLIC_SOLANA_CLUSTER_URL, 'confirmed');
+};
+
+export const getProgramDerivedAddress = (
+  programId: PublicKey,
+  seed: string
+) => {
+  const pda = anchor.web3.PublicKey.findProgramAddressSync(
+    [Buffer.from(seed)],
+    programId
+  );
+  return pda[0];
+};
+
+export const fetchTokenBalance = async (
+  publicKey: PublicKey,
+  tokenMintAddress: PublicKey,
+  connection: Connection
+): Promise<number> => {
+  if (!publicKey || !tokenMintAddress) {
+    return 0;
+  }
+
+  try {
+    const tokenAccounts = await connection.getParsedTokenAccountsByOwner(
+      publicKey,
+      {
+        mint: tokenMintAddress,
+      }
+    );
+
+    if (tokenAccounts.value.length > 0) {
+      const tokenAccountInfo = tokenAccounts.value[0].account.data.parsed.info;
+      const amount = tokenAccountInfo.tokenAmount.uiAmount;
+      return amount;
+    } else {
+      return 0;
+    }
+  } catch (err) {
+    return 0;
+  }
+};
 
 export function formatNumber(num: number): string {
   return new Intl.NumberFormat('en-US', {
     notation: 'compact',
     maximumFractionDigits: 1
   }).format(num)
+}
+
+export function formatWalletAddress(address: string): string {
+  if (address.length <= 8) {
+    return address; // If the address is too short, return it as is
+  }
+
+  const start = address.slice(0, 4);
+  const end = address.slice(-4);
+  return `${start}...${end}`;
 }
 
 export function formatTimeAgo(date: Date): string {
@@ -42,6 +104,22 @@ export const validateSolanaAddress = (address: string): boolean => {
   }
 };
 
+interface ErrorToastOptions {
+  description?: string;
+  duration?: number;
+}
+
+export const showErrorToast = (
+  message: string,
+  options?: ErrorToastOptions
+) => {
+  toast.error(message, {
+    description: options?.description,
+    duration: options?.duration ?? 5000, // Default to 5 seconds
+    style: { backgroundColor: "#FF8A8A", color: "#EE9191" }, // Custom styles for error
+  });
+};
+
 export const getProgramDerivedAddressForPair = (seed1: PublicKey, seed2: PublicKey) => {
   const pda = anchor.web3.PublicKey.findProgramAddressSync(
     [seed1.toBuffer(), seed2.toBuffer()],
@@ -49,6 +127,23 @@ export const getProgramDerivedAddressForPair = (seed1: PublicKey, seed2: PublicK
   );
   return pda[0];
 }
+
+export const findAssociatedTokenAddress = ({
+  walletAddress,
+  tokenMintAddress,
+}: {
+  walletAddress: PublicKey;
+  tokenMintAddress: PublicKey;
+}): PublicKey => {
+  return PublicKey.findProgramAddressSync(
+    [
+      walletAddress.toBuffer(),
+      TOKEN_PROGRAM_ID.toBuffer(),
+      tokenMintAddress.toBuffer(),
+    ],
+    ASSOCIATED_TOKEN_PROGRAM_ID
+  )[0];
+};
 
 export async function getAssetFromMint(assetId:string) {
   const requestBody = {
