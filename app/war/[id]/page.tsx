@@ -21,6 +21,7 @@ import { useSendChatMessage } from '@/app/api/sendChatMessage'
 import { useAuth } from '@/app/hooks/useAuth'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { PublicKey } from '@solana/web3.js'
+import { io, Socket } from "socket.io-client"
 
 const REFRESH_DELAY = 5000;
 
@@ -65,9 +66,11 @@ interface TradeData {
 
 // Interface for chat message
 interface ChatMessage {
+  id?: string;
   sender: string;
   message: string;
   sender_time: string;
+  meme_war_state?: string;
 }
 
 // Interface for user state
@@ -130,7 +133,7 @@ interface TokenCardProps {
   index: 0 | 1;
   publicKey: PublicKey | null;
   isWarEnded: boolean | undefined;
-  disablePledgeBtn: boolean;
+  disablePledgeBtn?: boolean;
   disableUnpledgeBtn: boolean;
 }
 
@@ -144,7 +147,7 @@ export default function WarPage() {
   // Get params and context
   const params = useParams();
   const { memeWarState, mintA, mintB, userState, setMemeWarState, setMintA, setMintB } = useMemeWarContext();
-  
+
   // Set memeWarState from URL parameters
   useEffect(() => {
     console.log("Params:", params);
@@ -152,45 +155,48 @@ export default function WarPage() {
       setMemeWarState(params.id as string);
     }
   }, [params, setMemeWarState]);
-  
+
   // Get meme war state data
   const { data: memeWarStateInfo, error, isLoading } = useMemeWarStateInfo(memeWarState);
-  
+
   // Initialize deposit/withdraw hooks
   const { depositTokens } = useDepositTokens(mintA, mintB);
   const { withdrawTokens } = useWithdrawTokens(mintA, mintB);
-  
+
   // Get token balances
-  const { data: tokenBalanceData, refreshTokenBalance} = useTokenBalance(mintA, mintB);
+  const { data: tokenBalanceData, refreshTokenBalance } = useTokenBalance(mintA, mintB);
   const tokenBalanceMintA = useMemo(() => Number(tokenBalanceData?.[0] ?? 0), [tokenBalanceData]);
   const tokenBalanceMintB = useMemo(() => Number(tokenBalanceData?.[1] ?? 0), [tokenBalanceData]);
-  
+
   // User state data
   const { data: userStateInfo } = useGetUserStateInfo(userState, memeWarState);
-  
+
   // Recent trades data
   const { data: tradesData } = useRecentTrades(memeWarState);
-  
+
   // Chat messages data
   const { data: chatMessages, refresh: refreshChat } = useGetChatMessages(memeWarState!);
   const { mutate: sendMessage, status: sendStatus } = useSendChatMessage(refreshChat);
-  
+
   // Get wallet info
   const { publicKey, pubKey } = useWalletInfo();
   const { authState, handleSignIn } = useAuth();
   const wallet = useWallet();
-  
+
   // Loading state
   const [btnLoading, setBtnLoading] = useState<boolean | number>(-1);
-  
+
   // Input states
   const [leftInput, setLeftInput] = useState<string>('1');
   const [rightInput, setRightInput] = useState<string>('1');
   const [newMessage, setNewMessage] = useState<string>('');
-  
+
+  const [displayMessages, setDisplayMessages] = useState<ChatMessage[] | null>(null);
+  const [lastMessageId, setLastMessageId] = useState<string | null>(null);
+
   // War countdown
   const { timeLeft, endedTimeAgo } = useCountdown(memeWarStateInfo?.end_time);
-  
+
   // Set mint addresses when war state info is loaded
   useEffect(() => {
     if (memeWarStateInfo) {
@@ -198,7 +204,54 @@ export default function WarPage() {
       setMintB(memeWarStateInfo.mint_b);
     }
   }, [memeWarStateInfo, setMintA, setMintB]);
+
+  useEffect(() => {
+    if (!memeWarState) return;
   
+    const socket: Socket = io(process.env.NEXT_PUBLIC_SERVER_URL!);
+    let animationTimeoutId: NodeJS.Timeout;
+  
+    socket.on("connect", () => {
+      socket.emit("subscribeToGame", "game-" + memeWarState);
+    });
+  
+    socket.on("chatUpdate", (message: ChatMessage) => {
+      setLastMessageId(message.id!);
+      console.log("Received details from WebSocket:", message);
+  
+      if (animationTimeoutId) {
+        clearTimeout(animationTimeoutId);
+      }
+      
+      // Set timeout to clear the animation
+      animationTimeoutId = setTimeout(() => {
+        setLastMessageId(null);
+      }, 1000);
+  
+      setDisplayMessages((prevMessages) => {
+        const updatedMessages = [...(prevMessages || []), message];
+        
+        // Sort by descending time
+        return updatedMessages.sort((a, b) => 
+          new Date(b.sender_time).getTime() - new Date(a.sender_time).getTime()
+        );
+      });
+    });
+  
+    return () => {
+      socket.disconnect();
+    };
+  }, [memeWarState]);
+
+  useEffect(() => {
+    if (chatMessages) {
+      const sortedMessages = [...chatMessages].sort((a, b) => 
+        new Date(b.sender_time).getTime() - new Date(a.sender_time).getTime()
+      );
+      setDisplayMessages(sortedMessages);
+    }
+  }, [chatMessages]);
+
   // Handle deposit for a token
   const handleDeposit = async (mintIdentifier: 0 | 1, amount: string) => {
     try {
@@ -211,7 +264,7 @@ export default function WarPage() {
       setBtnLoading(-1);
     }
   };
-  
+
   // Handle withdraw for a token
   const handleWithdraw = useCallback(async (index: 0 | 1) => {
     try {
@@ -223,7 +276,7 @@ export default function WarPage() {
       setBtnLoading(-1);
     }
   }, [withdrawTokens, refreshTokenBalance]);
-  
+
   // Auto refresh on invalid state
   useEffect(() => {
     const memeWarStateParam = params.memeWarState;
@@ -239,58 +292,58 @@ export default function WarPage() {
       return () => clearTimeout(timer);
     }
   }, [memeWarStateInfo, params.memeWarState]);
-  
+
   // Handle chat message sending
   const handleSendMessage = async () => {
     if (!newMessage.trim()) return;
-    
+
     if (!authState.token && wallet.connected) {
       await handleSignIn();
     }
-    
+
     sendMessage({ pubKey: pubKey!, newMessage, memeWarState: memeWarState! });
     setNewMessage('');
   };
-  
+
   // Handle Enter key for sending message
   const handleKeyPress = async (e: React.KeyboardEvent) => {
     if (e.key === 'Enter') {
       await handleSendMessage();
     }
   };
-  
+
   // Calculate percentages and amounts for display
   const totalPledged = useMemo(() => {
     if (!memeWarStateInfo) return 0;
-    
+
     const mintADeposited = Number(memeWarStateInfo.mint_a_total_deposited) / 10 ** (memeWarStateInfo.mint_a_decimals || 9);
     const mintBDeposited = Number(memeWarStateInfo.mint_b_total_deposited) / 10 ** (memeWarStateInfo.mint_b_decimals || 9);
-    
+
     return mintADeposited + mintBDeposited;
   }, [memeWarStateInfo]);
-  
+
   const mintAPercentage = useMemo(() => {
     if (!memeWarStateInfo || totalPledged === 0) return 0;
-    
+
     const mintADeposited = Number(memeWarStateInfo.mint_a_total_deposited) / 10 ** (memeWarStateInfo.mint_a_decimals || 9);
     return (mintADeposited / totalPledged) * 100;
   }, [memeWarStateInfo, totalPledged]);
-  
+
   const mintBPercentage = useMemo(() => {
     return 100 - mintAPercentage;
   }, [mintAPercentage]);
-  
+
   // Convert blockchain data to UI-friendly format
   const warData = useMemo(() => {
     if (!memeWarStateInfo) {
       return null;
     }
-    
+
     const mintADeposited = Number(memeWarStateInfo.mint_a_total_deposited) / 10 ** (memeWarStateInfo.mint_a_decimals || 9);
     const mintBDeposited = Number(memeWarStateInfo.mint_b_total_deposited) / 10 ** (memeWarStateInfo.mint_b_decimals || 9);
     const mintAPrice = Number(memeWarStateInfo.mint_a_price || 0);
     const mintBPrice = Number(memeWarStateInfo.mint_b_price || 0);
-    
+
     return {
       coin1: {
         ticker: memeWarStateInfo.mint_a_symbol || 'TOKEN_A',
@@ -337,16 +390,16 @@ export default function WarPage() {
       recentPledges: []
     } as WarData;
   }, [memeWarStateInfo, timeLeft]);
-  
+
   // Format user deposit amounts
   const formatDeposit = useCallback((amount: string | undefined, index: number): number => {
     if (!amount) return 0;
-    const decimal = index === 0 
-      ? memeWarStateInfo?.mint_a_decimals 
+    const decimal = index === 0
+      ? memeWarStateInfo?.mint_a_decimals
       : memeWarStateInfo?.mint_b_decimals;
     return Number(amount) / 10 ** (decimal || 9);
   }, [memeWarStateInfo]);
-  
+
   // Return loading state if data isn't ready
   if (!warData) {
     return <div className="container mx-auto px-4 py-6 text-center">Loading...</div>;
@@ -364,7 +417,7 @@ export default function WarPage() {
       <div className="grid grid-cols-7 gap-6">
         {/* Left Token */}
         <div className="col-span-3">
-          <TokenCard 
+          <TokenCard
             token={warData.coin1}
             totalPledged={warData.totalPledged}
             handleDeposit={() => handleDeposit(0, leftInput)}
@@ -378,15 +431,15 @@ export default function WarPage() {
             index={0}
             publicKey={publicKey}
             isWarEnded={memeWarStateInfo?.war_ended}
-            disablePledgeBtn={
-              Number(leftInput) > tokenBalanceMintA || 
-              Number(leftInput) <= 0 || 
-              btnLoading === 0 ||
-              !!memeWarStateInfo?.war_ended
-            }
+            // disablePledgeBtn={
+            //   Number(leftInput) > tokenBalanceMintA || 
+            //   Number(leftInput) <= 0 || 
+            //   btnLoading === 0 
+            //   // !!memeWarStateInfo?.war_ended
+            // }
             disableUnpledgeBtn={
-              btnLoading === 0 || 
-              !!memeWarStateInfo?.war_ended || 
+              btnLoading === 0 ||
+              !!memeWarStateInfo?.war_ended ||
               !userStateInfo?.mint_a_deposit
             }
           />
@@ -396,7 +449,7 @@ export default function WarPage() {
         <div className="col-span-1 flex flex-col items-center justify-start">
           <div className="sticky top-4 w-full">
             <div className="text-6xl font-bold mb-8 text-center">VS</div>
-            
+
             {/* Coin Ratio */}
             <div className="mb-6 text-center">
               <div className="text-sm text-muted-foreground mb-1">Price Ratio</div>
@@ -407,13 +460,13 @@ export default function WarPage() {
                 {warData.coin1.ticker} : {warData.coin2.ticker}
               </div>
             </div>
-            
+
             {/* War Share Bar */}
             <div className="space-y-4">
               <div className="text-center text-sm text-muted-foreground">
                 War Share
               </div>
-              
+
               {/* Progress Labels */}
               <div className="flex justify-between text-xs mb-1">
                 <span className="text-primary font-medium">
@@ -426,25 +479,25 @@ export default function WarPage() {
 
               {/* Progress Bar */}
               <div className="h-3 bg-muted rounded-full overflow-hidden relative">
-                <motion.div 
+                <motion.div
                   className="absolute left-0 top-0 bottom-0 bg-primary"
-                  style={{ 
+                  style={{
                     width: `${mintAPercentage}%`,
                     borderRadius: '9999px 0 0 9999px'
                   }}
-                  animate={{ 
-                    width: `${mintAPercentage}%` 
+                  animate={{
+                    width: `${mintAPercentage}%`
                   }}
                   transition={{ duration: 0.5 }}
                 />
-                <motion.div 
+                <motion.div
                   className="absolute right-0 top-0 bottom-0 bg-[#FF4444]"
-                  style={{ 
+                  style={{
                     width: `${mintBPercentage}%`,
                     borderRadius: '0 9999px 9999px 0'
                   }}
-                  animate={{ 
-                    width: `${mintBPercentage}%` 
+                  animate={{
+                    width: `${mintBPercentage}%`
                   }}
                   transition={{ duration: 0.5 }}
                 />
@@ -475,7 +528,7 @@ export default function WarPage() {
                 <div className="text-sm text-muted-foreground mb-1">
                   {memeWarStateInfo?.war_ended ? 'War Ended' : 'Time Left'}
                 </div>
-                <motion.div 
+                <motion.div
                   className="text-xl font-mono"
                   animate={{ opacity: [1, 0.5, 1] }}
                   transition={{ duration: 2, repeat: Infinity }}
@@ -489,8 +542,8 @@ export default function WarPage() {
                 <div className="mt-4 text-center">
                   <div className="text-sm text-muted-foreground mb-1">Winner</div>
                   <div className="text-xl font-mono">
-                    {memeWarStateInfo.winner_declared === mintA 
-                      ? warData.coin1.ticker 
+                    {memeWarStateInfo.winner_declared === mintA
+                      ? warData.coin1.ticker
                       : warData.coin2.ticker}
                   </div>
                 </div>
@@ -509,7 +562,7 @@ export default function WarPage() {
 
         {/* Right Token */}
         <div className="col-span-3">
-          <TokenCard 
+          <TokenCard
             token={warData.coin2}
             totalPledged={warData.totalPledged}
             handleDeposit={() => handleDeposit(1, rightInput)}
@@ -523,15 +576,15 @@ export default function WarPage() {
             index={1}
             publicKey={publicKey}
             isWarEnded={memeWarStateInfo?.war_ended}
-            disablePledgeBtn={
-              Number(rightInput) > tokenBalanceMintB || 
-              Number(rightInput) <= 0 || 
-              btnLoading === 1 ||
-              !!memeWarStateInfo?.war_ended
-            }
+            // disablePledgeBtn={
+            //   Number(rightInput) > tokenBalanceMintB || 
+            //   Number(rightInput) <= 0 || 
+            //   btnLoading === 1 
+            //   // !!memeWarStateInfo?.war_ended
+            // }
             disableUnpledgeBtn={
-              btnLoading === 1 || 
-              !!memeWarStateInfo?.war_ended || 
+              btnLoading === 1 ||
+              !!memeWarStateInfo?.war_ended ||
               !userStateInfo?.mint_b_deposit
             }
           />
@@ -553,7 +606,7 @@ export default function WarPage() {
               <div className="space-y-2 max-h-[400px] overflow-y-auto">
                 <AnimatePresence mode="popLayout">
                   {tradesData && [
-                    ...(tradesData.mintA || []), 
+                    ...(tradesData.mintA || []),
                     ...(tradesData.mintB || [])
                   ]
                     .sort((a: TradeData, b: TradeData) => b.event_time - a.event_time)
@@ -561,11 +614,11 @@ export default function WarPage() {
                     .map((trade: TradeData, i: number) => {
                       const isMintA = trade.mint === mintA;
                       const coin = isMintA ? warData.coin1 : warData.coin2;
-                      const decimals = isMintA 
-                        ? memeWarStateInfo?.mint_a_decimals 
+                      const decimals = isMintA
+                        ? memeWarStateInfo?.mint_a_decimals
                         : memeWarStateInfo?.mint_b_decimals;
                       const amount = Number(trade.amount) / (10 ** (decimals || 9));
-                      
+
                       return (
                         <motion.div
                           key={i}
@@ -605,22 +658,22 @@ export default function WarPage() {
                 Refresh
               </div>
             </div>
-            
+
             {/* Chat Messages */}
             <div className="flex-1 p-4 space-y-4 overflow-y-auto max-h-[400px]">
               <AnimatePresence mode="popLayout">
-                {chatMessages && [...chatMessages]
+                {displayMessages && [...displayMessages]
                   .sort((a: ChatMessage, b: ChatMessage) => new Date(b.sender_time).getTime() - new Date(a.sender_time).getTime())
                   .map((message: ChatMessage, i: number) => {
                     // Determine if sender is supporting a coin based on deposit history
                     const isCoin1Supporter = message.sender === pubKey && userStateInfo?.mint_a_deposit;
                     const isCoin2Supporter = message.sender === pubKey && userStateInfo?.mint_b_deposit;
-                    const supporterType = isCoin1Supporter 
-                      ? warData.coin1.ticker 
-                      : isCoin2Supporter 
-                        ? warData.coin2.ticker 
+                    const supporterType = isCoin1Supporter
+                      ? warData.coin1.ticker
+                      : isCoin2Supporter
+                        ? warData.coin2.ticker
                         : null;
-                    
+
                     return (
                       <motion.div
                         key={i}
@@ -630,10 +683,10 @@ export default function WarPage() {
                         className="flex items-start gap-3"
                       >
                         <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm shrink-0">
-                          {isCoin1Supporter 
-                            ? '1️⃣' 
-                            : isCoin2Supporter 
-                              ? '2️⃣' 
+                          {isCoin1Supporter
+                            ? '1️⃣'
+                            : isCoin2Supporter
+                              ? '2️⃣'
                               : '👤'}
                         </div>
                         <div className="flex-1">
@@ -642,11 +695,10 @@ export default function WarPage() {
                               {formatWalletAddress(message.sender)}
                             </span>
                             {supporterType && (
-                              <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-                                isCoin1Supporter 
-                                  ? 'bg-primary/10 text-primary' 
+                              <span className={`text-xs px-1.5 py-0.5 rounded-full ${isCoin1Supporter
+                                  ? 'bg-primary/10 text-primary'
                                   : 'bg-red-500/10 text-red-500'
-                              }`}>
+                                }`}>
                                 {supporterType} Supporter
                               </span>
                             )}
@@ -675,7 +727,7 @@ export default function WarPage() {
                   onKeyPress={handleKeyPress}
                   className="flex-1 bg-muted border-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
                 />
-                <button 
+                <button
                   onClick={handleSendMessage}
                   disabled={!newMessage.trim() || sendStatus === 'pending' || !pubKey}
                   className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded text-sm font-medium disabled:opacity-50"
@@ -693,13 +745,13 @@ export default function WarPage() {
 
 // Token Card Component
 // Token Card Component
-function TokenCard({ 
-  token, 
-  totalPledged, 
-  handleDeposit, 
-  handleWithdraw, 
-  pledgeAmount, 
-  setPledgeAmount, 
+function TokenCard({
+  token,
+  totalPledged,
+  handleDeposit,
+  handleWithdraw,
+  pledgeAmount,
+  setPledgeAmount,
   tokenBalance,
   btnLoading,
   userState,
@@ -712,12 +764,12 @@ function TokenCard({
 }: TokenCardProps) {
   const [isWarRoomOpen, setIsWarRoomOpen] = useState<boolean>(false);
   const [selectedTemplate, setSelectedTemplate] = useState<TweetTemplate | null>(null);
-  
+
   interface TweetTemplate {
     text: string;
     hashtags: string[];
   }
-  
+
   const tweetTemplates: TweetTemplate[] = [
     {
       text: `${token.ticker} is crushing it in the meme wars! Join me in supporting the future of memes 🚀`,
@@ -790,7 +842,7 @@ function TokenCard({
             </div>
           </div>
         </div>
-        
+
         {/* Support Button */}
         <button
           onClick={() => setIsWarRoomOpen(true)}
@@ -873,14 +925,14 @@ function TokenCard({
         {/* Action Buttons */}
         {publicKey ? (
           <div className="grid grid-cols-2 gap-2">
-            <button 
+            <button
               onClick={handleDeposit}
               disabled={disablePledgeBtn}
               className="bg-primary hover:bg-primary/90 text-primary-foreground py-2 rounded text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {btnLoading ? 'Processing...' : `Pledge ${token.ticker}`}
             </button>
-            <button 
+            <button
               onClick={handleWithdraw}
               disabled={disableUnpledgeBtn}
               className="bg-muted hover:bg-muted/90 text-foreground py-2 rounded text-sm font-medium border border-border disabled:opacity-50 disabled:cursor-not-allowed"
@@ -926,7 +978,7 @@ function TokenCard({
               {token.ticker} War Room
             </DialogTitle>
           </DialogHeader>
-          
+
           <div className="space-y-4 py-4">
             <div className="text-sm text-muted-foreground">
               Support {token.ticker} by spreading the word! Choose a message to share:
@@ -937,16 +989,15 @@ function TokenCard({
                 <div
                   key={index}
                   onClick={() => setSelectedTemplate(template)}
-                  className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                    selectedTemplate === template 
-                      ? 'border-primary bg-primary/5' 
+                  className={`p-3 rounded-lg border cursor-pointer transition-all ${selectedTemplate === template
+                      ? 'border-primary bg-primary/5'
                       : 'border-border hover:border-primary/50'
-                  }`}
+                    }`}
                 >
                   <p className="text-sm mb-2">{template.text}</p>
                   <div className="flex flex-wrap gap-2">
                     {template.hashtags.map(tag => (
-                      <span 
+                      <span
                         key={tag}
                         className="text-xs px-2 py-1 rounded-full bg-muted text-muted-foreground"
                       >
@@ -964,14 +1015,14 @@ function TokenCard({
               rel="noopener noreferrer"
               className={`
                 w-full inline-flex justify-center items-center px-4 py-2 rounded
-                ${selectedTemplate 
+                ${selectedTemplate
                   ? 'bg-[#1DA1F2] hover:bg-[#1DA1F2]/90 text-white cursor-pointer'
                   : 'bg-muted text-muted-foreground cursor-not-allowed'
                 }
               `}
             >
               <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+                <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z" />
               </svg>
               {selectedTemplate ? 'Share on Twitter' : 'Select a message'}
             </a>
