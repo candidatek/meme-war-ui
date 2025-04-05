@@ -83,8 +83,8 @@ interface UserWarsProps {
 
 const UserWars: React.FC<UserWarsProps> = ({ wars = [] }) => {
   const params = useParams();
-  const { userProfile } = params;
-  const { data: userProfileDetails, isLoading, refetch, isFetching } = useGetUserProfile(typeof userProfile === 'string' ? userProfile : null);
+  const { userId } = params;
+  const { data: userProfileDetails, isLoading, refetch, isFetching } = useGetUserProfile(typeof userId === 'string' ? userId : null);
 
   if (isLoading || isFetching) {
     return <div>Loading...</div>;

@@ -16,6 +16,10 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
+export const formatToDollar = (amount: number): string => {
+  return `${amount.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ",")}`;
+};
+
 export const getConnection = () => {
   if(!process.env.NEXT_PUBLIC_SOLANA_CLUSTER_URL) {
     throw new Error('Solana cluster URL is not defined');
