@@ -23,8 +23,8 @@ const useWithdrawTokens = (mintAKey: string | null, mintBKey: string | null) => 
   const { memeProgram } = useProgramDetails()
   const connection = getConnection();
 
-  const { data: mintAInfo, isLoading: isMintALoading } = useMintInfo(mintAKey!);
-  const { data: mintBInfo, isLoading: isMintBLoading } = useMintInfo(mintBKey!);
+  const { data: mintAInfo, isLoading: isMintALoading } = useMintInfo(mintAKey ?? '');
+  const { data: mintBInfo, isLoading: isMintBLoading } = useMintInfo(mintBKey ?? '');
 
 
   const withdrawTokens = useCallback(async (mintIdentifier: number,
@@ -55,9 +55,6 @@ const useWithdrawTokens = (mintAKey: string | null, mintBKey: string | null) => 
       const mintAATA = await findAssociatedTokenAddress({ walletAddress: memeWarState!, tokenMintAddress: mintA });
       const mintBATA = await findAssociatedTokenAddress({ walletAddress: memeWarState!, tokenMintAddress: mintB });
 
-      const { data: mintAInfo, isLoading: isMintALoading } = useMintInfo(mintAKey!);
-  const { data: mintBInfo, isLoading: isMintBLoading } = useMintInfo(mintBKey!);
-
       const userState = await getProgramDerivedAddressForPair(memeWarState, publicKey!);
 
       const withdrawIx = await memeProgram!.methods.withdrawToken(mintIdentifier)
@@ -67,8 +64,12 @@ const useWithdrawTokens = (mintAKey: string | null, mintBKey: string | null) => 
           mintA: mintA,
           mintB: mintB,
           userAta: userAta,
-          mintAAta: new PublicKey(mintAInfo),
-          mintBAta: new PublicKey(mintBInfo),
+          mintAAta: mintAATA,
+          mintBAta: mintBATA,
+          mintABaseVault: new PublicKey(mintAInfo.pool_base_token_account),
+          mintBBaseVault: new PublicKey(mintBInfo.pool_base_token_account),
+          mintAQuoteVault: new PublicKey(mintAInfo.pool_quote_token_account),
+          mintBQuoteVault: new PublicKey(mintBInfo.pool_quote_token_account),
           memeWarRegistry: memeWarRegistryAddress,
           memeWarState: memeWarState,
           userState: userState,
