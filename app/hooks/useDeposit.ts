@@ -15,6 +15,7 @@ import { findAssociatedTokenAddress } from "@/lib/utils";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { toast } from "sonner";
 import { SetStateAction } from "jotai";
+import { useMintInfo } from "./useMintInfo";
 
 
 const useDepositTokens = (mintAKey: string | null, mintBKey: string | null) => {
@@ -27,6 +28,9 @@ const useDepositTokens = (mintAKey: string | null, mintBKey: string | null) => {
   const connection = getConnection();
 
   const memeWarGlobalAccount = getMemeWarGlobalAccount();
+
+  const { data: mintAInfo, isLoading: isMintALoading } = useMintInfo(mintAKey!);
+  const { data: mintBInfo, isLoading: isMintBLoading } = useMintInfo(mintBKey!);
 
   const depositTokens = useCallback(async (
     amount: number,
@@ -93,10 +97,10 @@ const useDepositTokens = (mintAKey: string | null, mintBKey: string | null) => {
           memeWarRegistry: memeWarRegistryAddress,
           memeWarState: memeWarState,
           userState: userState,
-          mintABaseVault: userAta,
-          mintBBaseVault: userAta,
-          mintAQuoteVault: userAta,
-          mintBQuoteVault: userAta,
+          mintABaseVault: new PublicKey(mintAInfo.pool_base_token_account),
+          mintBBaseVault: new PublicKey(mintBInfo.pool_base_token_account),
+          mintAQuoteVault: new PublicKey(mintAInfo.pool_quote_token_account),
+          mintBQuoteVault: new PublicKey(mintBInfo.pool_quote_token_account),
           tokenProgram: TOKEN_PROGRAM_ID,
           systemProgram: anchor.web3.SystemProgram.programId,
         }).instruction();
