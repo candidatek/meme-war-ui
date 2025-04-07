@@ -11,6 +11,7 @@ import useProgramDetails from "./useProgramDetails";
 import { findAssociatedTokenAddress } from "@/lib/utils";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { toast } from "sonner";
+import { useMintInfo } from './useMintInfo';
 
 
 const useWithdrawTokens = (mintAKey: string | null, mintBKey: string | null) => {
@@ -21,6 +22,9 @@ const useWithdrawTokens = (mintAKey: string | null, mintBKey: string | null) => 
   const { checkStatus } = useTransactionStatus();
   const { memeProgram } = useProgramDetails()
   const connection = getConnection();
+
+  const { data: mintAInfo, isLoading: isMintALoading } = useMintInfo(mintAKey!);
+  const { data: mintBInfo, isLoading: isMintBLoading } = useMintInfo(mintBKey!);
 
 
   const withdrawTokens = useCallback(async (mintIdentifier: number,
@@ -51,6 +55,9 @@ const useWithdrawTokens = (mintAKey: string | null, mintBKey: string | null) => 
       const mintAATA = await findAssociatedTokenAddress({ walletAddress: memeWarState!, tokenMintAddress: mintA });
       const mintBATA = await findAssociatedTokenAddress({ walletAddress: memeWarState!, tokenMintAddress: mintB });
 
+      const { data: mintAInfo, isLoading: isMintALoading } = useMintInfo(mintAKey!);
+  const { data: mintBInfo, isLoading: isMintBLoading } = useMintInfo(mintBKey!);
+
       const userState = await getProgramDerivedAddressForPair(memeWarState, publicKey!);
 
       const withdrawIx = await memeProgram!.methods.withdrawToken(mintIdentifier)
@@ -60,8 +67,8 @@ const useWithdrawTokens = (mintAKey: string | null, mintBKey: string | null) => 
           mintA: mintA,
           mintB: mintB,
           userAta: userAta,
-          mintAAta: mintAATA,
-          mintBAta: mintBATA,
+          mintAAta: new PublicKey(mintAInfo),
+          mintBAta: new PublicKey(mintBInfo),
           memeWarRegistry: memeWarRegistryAddress,
           memeWarState: memeWarState,
           userState: userState,

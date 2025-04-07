@@ -706,6 +706,7 @@ export default function WarPage() {
                     .sort((a: TradeData, b: TradeData) => b.event_time - a.event_time)
                     .slice(0, 10)
                     .map((trade: TradeData, i: number) => {
+                      // console.log("Trade: ", trade);
                       const isMintA = trade.mint === mintA;
                       const coin = isMintA ? warData.coin1 : warData.coin2;
                       const decimals = isMintA
