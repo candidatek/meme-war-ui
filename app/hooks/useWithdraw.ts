@@ -23,8 +23,8 @@ const useWithdrawTokens = (mintAKey: string | null, mintBKey: string | null) => 
   const { memeProgram } = useProgramDetails()
   const connection = getConnection();
 
-  const { data: mintAInfo, isLoading: isMintALoading } = useMintInfo(mintAKey ?? '');
-  const { data: mintBInfo, isLoading: isMintBLoading } = useMintInfo(mintBKey ?? '');
+  const { data: mintAInfo, isLoading: isMintALoading } = useMintInfo(mintAKey!);
+  const { data: mintBInfo, isLoading: isMintBLoading } = useMintInfo(mintBKey!);
 
 
   const withdrawTokens = useCallback(async (mintIdentifier: number,
