@@ -56,7 +56,7 @@ const useDepositTokens = (mintAKey: string | null, mintBKey: string | null) => {
       const depositMint = mintIdentifier === 0 ? mintA : mintB;
 
       const userAta = await findAssociatedTokenAddress({ walletAddress: publicKey!, tokenMintAddress: depositMint });
-
+      
       const memeWarState = await getPDAForMemeSigner(mintA, mintB, lastValidated);
 
       const memeWarStateAta = await findAssociatedTokenAddress({ walletAddress: memeWarState, tokenMintAddress: depositMint });
@@ -82,7 +82,7 @@ const useDepositTokens = (mintAKey: string | null, mintBKey: string | null) => {
         tx.add(ix);
       }
 
-      const depositIx = await memeProgram!.methods.depositToken(new BN(amount * (10 ** mintDecimal)))
+      const depositIx = await memeProgram!.methods.depositToken(new BN(amount * (10 ** 6)))
         .accounts({
           payer: publicKey!,
           mintA: mintA,
@@ -93,6 +93,10 @@ const useDepositTokens = (mintAKey: string | null, mintBKey: string | null) => {
           memeWarRegistry: memeWarRegistryAddress,
           memeWarState: memeWarState,
           userState: userState,
+          mintABaseVault: userAta,
+          mintBBaseVault: userAta,
+          mintAQuoteVault: userAta,
+          mintBQuoteVault: userAta,
           tokenProgram: TOKEN_PROGRAM_ID,
           systemProgram: anchor.web3.SystemProgram.programId,
         }).instruction();
