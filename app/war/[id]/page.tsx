@@ -154,7 +154,6 @@ export default function WarPage() {
 
   // Set memeWarState from URL parameters
   useEffect(() => {
-    console.log("Params:", params);
     if (params?.id) {
       setMemeWarState(params.id as string);
     }
