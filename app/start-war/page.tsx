@@ -99,7 +99,7 @@ export default function StartWarPage() {
     if (!mintAddress || mintAddress.length < 32) return;
 
     try {
-      // setCoinData({ ...currentData, isLoading: true, error: "" });
+      setCoinData({ ...currentData, isLoading: true, error: "" });
       // Check if war already exists for these tokens
 
       const data = await getAssetFromMint(mintAddress) as TokenResponse;
@@ -173,25 +173,6 @@ export default function StartWarPage() {
     //   toast.error("A meme war already exists for these tokens. Please wait for it to end.");
     //   return;
     // }
-
-    console.log({
-      userPublicKey: publicKey ? publicKey.toString() : null,
-      warData,
-      coin1: {
-        mintAddress: coin1Data.mintAddress,
-        name: coin1Data.name,
-        ticker: coin1Data.ticker,
-        emoji: coin1Data.emoji,
-        image: coin1Data.image
-      },
-      coin2: {
-        mintAddress: coin2Data.mintAddress,
-        name: coin2Data.name,
-        ticker: coin2Data.ticker,
-        emoji: coin2Data.emoji,
-        image: coin2Data.image
-      }
-    });
   }
 
   interface CoinFormProps {
@@ -225,7 +206,17 @@ export default function StartWarPage() {
               });
             }}
           />
-          {data.isLoading && <p className="text-sm text-muted-foreground">Loading token data...</p>}
+          {data.isLoading &&
+            <p className="text-sm text-muted-foreground">
+              <div className="mb-6">
+                <div className="flex items-center justify-center">
+                  <span className="relative flex h-10 w-10">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75 mt-4"></span>
+                    <span className="relative inline-flex rounded-full h-10 w-10 bg-green-500 mt-4"></span>
+                  </span>
+                </div>
+              </div>
+            </p>}
           {data.error && <p className="text-sm text-red-500">{data.error}</p>}
         </div>
 
@@ -243,23 +234,23 @@ export default function StartWarPage() {
           </div>
         )}
 
-        <div className="flex w-full border gap-4 ">
-          {data.ticker && <div className="flex justify-between border w-fit">
-            <Label htmlFor={`${title}-ticker`}>Ticker Symbol</Label>
+        <div className="flex w-full gap-4 ">
+          {data.ticker && <div className="flex justify-between items-center gap-2">
+            <Label htmlFor={`${title}-ticker`}>Symbol</Label>
             <Input
               id={`${title}-ticker`}
               placeholder="e.g. DOGE"
               value={data.ticker}
               maxLength={10}
             />
-             <Label htmlFor={`${title}-name`}>Coin Name</Label>
-          <Input
-            id={`${title}-ticker`}
-            placeholder="e.g. Dogecoin"
-            value={data.name}
-            onChange={(e) => setData({ ...data, name: e.target.value })}
-          />
-         
+            <Label htmlFor={`${title}-name`}>Name</Label>
+            <Input
+              id={`${title}-ticker`}
+              placeholder="e.g. Dogecoin"
+              value={data.name}
+              onChange={(e) => setData({ ...data, name: e.target.value })}
+            />
+
           </div>}
         </div>
       </CardContent>
