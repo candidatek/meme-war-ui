@@ -1,10 +1,11 @@
 "use client"
 
-import { MemeCoinWar } from "./meme-coin-war"
-import { Card } from "@/components/ui/card"
+
 import { formatNumber, formatTimeAgo } from "@/lib/utils"
 import { useState, useEffect } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
+import { useRouter } from 'next/navigation'
+import { useGetHomePageDetails } from '@/app/api/getHomePageDetails'
 
 interface Pledge {
   id: string
@@ -27,107 +28,82 @@ interface CoinData {
 interface War {
   coin1: CoinData
   coin2: CoinData
+  warId: string
+  meme_war_state: string;
+  mint_a_image: string;
+  mint_a_name: string;
+  mint_a_symbol: string;
+  mint_b_image: string;
+  mint_b_name: string;
+  mint_b_symbol: string;
+  war_ended: boolean;
+  end_time: string;
+  mint_a: string;
+  mint_b: string;
 }
 
-// Generate more mock data for testing scrolling
-const generateMoreWars = () => {
-  const baseWars = [
-    {
-      coin1: {
-        ticker: "DOGE",
-        name: "Dogecoin",
-        marketCap: 10000000000,
-        pledgers: 50000,
-        amountPledged: 5000000,
-        emoji: "🐶",
-      },
-      coin2: {
-        ticker: "SHIB",
-        name: "Shiba Inu",
-        marketCap: 5000000000,
-        pledgers: 40000,
-        amountPledged: 4000000,
-        emoji: "🐕",
-      },
-    },
-    {
-      coin1: {
-        ticker: "PEPE",
-        name: "Pepe",
-        marketCap: 1000000000,
-        pledgers: 20000,
-        amountPledged: 2000000,
-        emoji: "🐸",
-      },
-      coin2: {
-        ticker: "WOJAK",
-        name: "Wojak",
-        marketCap: 500000000,
-        pledgers: 15000,
-        amountPledged: 1500000,
-        emoji: "😐",
-      },
-    },
-    {
-      coin1: {
-        ticker: "MOON",
-        name: "MoonCoin",
-        marketCap: 100000000,
-        pledgers: 5000,
-        amountPledged: 500000,
-        emoji: "🌙",
-      },
-      coin2: {
-        ticker: "LAMBO",
-        name: "LamboCoin",
-        marketCap: 50000000,
-        pledgers: 3000,
-        amountPledged: 300000,
-        emoji: "🚗",
-      },
-    },
-  ]
-
-  // Generate 50 more wars with random variations
-  const moreWars = Array.from({ length: 50 }, (_, index) => {
-    const randomMultiplier = Math.random() * 2 + 0.1 // Random number between 0.1 and 2.1
-    return {
-      coin1: {
-        ticker: `MEME${index + 1}`,
-        name: `MemeCoin ${index + 1}`,
-        marketCap: Math.floor(1000000 * randomMultiplier),
-        pledgers: Math.floor(1000 * randomMultiplier),
-        amountPledged: Math.floor(100000 * randomMultiplier),
-        emoji: ["🚀", "💎", "🌙", "🎮", "��", "🎲"][Math.floor(Math.random() * 6)],
-      },
-      coin2: {
-        ticker: `COIN${index + 1}`,
-        name: `FunCoin ${index + 1}`,
-        marketCap: Math.floor(900000 * randomMultiplier),
-        pledgers: Math.floor(900 * randomMultiplier),
-        amountPledged: Math.floor(90000 * randomMultiplier),
-        emoji: ["🦊", "🐱", "🐼", "🦁", "🐯", "🐸"][Math.floor(Math.random() * 6)],
-      },
-    }
-  })
-
-  return [...baseWars, ...moreWars]
+// Emoji mapping for common coins
+const coinEmojis: Record<string, string> = {
+  "USDC": "💲",
+  "USDT": "💵",
+  "PEPE": "🐸",
+  "WOJAK": "😐",
+  "MOON": "🌙",
+  "LAMBO": "🚗",
+  "SOL": "💎",
+  "BTC": "₿",
+  "ETH": "Ξ"
 }
-
-const memeCoinWars = generateMoreWars()
 
 export function MemeCoinWars() {
-  const [wars, setWars] = useState<War[]>(memeCoinWars.slice(0, 10))
+  const { data: warArray, isError, isLoading } = useGetHomePageDetails()
+  const [wars, setWars] = useState<War[]>([])
   const [shakingWarId, setShakingWarId] = useState<number | null>(null)
+  const [animationsEnabled, setAnimationsEnabled] = useState(true)
+  const router = useRouter()
 
+  // Transform API data to component format
   useEffect(() => {
+    if (warArray && warArray.length > 0) {
+      const transformedWars = warArray.slice(0, 10).map((warData: War) => {
+        // We'll create a separate component for each war to use the hook properly
+        return {
+          coin1: {
+            ticker: warData.mint_a_symbol || "Unknown",
+            name: warData.mint_a_name || warData.mint_a || "Unknown",
+            marketCap: Math.random() * 10000000000,
+            pledgers: Math.floor(Math.random() * 50000) + 1000,
+            amountPledged: 0, // Will be calculated in WarItem
+            emoji: coinEmojis[warData.mint_a_symbol] || "🪙"
+          },
+          coin2: {
+            ticker: warData.mint_b_symbol || "Unknown",
+            name: warData.mint_b_name || warData.mint_b || "Unknown",
+            marketCap: Math.random() * 5000000000,
+            pledgers: Math.floor(Math.random() * 40000) + 1000,
+            amountPledged: 0, // Will be calculated in WarItem
+            emoji: coinEmojis[warData.mint_b_symbol] || "🪙"
+          },
+          warId: warData.meme_war_state,
+          warData: warData // Pass the raw data for calculations
+        }
+      })
+      
+      setWars(transformedWars)
+    }
+  }, [warArray])
+
+  // Simulate real-time pledge updates (in a production app, this would use WebSockets)
+  useEffect(() => {
+    if (wars.length === 0) return
+
     const simulatePledge = () => {
       // Randomly select 2-3 wars to receive pledges
       const numPledges = Math.floor(Math.random() * 2) + 2 // 2-3 pledges
       const pledgedWars = new Set<number>()
       
-      while (pledgedWars.size < numPledges) {
-        pledgedWars.add(Math.floor(Math.random() * 10))
+      while (pledgedWars.size < numPledges && pledgedWars.size < wars.length) {
+        pledgedWars.add(Math.floor(Math.random() * wars.length))
       }
 
       pledgedWars.forEach(warIndex => {
@@ -154,23 +130,17 @@ export function MemeCoinWars() {
           war[randomCoinSide] = coin
           newWars[warIndex] = war
 
-          setShakingWarId(warIndex)
-          setTimeout(() => setShakingWarId(null), 300)
-
-          // Sort wars and maintain top 10
-          const allWars = [...memeCoinWars]
-          const updatedWarIndex = allWars.findIndex(w => 
-            w.coin1.ticker === war.coin1.ticker && 
-            w.coin2.ticker === war.coin2.ticker
-          )
-          allWars[updatedWarIndex] = war
+          // Only update shaking state if animations are enabled
+          if (animationsEnabled) {
+            setShakingWarId(warIndex)
+            setTimeout(() => setShakingWarId(null), 300)
+          }
           
-          return allWars
-            .sort((a, b) => 
-              (b.coin1.amountPledged + b.coin2.amountPledged) - 
-              (a.coin1.amountPledged + a.coin2.amountPledged)
-            )
-            .slice(0, 10)
+          // Sort wars by total amount pledged
+          return [...newWars].sort((a, b) => 
+            (b.coin1.amountPledged + b.coin2.amountPledged) - 
+            (a.coin1.amountPledged + a.coin2.amountPledged)
+          )
         })
       })
     }
@@ -181,126 +151,332 @@ export function MemeCoinWars() {
     }, Math.random() * 100 + 400)
 
     return () => clearInterval(interval)
-  }, [])
+  }, [wars, animationsEnabled])
+
+  // Toggle animations handler
+  const toggleAnimations = () => {
+    setAnimationsEnabled(prev => !prev)
+    // Clear shaking state when disabling animations
+    if (animationsEnabled) {
+      setShakingWarId(null)
+    }
+  }
+
+  if (isLoading) {
+    return (
+      <div className="container mx-auto px-4 h-full flex flex-col items-center justify-center">
+        <div className="text-xl">Loading wars data...</div>
+      </div>
+    )
+  }
+
+  if (isError || !wars.length) {
+    return (
+      <div className="container mx-auto px-4 h-full flex flex-col items-center justify-center">
+        <div className="text-xl">Could not load meme wars</div>
+      </div>
+    )
+  }
 
   return (
     <div className="container mx-auto px-4 h-full flex flex-col">
-      <h2 className="text-xl font-medium mb-6">MARKET</h2>
+      <div className="flex items-center justify-between mb-6">
+        <h2 className="text-xl font-medium">MARKET</h2>
+        <motion.button
+          onClick={toggleAnimations}
+          className="relative flex items-center gap-1 px-3 py-1 rounded text-xs font-medium bg-muted hover:bg-muted/80 transition-colors overflow-hidden group"
+          aria-label={animationsEnabled ? "Disable animations" : "Enable animations"}
+          title={animationsEnabled ? "Disable animations" : "Enable animations"}
+          whileTap={{ scale: 0.95 }}
+          whileHover={{ boxShadow: "0 0 8px rgba(var(--primary-rgb), 0.4)" }}
+          transition={{ 
+            type: "spring",
+            stiffness: 400,
+            damping: 17
+          }}
+        >
+          <motion.div 
+            className="absolute inset-0 bg-primary/40 scale-x-0 origin-left"
+            animate={{ scaleX: animationsEnabled ? 1 : 0 }}
+            transition={{ duration: 0.3, ease: "easeInOut" }}
+          />
+          <motion.div 
+            className="relative z-10 w-4 h-4 flex items-center justify-center"
+            animate={{ rotate: animationsEnabled ? 0 : 180 }}
+            transition={{ duration: 0.3, type: "spring" }}
+          >
+            {animationsEnabled ? (
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <path d="M8 11V8.5a4.5 4.5 0 019 0v7M8 12v3.5a4.5 4.5 0 009 0V8" />
+              </svg>
+            ) : (
+              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                <line x1="5" y1="12" x2="19" y2="12" />
+                <polyline points="5 12 9 16" />
+                <polyline points="5 12 9 8" />
+                <line x1="19" y1="6" x2="15" y2="6" />
+                <line x1="19" y1="18" x2="15" y2="18" />
+              </svg>
+            )}
+          </motion.div>
+          <motion.span 
+            className="relative z-10"
+            initial={false}
+            animate={{ 
+              opacity: [1, 0.8, 1],
+              y: animationsEnabled ? [2, 0] : 0
+            }}
+            transition={{ 
+              opacity: { duration: 0.3 },
+              y: { duration: 0.2 }
+            }}
+          >
+            {animationsEnabled ? "Animations On" : "Animations Off"}
+          </motion.span>
+          {/* Animated decorative elements */}
+          <div className="absolute inset-0 overflow-hidden pointer-events-none">
+            {/* Multiple particles that animate outward when enabled */}
+            {Array.from({ length: 5 }).map((_, i) => (
+              <motion.div
+                key={`particle-${i}`}
+                className="absolute rounded-full bg-primary/80"
+                style={{
+                  width: `${3 + i % 2}px`,
+                  height: `${3 + i % 2}px`,
+                  left: `${50 + (i * 5) - 10}%`,
+                  top: `${50 + (Math.sin(i) * 20)}%`,
+                }}
+                initial={{ scale: 0, opacity: 0 }}
+                animate={animationsEnabled ? {
+                  scale: [0, 1, 0],
+                  opacity: [0, 0.8, 0],
+                  x: [(i - 2) * 10, (i - 2) * 30],
+                  y: [0, i % 2 === 0 ? -20 : 20]
+                } : { scale: 0, opacity: 0 }}
+                transition={{
+                  duration: 0.7,
+                  delay: i * 0.04,
+                  ease: "easeOut"
+                }}
+              />
+            ))}
+            
+            {/* Ripple effect */}
+            <motion.div
+              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary/30"
+              initial={{ width: 0, height: 0, opacity: 0 }}
+              animate={animationsEnabled ? {
+                width: ["0%", "150%"],
+                height: ["0%", "150%"],
+                opacity: [0, 0.5, 0]
+              } : { width: 0, height: 0, opacity: 0 }}
+              transition={{
+                duration: 0.6,
+                ease: "easeOut",
+                times: [0, 0.5, 1]
+              }}
+            />
+          </div>
+        </motion.button>
+      </div>
       <div className="flex-1 overflow-y-auto">
         <div className="space-y-4">
-          <AnimatePresence mode="popLayout">
-            {wars.map((war, index) => (
-              <motion.div
-                key={`war-${war.coin1.ticker}-${war.coin2.ticker}`}
-                layout
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                exit={{ opacity: 0, y: -20 }}
-                transition={{ 
-                  type: "spring", 
-                  stiffness: 500, 
-                  damping: 30,
-                  layout: { duration: 0.3 }
-                }}
-                className={`${shakingWarId === index ? 'animate-shake' : ''}`}
-              >
-                <div className="grid grid-cols-5 gap-4">
-                  {/* Left Side */}
-                  <div className="col-span-2">
-                    <CoinCard 
-                      coin={war.coin1}
-                      isTopWar={index === 0}
-                      align="right"
-                    />
-                    {/* Animated pledge notification */}
-                    <AnimatePresence mode="popLayout">
-                      {war.coin1.recentPledges?.[0] && (
-                        <motion.div
-                          key={war.coin1.recentPledges[0].id}
-                          initial={{ opacity: 0, y: -10, x: 20 }}
-                          animate={{ opacity: 1, y: 0, x: 0 }}
-                          exit={{ opacity: 0, x: -20 }}
-                          transition={{ duration: 0.2 }}
-                          className="mt-2 text-xs text-right"
-                        >
-                          <span className="text-primary">+${formatNumber(war.coin1.recentPledges[0].amount)}</span>
-                          <span className="text-muted-foreground ml-2">
-                            by {war.coin1.recentPledges[0].pledger}
-                          </span>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-
-                  {/* Center VS */}
-                  <div className="flex items-center justify-center">
-                    <motion.div 
-                      className="vs-badge opacity-50"
-                      animate={{ scale: shakingWarId === index ? 1.1 : 1 }}
-                      transition={{ duration: 0.2 }}
-                    >
-                      vs
-                    </motion.div>
-                  </div>
-
-                  {/* Right Side */}
-                  <div className="col-span-2">
-                    <CoinCard 
-                      coin={war.coin2}
-                      isTopWar={index === 0}
-                      align="left"
-                    />
-                    {/* Animated pledge notification */}
-                    <AnimatePresence mode="popLayout">
-                      {war.coin2.recentPledges?.[0] && (
-                        <motion.div
-                          key={war.coin2.recentPledges[0].id}
-                          initial={{ opacity: 0, y: -10, x: -20 }}
-                          animate={{ opacity: 1, y: 0, x: 0 }}
-                          exit={{ opacity: 0, x: 20 }}
-                          transition={{ duration: 0.2 }}
-                          className="mt-2 text-xs text-left"
-                        >
-                          <span className="text-primary">+${formatNumber(war.coin2.recentPledges[0].amount)}</span>
-                          <span className="text-muted-foreground ml-2">
-                            by {war.coin2.recentPledges[0].pledger}
-                          </span>
-                        </motion.div>
-                      )}
-                    </AnimatePresence>
-                  </div>
-                </div>
-
-                {/* Divider */}
-                {index < wars.length - 1 && (
-                  <motion.div 
-                    layout
-                    className="h-px bg-border mt-4" 
-                  />
-                )}
-              </motion.div>
-            ))}
-          </AnimatePresence>
+          {animationsEnabled ? (
+            <AnimatePresence mode="popLayout">
+              {wars.map((war, index) => (
+                <WarItem 
+                  key={`war-${war.coin1.ticker}-${war.coin2.ticker}-${index}`}
+                  war={war}
+                  index={index}
+                  isShaking={shakingWarId === index}
+                  onPledgeClick={() => router.push(`/war/${war.warId}`)}
+                  animationsEnabled={animationsEnabled}
+                />
+              ))}
+            </AnimatePresence>
+          ) : (
+            // No animations version
+            wars.map((war, index) => (
+              <div key={`war-${war.coin1.ticker}-${war.coin2.ticker}-${index}`}>
+                <WarItem 
+                  war={war}
+                  index={index}
+                  isShaking={false}
+                  onPledgeClick={() => router.push(`/war/${war.warId}`)}
+                  animationsEnabled={false}
+                />
+              </div>
+            ))
+          )}
         </div>
       </div>
     </div>
   )
 }
 
-interface CoinCardProps {
-  coin: {
-    ticker: string
-    name: string
-    marketCap: number
-    pledgers: number
-    amountPledged: number
-    emoji: string
-  }
-  isTopWar: boolean
-  align: 'left' | 'right'
+// A minimal wrapper component to use the hook properly
+import { useMemeWarCalculations } from '@/app/hooks/useMemeWarCalculations'
+
+interface WarItemProps {
+  war: War & { warData?: War }
+  index: number
+  isShaking: boolean
+  onPledgeClick: () => void
+  animationsEnabled: boolean
 }
 
-function CoinCard({ coin, isTopWar, align }: CoinCardProps) {
+function WarItem({ war, index, isShaking, onPledgeClick, animationsEnabled }: WarItemProps) {
+  // Now we can safely use the hook at the top level of this component
+  const { rfPlusMintADeposited, rfPlusMintBDeposited } = useMemeWarCalculations(war.warData)
+  
+  // Update the amountPledged values with the calculated ones
+  const updatedCoin1 = {
+    ...war.coin1,
+    amountPledged: war.coin1.amountPledged + (parseFloat(rfPlusMintADeposited.replace(/,/g, '')) || 0)
+  }
+  
+  const updatedCoin2 = {
+    ...war.coin2,
+    amountPledged: war.coin2.amountPledged + (parseFloat(rfPlusMintBDeposited.replace(/,/g, '')) || 0)
+  }
+
+  const WarItemContent = () => (
+    <>
+      <div className="grid grid-cols-5 gap-4">
+        {/* Left Side */}
+        <div className="col-span-2">
+          <CoinCard 
+            coin={updatedCoin1}
+            isTopWar={index === 0}
+            align="right"
+            onClick={onPledgeClick}
+          />
+          {/* Animated pledge notification */}
+          {animationsEnabled && (
+            <AnimatePresence mode="popLayout">
+              {war.coin1.recentPledges?.[0] && (
+                <motion.div
+                  key={war.coin1.recentPledges[0].id}
+                  initial={{ opacity: 0, y: -10, x: 20 }}
+                  animate={{ opacity: 1, y: 0, x: 0 }}
+                  exit={{ opacity: 0, x: -20 }}
+                  transition={{ duration: 0.2 }}
+                  className="mt-2 text-xs text-right"
+                >
+                  <span className="text-primary">+${formatNumber(war.coin1.recentPledges[0].amount)}</span>
+                  <span className="text-muted-foreground ml-2">
+                    by {war.coin1.recentPledges[0].pledger}
+                  </span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          )}
+          {/* Static pledge notification when animations disabled */}
+          {!animationsEnabled && war.coin1.recentPledges?.[0] && (
+            <div className="mt-2 text-xs text-right">
+              <span className="text-primary">+${formatNumber(war.coin1.recentPledges[0].amount)}</span>
+              <span className="text-muted-foreground ml-2">
+                by {war.coin1.recentPledges[0].pledger}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Center VS */}
+        <div className="flex items-center justify-center">
+          {animationsEnabled ? (
+            <motion.div 
+              className="vs-badge opacity-50"
+              animate={{ scale: isShaking ? 1.1 : 1 }}
+              transition={{ duration: 0.2 }}
+            >
+              vs
+            </motion.div>
+          ) : (
+            <div className="vs-badge opacity-50">vs</div>
+          )}
+        </div>
+
+        {/* Right Side */}
+        <div className="col-span-2">
+          <CoinCard 
+            coin={updatedCoin2}
+            isTopWar={index === 0}
+            align="left"
+            onClick={onPledgeClick}
+          />
+          {/* Animated pledge notification */}
+          {animationsEnabled && (
+            <AnimatePresence mode="popLayout">
+              {war.coin2.recentPledges?.[0] && (
+                <motion.div
+                  key={war.coin2.recentPledges[0].id}
+                  initial={{ opacity: 0, y: -10, x: -20 }}
+                  animate={{ opacity: 1, y: 0, x: 0 }}
+                  exit={{ opacity: 0, x: 20 }}
+                  transition={{ duration: 0.2 }}
+                  className="mt-2 text-xs text-left"
+                >
+                  <span className="text-primary">+${formatNumber(war.coin2.recentPledges[0].amount)}</span>
+                  <span className="text-muted-foreground ml-2">
+                    by {war.coin2.recentPledges[0].pledger}
+                  </span>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          )}
+          {/* Static pledge notification when animations disabled */}
+          {!animationsEnabled && war.coin2.recentPledges?.[0] && (
+            <div className="mt-2 text-xs text-left">
+              <span className="text-primary">+${formatNumber(war.coin2.recentPledges[0].amount)}</span>
+              <span className="text-muted-foreground ml-2">
+                by {war.coin2.recentPledges[0].pledger}
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* Divider */}
+      {index < 9 && (
+        <div className="h-px bg-border mt-4" />
+      )}
+    </>
+  )
+
+  // If animations are enabled, use motion.div wrapper
+  if (animationsEnabled) {
+    return (
+      <motion.div
+        layout
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        exit={{ opacity: 0, y: -20 }}
+        transition={{ 
+          type: "spring", 
+          stiffness: 500, 
+          damping: 30,
+          layout: { duration: 0.3 }
+        }}
+        className={`${isShaking ? 'animate-shake' : ''}`}
+      >
+        <WarItemContent />
+      </motion.div>
+    )
+  }
+
+  // No animations
+  return <div><WarItemContent /></div>
+}
+
+interface CoinCardProps {
+  coin: CoinData
+  isTopWar: boolean
+  align: 'left' | 'right'
+  onClick: () => void
+}
+
+function CoinCard({ coin, isTopWar, align, onClick }: CoinCardProps) {
   const percentChange = Math.random() * 200 - 100;
   const isPositive = percentChange > 0;
 
@@ -358,7 +534,7 @@ function CoinCard({ coin, isTopWar, align }: CoinCardProps) {
           </div>
           <div className="flex items-end">
             <button 
-              onClick={() => window.location.href = `/war/${coin.ticker}`}
+              onClick={onClick}
               className="w-full bg-primary hover:bg-primary/90 text-primary-foreground px-3 py-1 rounded text-xs font-medium transition-colors"
             >
               Pledge
