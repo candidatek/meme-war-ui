@@ -11,6 +11,7 @@ import useProgramDetails from "./useProgramDetails";
 import { findAssociatedTokenAddress } from "@/lib/utils";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { toast } from "sonner";
+import { useMintInfo } from './useMintInfo';
 
 
 const useWithdrawTokens = (mintAKey: string | null, mintBKey: string | null) => {
@@ -21,6 +22,9 @@ const useWithdrawTokens = (mintAKey: string | null, mintBKey: string | null) => 
   const { checkStatus } = useTransactionStatus();
   const { memeProgram } = useProgramDetails()
   const connection = getConnection();
+
+  const { data: mintAInfo, isLoading: isMintALoading } = useMintInfo(mintAKey!);
+  const { data: mintBInfo, isLoading: isMintBLoading } = useMintInfo(mintBKey!);
 
 
   const withdrawTokens = useCallback(async (mintIdentifier: number,
@@ -62,6 +66,10 @@ const useWithdrawTokens = (mintAKey: string | null, mintBKey: string | null) => 
           userAta: userAta,
           mintAAta: mintAATA,
           mintBAta: mintBATA,
+          mintABaseVault: new PublicKey(mintAInfo.pool_base_token_account),
+          mintBBaseVault: new PublicKey(mintBInfo.pool_base_token_account),
+          mintAQuoteVault: new PublicKey(mintAInfo.pool_quote_token_account),
+          mintBQuoteVault: new PublicKey(mintBInfo.pool_quote_token_account),
           memeWarRegistry: memeWarRegistryAddress,
           memeWarState: memeWarState,
           userState: userState,

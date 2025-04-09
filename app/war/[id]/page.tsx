@@ -22,6 +22,7 @@ import { useAuth } from '@/app/hooks/useAuth'
 import { useWallet } from '@solana/wallet-adapter-react'
 import { PublicKey } from '@solana/web3.js'
 import { io, Socket } from "socket.io-client"
+import { useQueryClient } from '@tanstack/react-query'
 
 const REFRESH_DELAY = 5000;
 
@@ -58,10 +59,13 @@ interface WarData {
 
 // Interface for trade data
 interface TradeData {
+  event_type: string;
   mint: string;
   amount: string;
+  amount_in_sol?: string;
   wallet_address: string;
   event_time: number;
+  tx_signature?: string;
 }
 
 // Interface for chat message
@@ -172,6 +176,16 @@ export default function WarPage() {
 
   // Recent trades data
   const { data: tradesData } = useRecentTrades(memeWarState);
+  const [displayTradesData, setDisplayTradesData] = useState<{ mintA: TradeData[], mintB: TradeData[] } | null>(null);
+  const [animateTrade, setAnimateTrade] = useState<{ index: number, tradeId: string | null }>({ index: -1, tradeId: null });
+  const queryClient = useQueryClient();
+
+  // Set display trades when tradesData updates
+  useEffect(() => {
+    if (tradesData) {
+      setDisplayTradesData(tradesData);
+    }
+  }, [tradesData]);
 
   // Chat messages data
   const { data: chatMessages, refresh: refreshChat } = useGetChatMessages(memeWarState!);
@@ -204,6 +218,76 @@ export default function WarPage() {
     }
   }, [memeWarStateInfo, setMintA, setMintB]);
 
+  // WebSocket implementation for trades
+  useEffect(() => {
+    if (!memeWarState || !mintA || !mintB) return;
+  
+    const socket: Socket = io(process.env.NEXT_PUBLIC_SERVER_URL!);
+    let tradeTimeoutId: NodeJS.Timeout;
+  
+    const handleConnect = () => {
+      console.log("Trade WebSocket connected, subscribing to game:", memeWarState);
+      socket.emit("subscribeToGame", "game-" + memeWarState);
+    };
+  
+    const handleGameUpdate = (message: TradeData) => {
+      console.log("Received trade update from WebSocket:", message);
+  
+      // Determine which side the trade belongs to
+      const isMatchingMintA = message?.mint === mintA;
+      const isMatchingMintB = message?.mint === mintB;
+      const index = isMatchingMintA ? 0 : isMatchingMintB ? 1 : -1;
+  
+      if (index !== -1) {
+        // Clear any existing animation timeout
+        if (tradeTimeoutId) {
+          clearTimeout(tradeTimeoutId);
+        }
+  
+        // Set animation state
+        setAnimateTrade({ index, tradeId: message.tx_signature || `${message.event_time}` });
+        
+        // Set timeout to clear the animation
+        tradeTimeoutId = setTimeout(() => {
+          setAnimateTrade({ index: -1, tradeId: null });
+        }, 4000);
+  
+        // Update local trade data
+        setDisplayTradesData(prevData => {
+          if (!prevData) return { mintA: [], mintB: [] };
+          
+          const updatedData = { ...prevData };
+          
+          if (isMatchingMintA) {
+            const newTrades = [message, ...updatedData.mintA];
+            updatedData.mintA = newTrades.sort((a, b) => b.event_time - a.event_time);
+          } else if (isMatchingMintB) {
+            const newTrades = [message, ...updatedData.mintB];
+            updatedData.mintB = newTrades.sort((a, b) => b.event_time - a.event_time);
+          }
+          
+          return updatedData;
+        });
+      }
+    };
+  
+    // Set up event listeners
+    socket.on("connect", handleConnect);
+    socket.on("gameUpdate", handleGameUpdate);
+  
+    // Cleanup function
+    return () => {
+      if (tradeTimeoutId) {
+        clearTimeout(tradeTimeoutId);
+      }
+      
+      socket.off("connect", handleConnect);
+      socket.off("gameUpdate", handleGameUpdate);
+      socket.disconnect();
+    };
+  }, [memeWarState, mintA, mintB]);
+
+  // Chat WebSocket implementation
   useEffect(() => {
     if (!memeWarState) return;
   
@@ -216,7 +300,7 @@ export default function WarPage() {
   
     socket.on("chatUpdate", (message: ChatMessage) => {
       setLastMessageId(message.id!);
-      console.log("Received details from WebSocket:", message);
+      console.log("Received chat update from WebSocket:", message);
   
       if (animationTimeoutId) {
         clearTimeout(animationTimeoutId);
@@ -238,6 +322,9 @@ export default function WarPage() {
     });
   
     return () => {
+      if (animationTimeoutId) {
+        clearTimeout(animationTimeoutId);
+      }
       socket.disconnect();
     };
   }, [memeWarState]);
@@ -291,6 +378,13 @@ export default function WarPage() {
       return () => clearTimeout(timer);
     }
   }, [memeWarStateInfo, params.memeWarState]);
+
+  // Handle manual refresh
+  const handleRefresh = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['trades', memeWarState] });
+    queryClient.invalidateQueries({ queryKey: ['memeWarState', memeWarState] });
+    refreshTokenBalance();
+  }, [memeWarState, queryClient, refreshTokenBalance]);
 
   // Handle chat message sending
   const handleSendMessage = async () => {
@@ -597,20 +691,21 @@ export default function WarPage() {
           <div className="bg-card border border-border rounded-lg">
             <div className="p-4 border-b border-border flex justify-between">
               <h2 className="text-xl font-medium">Live Feed</h2>
-              <div onClick={() => refreshTokenBalance()} className="cursor-pointer text-sm">
+              <div onClick={handleRefresh} className="cursor-pointer text-sm">
                 Refresh
               </div>
             </div>
             <div className="p-4">
               <div className="space-y-2 max-h-[400px] overflow-y-auto">
                 <AnimatePresence mode="popLayout">
-                  {tradesData && [
-                    ...(tradesData.mintA || []),
-                    ...(tradesData.mintB || [])
+                  {displayTradesData && [
+                    ...(displayTradesData.mintA || []),
+                    ...(displayTradesData.mintB || [])
                   ]
                     .sort((a: TradeData, b: TradeData) => b.event_time - a.event_time)
                     .slice(0, 10)
                     .map((trade: TradeData, i: number) => {
+                      // console.log("Trade: ", trade);
                       const isMintA = trade.mint === mintA;
                       const coin = isMintA ? warData.coin1 : warData.coin2;
                       const decimals = isMintA
@@ -620,12 +715,16 @@ export default function WarPage() {
 
                       return (
                         <motion.div
-                          key={i}
+                          key={`${trade.wallet_address}-${trade.event_time}`}
                           initial={{ opacity: 0, y: -10 }}
                           animate={{ opacity: 1, y: 0 }}
                           exit={{ opacity: 0, height: 0 }}
-                          className="flex items-center justify-between py-2 border-b border-border/50 last:border-0"
+                          className={`flex items-center justify-between py-2 border-b border-border/50 last:border-0 
+                            ${animateTrade.index === (isMintA ? 0 : 1) && 
+                              animateTrade.tradeId === (trade.tx_signature || `${trade.event_time}`) && 
+                              i === 0 ? 'animate-shake' : ''}`}
                         >
+                          {/* HERE SOMEWHERE IS THE PROBLEM */}
                           <div className="flex items-center gap-2">
                             <span className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-sm">
                               <img src={coin.image} alt={coin.ticker} className="w-5 h-5" />
@@ -679,7 +778,7 @@ export default function WarPage() {
                         initial={{ opacity: 0, x: -20 }}
                         animate={{ opacity: 1, x: 0 }}
                         exit={{ opacity: 0, x: 20 }}
-                        className="flex items-start gap-3"
+                        className={`flex items-start gap-3 ${message.id === lastMessageId ? 'animate-pulse' : ''}`}
                       >
                         <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm shrink-0">
                           {isCoin1Supporter
@@ -742,7 +841,6 @@ export default function WarPage() {
   )
 }
 
-// Token Card Component
 // Token Card Component
 function TokenCard({
   token,
