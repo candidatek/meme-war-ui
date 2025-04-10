@@ -221,7 +221,6 @@ export default function StartWarPage() {
   const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
     if (warData && (warData.description || warData.telegram || warData.twitter || warData.website)) {
-      console.log("Validations work");
       handleCreateMemeWarDetails();
     }
     // Log the public key when the user clicks "Start War"
