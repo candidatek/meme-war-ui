@@ -1,9 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-
 import { toast } from "sonner";
-
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -16,9 +14,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { getAssetFromMint } from "@/lib/utils";
-import { useWallet } from "@solana/wallet-adapter-react"; // Import wallet hook
-
-// import { useGetMemeWarRegistry } from '../hooks/useGetMemeWarRegistry';
+import { useWallet } from "@solana/wallet-adapter-react";
+import { useCreateMemeWarRegistry } from "../hooks/useCreateMemeWar";
 
 interface WarData {
   description: string;
@@ -73,7 +70,7 @@ const createDefaultCoinData = (overrides: Partial<CoinData> = {}): CoinData => {
     image: "",
     isLoading: false,
     error: null,
-    ...overrides, // This allows customizing specific fields if needed
+    ...overrides,
   };
 };
 
@@ -85,11 +82,12 @@ export default function StartWarPage() {
   const [showRedirect, setShowRedirect] = useState<boolean>(false);
   const [coin1Data, setCoin1Data] = useState<CoinData>(createDefaultCoinData());
   const [coin2Data, setCoin2Data] = useState<CoinData>(createDefaultCoinData());
-
-  // const { data: mwrData } = useGetMemeWarRegistry(mintAddress, coin1Data.mintAddress === mintAddress ? coin2Data.mintAddress : coin1Data.mintAddress);
-  // const { data: memeWarRegistry } = useGetMemeWarRegistry(coin1Data.mintAddress, coin2Data.mintAddress);
-
-  const { publicKey } = useWallet(); // Get public key from wallet
+  const { publicKey } = useWallet();
+  const {
+    isCreateWarLoading,
+    error: createWarError,
+    createMemeRegistry,
+  } = useCreateMemeWarRegistry(coin1Data.mintAddress, coin2Data.mintAddress);
 
   const [warData, setWarData] = useState<WarData>({
     description: "",
@@ -105,7 +103,7 @@ export default function StartWarPage() {
     description: "",
     twitter: "",
     telegram: "",
-    website: "https://example.com", // todo: add website link from the warpage
+    website: "https://example.com",
     showName: true,
     image: null,
   });
@@ -115,7 +113,7 @@ export default function StartWarPage() {
     description: "",
     twitter: "",
     telegram: "",
-    website: "https://example.com", // todo: add website link from the warpage
+    website: "https://example.com",
     showName: true,
     image: null,
   });
@@ -129,16 +127,10 @@ export default function StartWarPage() {
 
     try {
       setCoinData({ ...currentData, isLoading: true, error: "" });
-      // Check if war already exists for these tokens
-
       const data = (await getAssetFromMint(mintAddress)) as TokenResponse;
       if (!data.result) {
         throw new Error("Invalid response from API");
       }
-
-      // if (mwrData && !mwrData.war_ended) {
-      //   throw new Error("A meme war already exists for these tokens");
-      // }
 
       const tokenData = data.result;
       const tokenImage = tokenData.content?.links?.image || "";
@@ -157,7 +149,6 @@ export default function StartWarPage() {
     } catch (error) {
       console.error("Error fetching token data:", error);
       await setCoinData(createDefaultCoinData());
-      console.log(" **** ", currentData);
       setCoinData({
         ...currentData,
         isLoading: false,
@@ -166,8 +157,6 @@ export default function StartWarPage() {
     }
   };
 
-  // Debounce function to prevent too many API calls
-  
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (coin1Data.mintAddress && coin1Data.mintAddress.length >= 32) {
@@ -186,41 +175,38 @@ export default function StartWarPage() {
     return () => clearTimeout(timeoutId);
   }, [coin2Data.mintAddress]);
 
-  const handleSubmit = (e: React.FormEvent): void => {
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
 
-    // Log the public key when the user clicks "Start War"
-    console.log(
-      "User public key:",
-      publicKey ? publicKey.toString() : "Not connected"
-    );
+    if (!publicKey) {
+      toast.error("Please connect your wallet to start a war");
+      return;
+    }
 
-    // Check if meme war registry exists
+    if (!coin1Data.mintAddress || !coin2Data.mintAddress) {
+      toast.error("Please enter both token mint addresses");
+      return;
+    }
 
-    // console.log({ memeWarRegistry });
+    if (coin1Data.mintAddress === coin2Data.mintAddress) {
+      toast.error("The two tokens must be different");
+      return;
+    }
 
-    // if (memeWarRegistry && !memeWarRegistry.war_ended) {
-    //   toast.error("A meme war already exists for these tokens. Please wait for it to end.");
-    //   return;
-    // }
-    console.log({
-      userPublicKey: publicKey ? publicKey.toString() : null,
-      warData,
-      coin1: {
-        mintAddress: coin1Data.mintAddress,
-        name: coin1Data.name,
-        ticker: coin1Data.ticker,
-        emoji: coin1Data.emoji,
-        image: coin1Data.image,
-      },
-      coin2: {
-        mintAddress: coin2Data.mintAddress,
-        name: coin2Data.name,
-        ticker: coin2Data.ticker,
-        emoji: coin2Data.emoji,
-        image: coin2Data.image,
-      },
-    });
+    try {
+      await createMemeRegistry(selectedDuration, publicKey);
+      toast.success("Meme war started successfully!");
+      setNewMemeWarState("created");
+      setDisableCreateWarBtn(true);
+      setTimeout(() => setShowRedirect(true), 3000);
+    } catch (error) {
+      console.error("Error creating meme war:", error);
+      toast.error(
+        `Failed to start meme war: ${
+          error instanceof Error ? error.message : "Unknown error"
+        }`
+      );
+    }
   };
 
   interface CoinFormProps {
@@ -250,17 +236,16 @@ export default function StartWarPage() {
               });
             }}
           />
-          {data.isLoading &&
-            <p className="text-sm text-muted-foreground">
-              <div className="mb-6">
-                <div className="flex items-center justify-center">
-                  <span className="relative flex h-10 w-10">
-                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75 mt-4"></span>
-                    <span className="relative inline-flex rounded-full h-10 w-10 bg-green-500 mt-4"></span>
-                  </span>
-                </div>
+          {data.isLoading && (
+            <div className="mb-6">
+              <div className="flex items-center justify-center">
+                <span className="relative flex h-10 w-10">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75 mt-4"></span>
+                  <span className="relative inline-flex rounded-full h-10 w-10 bg-green-500 mt-4"></span>
+                </span>
               </div>
-            </p>}
+            </div>
+          )}
           {data.error && <p className="text-sm text-red-500">{data.error}</p>}
         </div>
 
@@ -327,13 +312,7 @@ export default function StartWarPage() {
       return;
     }
 
-    // todo: add functionality to launch coins
     toast.info("Launching coins... This functionality is not yet implemented");
-    console.log("Launch data:", {
-      coin1: launchCoin1,
-      coin2: launchCoin2,
-      walletPublicKey: publicKey.toString(),
-    });
   };
 
   interface LaunchCoinFormProps {
@@ -465,7 +444,6 @@ export default function StartWarPage() {
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto">
-        {/* Launch 2 new Meme Coins dropdown section */}
         <Card className="mb-8">
           <CardHeader
             className="cursor-pointer"
@@ -528,7 +506,6 @@ export default function StartWarPage() {
           decide the winner!
         </p>
 
-        {/* Display wallet connection status */}
         <div className="mb-4 text-sm">
           {publicKey ? (
             <p className="text-green-500">
@@ -556,7 +533,6 @@ export default function StartWarPage() {
             />
           </div>
 
-          {/* War details section with common description and social links */}
           <Card>
             <CardHeader>
               <CardTitle>War Details</CardTitle>
@@ -633,12 +609,24 @@ export default function StartWarPage() {
               type="submit"
               size="lg"
               className="px-8"
-              disabled={!publicKey} // Disable button if wallet not connected
+              disabled={!publicKey || isCreateWarLoading || disableCreateWarBtn}
             >
-              Start War
+              {isCreateWarLoading
+                ? "Starting War..."
+                : disableCreateWarBtn
+                ? "War Started!"
+                : "Start War"}
             </Button>
           </div>
         </form>
+
+        {showRedirect && (
+          <div className="mt-4 text-center">
+            <p className="text-green-500">
+              War created successfully! Redirecting...
+            </p>
+          </div>
+        )}
       </div>
     </div>
   );
