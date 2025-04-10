@@ -237,7 +237,6 @@ export default function StartWarPage() {
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
     if (warData && (warData.description || warData.telegram || warData.twitter || warData.website)) {
-      console.log("Validations work");
       handleCreateMemeWarDetails();
     }
     if (!publicKey) {
