@@ -14,6 +14,7 @@ import {
 import {
   getConnection,
   getMemeWarGlobalAccount,
+  getPDAForMemeSigner,
   getProgramDerivedAddressForPair,
   sleep,
   sortTokensAddresses,
@@ -22,6 +23,9 @@ import useProgramDetails from './useProgramDetails';
 import { useTransactionStatus } from './useTransactionStatus';
 import useWalletInfo from './useWalletInfo';
 import { PROGRAM_ID } from '@/lib/constants';
+import { findAssociatedTokenAddress } from '@/lib/utils';
+import { ASSOCIATED_TOKEN_PROGRAM_ID, TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { toast } from 'sonner';
 
 export function useCreateMemeWarRegistry(mint_a: string, mint_b: string) {
     const [isCreateWarLoading, setIsCreateWarLoading] = useState(false);
@@ -44,13 +48,14 @@ export function useCreateMemeWarRegistry(mint_a: string, mint_b: string) {
       }
   
       try {
-        new PublicKey(mint_a.toString());
-        new PublicKey(mint_b.toString());
+
         const arr = sortTokensAddresses(mint_a, mint_b);
-        const mintA = new PublicKey(arr[0])
-        const mintB = new PublicKey(arr[1])
+        const mintA = new PublicKey(arr[0]);
+        const mintB = new PublicKey(arr[1]);
+      
         const memeWarGlobalAccount = await getMemeWarGlobalAccount();
-        // Fetch the Program Derived Address for the pair
+
+        
         const memeWarRegistryPDA = anchor.web3.PublicKey.findProgramAddressSync(
           [mintA.toBuffer(), mintB.toBuffer()],
           PROGRAM_ID
@@ -81,7 +86,12 @@ export function useCreateMemeWarRegistry(mint_a: string, mint_b: string) {
             }).instruction();
           tx.add(initIx);
         }
-        const pair_pda = await getProgramDerivedAddressForPair(mintA, mintB);
+
+        console.log("Getting program derived address for pair");
+        const memeWarRegistryAddr = await getProgramDerivedAddressForPair(mintA, mintB);
+        console.log(`Pair PDA: ${memeWarRegistryAddr.toString()}`);
+
+        console.log("Creating meme war instruction");
         const createIx = await memeProgram!.methods
           .createMemeWar(hours)
           .accounts({
@@ -89,18 +99,87 @@ export function useCreateMemeWarRegistry(mint_a: string, mint_b: string) {
             mintA: mintA,
             mintB: mintB,
             memeWarGlobalAccount: memeWarGlobalAccount,
-            memeWarRegistry: pair_pda,
-            systemProgram: anchor.web3.SystemProgram.programId
-          }).instruction();
-  
+            memeWarRegistry: memeWarRegistryAddr,
+            systemProgram: anchor.web3.SystemProgram.programId,
+          })
+          .instruction();
         tx.add(createIx);
+        let initialValidationIndex = 1
+
+        console.log("Added create meme war instruction");
+        try {
+          const data = await memeProgram!.account.memeWarRegistry.fetch(
+            memeWarRegistryAddr
+          );
+          console.log(data)
+          if(data) {
+            //@ts-expect-error some error in types
+            initialValidationIndex = data.lastValidated + 1;
+          }
+  
+        }
+        catch(err) {
+          initialValidationIndex = 1
+        }
+       
+      
+        console.log(
+          `Getting PDA for meme signer with validation index ${initialValidationIndex}`
+        );
+        const memeWarState = await getPDAForMemeSigner(
+          mintA,
+          mintB,
+          initialValidationIndex
+        );
+        console.log(`Meme war state: ${memeWarState.toString()}`);
+        console.log("Finding associated token addresses");
+        const mintAAta = await findAssociatedTokenAddress({
+          walletAddress: memeWarState,
+          tokenMintAddress: mintA,
+        });
+        console.log(`Token A ATA: ${mintAAta.toString()}`);
+
+        const mintBAta = await findAssociatedTokenAddress({
+          walletAddress: memeWarState,
+          tokenMintAddress: mintB,
+        });
+        console.log(`Token B ATA: ${mintBAta.toString()}`);
+
+        const riskFreeDeposit = 2;
+        console.log(
+          `Creating validate instruction with risk free deposit of ${riskFreeDeposit}`
+        );
+        const validateIx = await memeProgram!.methods
+          .validateMemeWar(new anchor.BN(riskFreeDeposit))
+          .accounts({
+            payer: payer,
+            mintA: mintA,
+            mintB: mintB,
+            memeWarGlobalAccount: memeWarGlobalAccount,
+            memeWarRegistry: memeWarRegistryAddr,
+            memeWarState: memeWarState,
+            mintAAta: mintAAta,
+            mintBAta: mintBAta,
+            creator: payer,
+            systemProgram: anchor.web3.SystemProgram.programId,
+            associatedTokenProgram: ASSOCIATED_TOKEN_PROGRAM_ID,
+            tokenProgram: TOKEN_PROGRAM_ID,
+            clock: anchor.web3.SYSVAR_CLOCK_PUBKEY,
+          })
+          .instruction();
+        tx.add(validateIx);
+        console.log("Added validate instruction");
+
         toast.dismiss();
-        toast.message("Approve Transaction from Wallet", { duration: 20000 });
-        const signature = await sendTransaction(tx, connection);
+        toast("Approve Transaction from Wallet", { duration: 20000 });
+        console.log("Sending transaction to wallet for approval");
+        const signature = await sendTransaction(tx, connection, {skipPreflight: true});
+        console.log(`Transaction signed with signature: ${signature}`);
+
         toast.dismiss();
         toast.message("Creating Meme war", { duration: 20000 });
         sleep(5 * 1000)
-        return await checkStatus({ signature, action: 'Creating Meme war', setIsLoading: setIsCreateWarLoading });
+        // return await checkStatus({ signature, action: 'Creating Meme war', setIsLoading: setIsCreateWarLoading });
   
         // Prepare and send the transaction
   
