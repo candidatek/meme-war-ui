@@ -1,17 +1,19 @@
-"use client"
+"use client";
 
-import Link from "next/link"
-import { Button } from "@/components/ui/button"
-import { Swords, Wallet, Menu } from "lucide-react"
-import Image from "next/image"
-import { useState } from 'react'
-import { useWallet } from "@solana/wallet-adapter-react"
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui"
-import { motion, AnimatePresence } from "framer-motion"
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Swords, Wallet, Menu } from "lucide-react";
+import Image from "next/image";
+import { useState } from "react";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
+import { motion, AnimatePresence } from "framer-motion";
+import { useAuth } from "@/lib/auth";
 
 export function Header() {
-  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
-  const { connected } = useWallet()
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { connected } = useWallet();
+  const { isAuthenticated, signIn, signOut, session } = useAuth();
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -22,20 +24,22 @@ export function Header() {
             {/* Logo */}
             <Link href="/" className="flex items-center gap-2">
               <div className="relative w-8 h-8">
-                <Image 
-                  src="/logo.png" 
-                  alt="Meme Coin Wars" 
+                <Image
+                  src="/logo.png"
+                  alt="Meme Coin Wars"
                   fill
                   className="object-contain"
                 />
               </div>
-              <span className="font-bold text-lg hidden sm:inline">Meme Coin Wars</span>
+              <span className="font-bold text-lg hidden sm:inline">
+                Meme Coin Wars
+              </span>
             </Link>
 
             {/* Desktop Navigation */}
             <nav className="hidden md:flex items-center gap-6">
-              <Link 
-                href="/wars" 
+              <Link
+                href="/wars"
                 className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
               >
                 Active Wars
@@ -53,10 +57,38 @@ export function Header() {
             </Link>
           </div>
 
-          {/* Right Section - Wallet */}
           <div className="flex items-center gap-4 flex-1 justify-end">
+            {isAuthenticated ? (
+              <Button
+                variant="outline"
+                onClick={() => signOut()}
+                className="flex items-center gap-2"
+              >
+                <Image
+                  src={session?.user?.image || "/default-avatar.png"}
+                  alt="Profile"
+                  width={20}
+                  height={20}
+                  className="rounded-full"
+                />
+                <span className="hidden sm:inline">{session?.user?.name}</span>
+              </Button>
+            ) : (
+              <Button
+                variant="outline"
+                onClick={() => signIn()}
+                className="flex items-center gap-2"
+              >
+                <span className="flex flex-row gap-2">
+                  Sign in with
+                  <svg viewBox="0 0 24 24" className="h-5 w-5 fill-current">
+                    <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                  </svg>
+                </span>
+              </Button>
+            )}
             <WalletMultiButton className="phantom-button" />
-            
+
             {/* Mobile Menu Button */}
             <Button
               variant="ghost"
@@ -79,8 +111,8 @@ export function Header() {
               className="md:hidden overflow-hidden border-t border-border/50"
             >
               <div className="py-4 space-y-4">
-                <Link 
-                  href="/wars" 
+                <Link
+                  href="/wars"
                   className="block px-4 py-2 text-sm text-muted-foreground hover:text-primary"
                 >
                   Active Wars
@@ -97,6 +129,5 @@ export function Header() {
         </AnimatePresence>
       </div>
     </header>
-  )
+  );
 }
-
