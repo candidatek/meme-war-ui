@@ -157,7 +157,8 @@ export async function getAssetFromMint(assetId:string) {
       "params": { "id": assetId }
   };
 
-  const response = await fetch("https://mainnet.helius-rpc.com/?api-key=d2d5073c-e14c-49f9-b6b7-92e094f7d489", {
+  const url = process.env.NEXT_PUBLIC_SOLANA_CLUSTER_URL || "https://mainnet.helius-rpc.com/?api-key=d2d5073c-e14c-49f9-b6b7-92e094f7d489"
+  const response = await fetch(url, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(requestBody)
