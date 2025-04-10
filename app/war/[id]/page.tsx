@@ -1,102 +1,502 @@
 "use client"
 
 import { motion, AnimatePresence } from 'framer-motion'
-import { formatNumber } from "@/lib/utils"
+import { formatNumber, formatWalletAddress, validateSolanaAddress, showErrorToast } from "@/lib/utils"
 import Link from 'next/link'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { Megaphone } from 'lucide-react'
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { useParams } from 'next/navigation'
+import { useMemeWarContext } from '@/app/context/memeWarStateContext'
+import { useMemeWarStateInfo } from '@/app/api/getMemeWarStateInfo'
+import { useGetUserStateInfo } from '@/app/api/getUserState'
+import { useRecentTrades } from '@/app/api/getRecentTrades'
+import useWalletInfo from '@/app/hooks/useWalletInfo'
+import { useTokenBalance } from '@/app/hooks/useUserBalance'
+import useDepositTokens from '@/app/hooks/useDeposit'
+import useWithdrawTokens from '@/app/hooks/useWithdraw'
+import useCountdown from '@/app/hooks/useCountdown'
+import { useGetChatMessages } from '@/app/api/getChatMessages'
+import { useSendChatMessage } from '@/app/api/sendChatMessage'
+import { useAuth } from '@/app/hooks/useAuth'
+import { useWallet } from '@solana/wallet-adapter-react'
+import { PublicKey } from '@solana/web3.js'
+import { io, Socket } from "socket.io-client"
+import { useQueryClient } from '@tanstack/react-query'
 
+const REFRESH_DELAY = 5000;
+
+// Interface for token data
 interface TokenData {
-  ticker: string
-  name: string
-  marketCap: number
-  price: number
-  priceChange24h: number
-  volume24h: number
-  holders: number
-  totalSupply: number
-  amountPledged: number
-  pledgers: number
-  emoji: string
-  description: string
+  ticker: string;
+  name: string;
+  marketCap: number;
+  price: number;
+  priceChange24h: number;
+  volume24h: number;
+  holders: number;
+  totalSupply: number;
+  amountPledged: number;
+  pledgers: number;
+  emoji: string;
+  description: string;
   socialLinks: {
-    twitter: string
-    telegram: string
-    website: string
-  }
+    twitter: string;
+    telegram: string;
+    website: string;
+  };
+  image?: string;
 }
 
-interface TweetTemplate {
-  text: string
-  hashtags: string[]
+// Interface for war data
+interface WarData {
+  coin1: TokenData;
+  coin2: TokenData;
+  totalPledged: number;
+  timeLeft: string;
+  recentPledges: any[]; // Could be further typed if we know the structure
 }
 
-export default function WarPage({ params }: { params: { id: string } }) {
-  const [warData, setWarData] = useState({
-    coin1: {
-      ticker: "DOGE",
-      name: "Dogecoin",
-      marketCap: 10000000000,
-      price: 0.1234,
-      priceChange24h: 5.67,
-      volume24h: 500000000,
-      holders: 1000000,
-      totalSupply: 1000000000000,
-      amountPledged: 5000000,
-      pledgers: 50000,
-      emoji: "🐶",
-      description: "The original meme coin that started it all.",
-      socialLinks: {
-        twitter: "#",
-        telegram: "#",
-        website: "#"
-      }
-    },
-    coin2: {
-      ticker: "SHIB",
-      name: "Shiba Inu",
-      marketCap: 8000000000,
-      price: 0.00001234,
-      priceChange24h: -2.34,
-      volume24h: 400000000,
-      holders: 800000,
-      totalSupply: 589736283000000,
-      amountPledged: 4000000,
-      pledgers: 40000,
-      emoji: "🐕",
-      description: "The Dogecoin killer, a decentralized meme token.",
-      socialLinks: {
-        twitter: "#",
-        telegram: "#",
-        website: "#"
-      }
-    },
-    totalPledged: 9000000,
-    timeLeft: "23:59:59",
-    recentPledges: []
-  })
+// Interface for trade data
+interface TradeData {
+  event_type: string;
+  mint: string;
+  amount: string;
+  amount_in_sol?: string;
+  wallet_address: string;
+  event_time: number;
+  tx_signature?: string;
+}
 
-  // Simulate real-time updates
+// Interface for chat message
+interface ChatMessage {
+  id?: string;
+  sender: string;
+  message: string;
+  sender_time: string;
+  meme_war_state?: string;
+}
+
+// Interface for user state
+interface UserState {
+  mint_a_deposit: string;
+  mint_b_deposit: string;
+  mint_a_risk_free_deposit: string;
+  mint_b_risk_free_deposit: string;
+  mint_a_withdrawn: string;
+  mint_b_withdrawn: string;
+  mint_a_penalty: string;
+  mint_b_penalty: string;
+}
+
+// Interface for meme war state info
+interface MemeWarStateInfo {
+  mint_a: string;
+  mint_b: string;
+  mint_a_decimals: number;
+  mint_b_decimals: number;
+  mint_a_total_deposited: string;
+  mint_b_total_deposited: string;
+  mint_a_symbol: string;
+  mint_b_symbol: string;
+  mint_a_name: string;
+  mint_b_name: string;
+  mint_a_price: number;
+  mint_b_price: number;
+  mint_a_price_change: number;
+  mint_b_price_change: number;
+  mint_a_volume: number;
+  mint_b_volume: number;
+  mint_a_holders: number;
+  mint_b_holders: number;
+  mint_a_supply: string;
+  mint_b_supply: string;
+  mint_a_depositors: number;
+  mint_b_depositors: number;
+  mint_a_description: string;
+  mint_b_description: string;
+  mint_a_image?: string;
+  mint_b_image?: string;
+  end_time: number;
+  war_ended: boolean;
+  winner_declared?: string;
+}
+
+// Interface for the token card props
+interface TokenCardProps {
+  token: TokenData;
+  totalPledged: number;
+  handleDeposit: () => void;
+  handleWithdraw: () => void;
+  pledgeAmount: string;
+  setPledgeAmount: (amount: string) => void;
+  tokenBalance: number;
+  btnLoading: boolean;
+  userState: UserState | null | undefined;
+  formatDeposit: (amount: string | undefined, index: number) => number;
+  index: 0 | 1;
+  publicKey: PublicKey | null;
+  isWarEnded: boolean | undefined;
+  disablePledgeBtn?: boolean;
+  disableUnpledgeBtn: boolean;
+}
+
+// Interface for the stat component props
+interface StatProps {
+  label: string;
+  value: string;
+}
+
+export default function WarPage() {
+  // Get params and context
+  const params = useParams();
+  const { memeWarState, mintA, mintB, userState, setMemeWarState, setMintA, setMintB } = useMemeWarContext();
+
+  // Set memeWarState from URL parameters
   useEffect(() => {
-    const interval = setInterval(() => {
-      setWarData(prev => ({
-        ...prev,
-        coin1: {
-          ...prev.coin1,
-          price: prev.coin1.price * (1 + (Math.random() - 0.5) * 0.001),
-          amountPledged: prev.coin1.amountPledged * (1 + (Math.random() - 0.5) * 0.01)
-        },
-        coin2: {
-          ...prev.coin2,
-          price: prev.coin2.price * (1 + (Math.random() - 0.5) * 0.001),
-          amountPledged: prev.coin2.amountPledged * (1 + (Math.random() - 0.5) * 0.01)
-        }
-      }))
-    }, 1000)
+    if (params?.id) {
+      setMemeWarState(params.id as string);
+    }
+  }, [params, setMemeWarState]);
 
-    return () => clearInterval(interval)
-  }, [])
+  // Get meme war state data
+  const { data: memeWarStateInfo, error, isLoading } = useMemeWarStateInfo(memeWarState);
+
+  // Initialize deposit/withdraw hooks
+  const { depositTokens } = useDepositTokens(mintA, mintB);
+  const { withdrawTokens } = useWithdrawTokens(mintA, mintB);
+
+  // Get token balances
+  const { data: tokenBalanceData, refreshTokenBalance } = useTokenBalance(mintA, mintB);
+  const tokenBalanceMintA = useMemo(() => Number(tokenBalanceData?.[0] ?? 0), [tokenBalanceData]);
+  const tokenBalanceMintB = useMemo(() => Number(tokenBalanceData?.[1] ?? 0), [tokenBalanceData]);
+
+  // User state data
+  const { data: userStateInfo } = useGetUserStateInfo(userState, memeWarState);
+
+  // Recent trades data
+  const { data: tradesData } = useRecentTrades(memeWarState);
+  const [displayTradesData, setDisplayTradesData] = useState<{ mintA: TradeData[], mintB: TradeData[] } | null>(null);
+  const [animateTrade, setAnimateTrade] = useState<{ index: number, tradeId: string | null }>({ index: -1, tradeId: null });
+  const queryClient = useQueryClient();
+
+  // Set display trades when tradesData updates
+  useEffect(() => {
+    if (tradesData) {
+      setDisplayTradesData(tradesData);
+    }
+  }, [tradesData]);
+
+  // Chat messages data
+  const { data: chatMessages, refresh: refreshChat } = useGetChatMessages(memeWarState!);
+  const { mutate: sendMessage, status: sendStatus } = useSendChatMessage(refreshChat);
+
+  // Get wallet info
+  const { publicKey, pubKey } = useWalletInfo();
+  const { authState, handleSignIn } = useAuth();
+  const wallet = useWallet();
+
+  // Loading state
+  const [btnLoading, setBtnLoading] = useState<boolean | number>(-1);
+
+  // Input states
+  const [leftInput, setLeftInput] = useState<string>('1');
+  const [rightInput, setRightInput] = useState<string>('1');
+  const [newMessage, setNewMessage] = useState<string>('');
+
+  const [displayMessages, setDisplayMessages] = useState<ChatMessage[] | null>(null);
+  const [lastMessageId, setLastMessageId] = useState<string | null>(null);
+
+  // War countdown
+  const { timeLeft, endedTimeAgo } = useCountdown(memeWarStateInfo?.end_time);
+
+  // Set mint addresses when war state info is loaded
+  useEffect(() => {
+    if (memeWarStateInfo) {
+      setMintA(memeWarStateInfo.mint_a);
+      setMintB(memeWarStateInfo.mint_b);
+    }
+  }, [memeWarStateInfo, setMintA, setMintB]);
+
+  // WebSocket implementation for trades
+  useEffect(() => {
+    if (!memeWarState || !mintA || !mintB) return;
+  
+    const socket: Socket = io(process.env.NEXT_PUBLIC_SERVER_URL!);
+    let tradeTimeoutId: NodeJS.Timeout;
+  
+    const handleConnect = () => {
+      console.log("Trade WebSocket connected, subscribing to game:", memeWarState);
+      socket.emit("subscribeToGame", "game-" + memeWarState);
+    };
+  
+    const handleGameUpdate = (message: TradeData) => {
+      console.log("Received trade update from WebSocket:", message);
+  
+      // Determine which side the trade belongs to
+      const isMatchingMintA = message?.mint === mintA;
+      const isMatchingMintB = message?.mint === mintB;
+      const index = isMatchingMintA ? 0 : isMatchingMintB ? 1 : -1;
+  
+      if (index !== -1) {
+        // Clear any existing animation timeout
+        if (tradeTimeoutId) {
+          clearTimeout(tradeTimeoutId);
+        }
+  
+        // Set animation state
+        setAnimateTrade({ index, tradeId: message.tx_signature || `${message.event_time}` });
+        
+        // Set timeout to clear the animation
+        tradeTimeoutId = setTimeout(() => {
+          setAnimateTrade({ index: -1, tradeId: null });
+        }, 4000);
+  
+        // Update local trade data
+        setDisplayTradesData(prevData => {
+          if (!prevData) return { mintA: [], mintB: [] };
+          
+          const updatedData = { ...prevData };
+          
+          if (isMatchingMintA) {
+            const newTrades = [message, ...updatedData.mintA];
+            updatedData.mintA = newTrades.sort((a, b) => b.event_time - a.event_time);
+          } else if (isMatchingMintB) {
+            const newTrades = [message, ...updatedData.mintB];
+            updatedData.mintB = newTrades.sort((a, b) => b.event_time - a.event_time);
+          }
+          
+          return updatedData;
+        });
+      }
+    };
+  
+    // Set up event listeners
+    socket.on("connect", handleConnect);
+    socket.on("gameUpdate", handleGameUpdate);
+  
+    // Cleanup function
+    return () => {
+      if (tradeTimeoutId) {
+        clearTimeout(tradeTimeoutId);
+      }
+      
+      socket.off("connect", handleConnect);
+      socket.off("gameUpdate", handleGameUpdate);
+      socket.disconnect();
+    };
+  }, [memeWarState, mintA, mintB]);
+
+  // Chat WebSocket implementation
+  useEffect(() => {
+    if (!memeWarState) return;
+  
+    const socket: Socket = io(process.env.NEXT_PUBLIC_SERVER_URL!);
+    let animationTimeoutId: NodeJS.Timeout;
+  
+    socket.on("connect", () => {
+      socket.emit("subscribeToGame", "game-" + memeWarState);
+    });
+  
+    socket.on("chatUpdate", (message: ChatMessage) => {
+      setLastMessageId(message.id!);
+      console.log("Received chat update from WebSocket:", message);
+  
+      if (animationTimeoutId) {
+        clearTimeout(animationTimeoutId);
+      }
+      
+      // Set timeout to clear the animation
+      animationTimeoutId = setTimeout(() => {
+        setLastMessageId(null);
+      }, 1000);
+  
+      setDisplayMessages((prevMessages) => {
+        const updatedMessages = [...(prevMessages || []), message];
+        
+        // Sort by descending time
+        return updatedMessages.sort((a, b) => 
+          new Date(b.sender_time).getTime() - new Date(a.sender_time).getTime()
+        );
+      });
+    });
+  
+    return () => {
+      if (animationTimeoutId) {
+        clearTimeout(animationTimeoutId);
+      }
+      socket.disconnect();
+    };
+  }, [memeWarState]);
+
+  useEffect(() => {
+    if (chatMessages) {
+      const sortedMessages = [...chatMessages].sort((a, b) => 
+        new Date(b.sender_time).getTime() - new Date(a.sender_time).getTime()
+      );
+      setDisplayMessages(sortedMessages);
+    }
+  }, [chatMessages]);
+
+  // Handle deposit for a token
+  const handleDeposit = async (mintIdentifier: 0 | 1, amount: string) => {
+    try {
+      setBtnLoading(mintIdentifier);
+      const mintDecimal = mintIdentifier === 0 ? memeWarStateInfo?.mint_a_decimals : memeWarStateInfo?.mint_b_decimals;
+      await depositTokens(parseFloat(amount), mintIdentifier, setBtnLoading, refreshTokenBalance, mintDecimal ?? 9);
+    }
+    catch (e) {
+      showErrorToast('Failed to Deposit Tokens');
+      setBtnLoading(-1);
+    }
+  };
+
+  // Handle withdraw for a token
+  const handleWithdraw = useCallback(async (index: 0 | 1) => {
+    try {
+      setBtnLoading(index);
+      await withdrawTokens(index, setBtnLoading, refreshTokenBalance);
+    }
+    catch (e) {
+      showErrorToast('Failed to Withdraw Tokens');
+      setBtnLoading(-1);
+    }
+  }, [withdrawTokens, refreshTokenBalance]);
+
+  // Auto refresh on invalid state
+  useEffect(() => {
+    const memeWarStateParam = params.memeWarState;
+
+    if (!memeWarStateParam || !validateSolanaAddress(typeof memeWarStateParam === 'string' ? memeWarStateParam : '')) {
+      return;
+    }
+
+    if (!memeWarStateInfo) {
+      const timer = setTimeout(() => {
+        window.location.reload();
+      }, REFRESH_DELAY);
+      return () => clearTimeout(timer);
+    }
+  }, [memeWarStateInfo, params.memeWarState]);
+
+  // Handle manual refresh
+  const handleRefresh = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['trades', memeWarState] });
+    queryClient.invalidateQueries({ queryKey: ['memeWarState', memeWarState] });
+    refreshTokenBalance();
+  }, [memeWarState, queryClient, refreshTokenBalance]);
+
+  // Handle chat message sending
+  const handleSendMessage = async () => {
+    if (!newMessage.trim()) return;
+
+    if (!authState.token && wallet.connected) {
+      await handleSignIn();
+    }
+
+    sendMessage({ pubKey: pubKey!, newMessage, memeWarState: memeWarState! });
+    setNewMessage('');
+  };
+
+  // Handle Enter key for sending message
+  const handleKeyPress = async (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter') {
+      await handleSendMessage();
+    }
+  };
+
+  // Calculate percentages and amounts for display
+  const totalPledged = useMemo(() => {
+    if (!memeWarStateInfo) return 0;
+
+    const mintADeposited = Number(memeWarStateInfo.mint_a_total_deposited) / 10 ** (memeWarStateInfo.mint_a_decimals || 9);
+    const mintBDeposited = Number(memeWarStateInfo.mint_b_total_deposited) / 10 ** (memeWarStateInfo.mint_b_decimals || 9);
+
+    return mintADeposited + mintBDeposited;
+  }, [memeWarStateInfo]);
+
+  const mintAPercentage = useMemo(() => {
+    if (!memeWarStateInfo || totalPledged === 0) return 0;
+
+    const mintADeposited = Number(memeWarStateInfo.mint_a_total_deposited) / 10 ** (memeWarStateInfo.mint_a_decimals || 9);
+    return (mintADeposited / totalPledged) * 100;
+  }, [memeWarStateInfo, totalPledged]);
+
+  const mintBPercentage = useMemo(() => {
+    return 100 - mintAPercentage;
+  }, [mintAPercentage]);
+
+  // Convert blockchain data to UI-friendly format
+  const warData = useMemo(() => {
+    if (!memeWarStateInfo) {
+      return null;
+    }
+
+    const mintADeposited = Number(memeWarStateInfo.mint_a_total_deposited) / 10 ** (memeWarStateInfo.mint_a_decimals || 9);
+    const mintBDeposited = Number(memeWarStateInfo.mint_b_total_deposited) / 10 ** (memeWarStateInfo.mint_b_decimals || 9);
+    const mintAPrice = Number(memeWarStateInfo.mint_a_price || 0);
+    const mintBPrice = Number(memeWarStateInfo.mint_b_price || 0);
+
+    return {
+      coin1: {
+        ticker: memeWarStateInfo.mint_a_symbol || 'TOKEN_A',
+        name: memeWarStateInfo.mint_a_name || 'Token A',
+        marketCap: mintAPrice * Number(memeWarStateInfo.mint_a_supply || 0),
+        price: mintAPrice,
+        priceChange24h: Number(memeWarStateInfo.mint_a_price_change || 0),
+        volume24h: Number(memeWarStateInfo.mint_a_volume || 0),
+        holders: Number(memeWarStateInfo.mint_a_holders || 0),
+        totalSupply: Number(memeWarStateInfo.mint_a_supply || 0),
+        amountPledged: mintADeposited,
+        pledgers: memeWarStateInfo.mint_a_depositors || 0,
+        emoji: "🪙",
+        description: memeWarStateInfo.mint_a_description || "Token A description",
+        socialLinks: {
+          twitter: "#",
+          telegram: "#",
+          website: "#"
+        },
+        image: memeWarStateInfo.mint_a_image
+      },
+      coin2: {
+        ticker: memeWarStateInfo.mint_b_symbol || 'TOKEN_B',
+        name: memeWarStateInfo.mint_b_name || 'Token B',
+        marketCap: mintBPrice * Number(memeWarStateInfo.mint_b_supply || 0),
+        price: mintBPrice,
+        priceChange24h: Number(memeWarStateInfo.mint_b_price_change || 0),
+        volume24h: Number(memeWarStateInfo.mint_b_volume || 0),
+        holders: Number(memeWarStateInfo.mint_b_holders || 0),
+        totalSupply: Number(memeWarStateInfo.mint_b_supply || 0),
+        amountPledged: mintBDeposited,
+        pledgers: memeWarStateInfo.mint_b_depositors || 0,
+        emoji: "🪙",
+        description: memeWarStateInfo.mint_b_description || "Token B description",
+        socialLinks: {
+          twitter: "#",
+          telegram: "#",
+          website: "#"
+        },
+        image: memeWarStateInfo.mint_b_image
+      },
+      totalPledged: mintADeposited + mintBDeposited,
+      timeLeft: timeLeft || "00:00:00",
+      recentPledges: []
+    } as WarData;
+  }, [memeWarStateInfo, timeLeft]);
+
+  // Format user deposit amounts
+  const formatDeposit = useCallback((amount: string | undefined, index: number): number => {
+    if (!amount) return 0;
+    const decimal = index === 0
+      ? memeWarStateInfo?.mint_a_decimals
+      : memeWarStateInfo?.mint_b_decimals;
+    return Number(amount) / 10 ** (decimal || 9);
+  }, [memeWarStateInfo]);
+
+  // Return loading state if data isn't ready
+  if (!warData) {
+    return <div className="container mx-auto px-4 py-6 text-center">Loading...</div>;
+  }
 
   return (
     <div className="container mx-auto px-4 py-6">
@@ -110,9 +510,31 @@ export default function WarPage({ params }: { params: { id: string } }) {
       <div className="grid grid-cols-7 gap-6">
         {/* Left Token */}
         <div className="col-span-3">
-          <TokenCard 
+          <TokenCard
             token={warData.coin1}
             totalPledged={warData.totalPledged}
+            handleDeposit={() => handleDeposit(0, leftInput)}
+            handleWithdraw={() => handleWithdraw(0)}
+            pledgeAmount={leftInput}
+            setPledgeAmount={setLeftInput}
+            tokenBalance={tokenBalanceMintA}
+            btnLoading={btnLoading === 0}
+            userState={userStateInfo}
+            formatDeposit={formatDeposit}
+            index={0}
+            publicKey={publicKey}
+            isWarEnded={memeWarStateInfo?.war_ended}
+            // disablePledgeBtn={
+            //   Number(leftInput) > tokenBalanceMintA || 
+            //   Number(leftInput) <= 0 || 
+            //   btnLoading === 0 
+            //   // !!memeWarStateInfo?.war_ended
+            // }
+            disableUnpledgeBtn={
+              btnLoading === 0 ||
+              !!memeWarStateInfo?.war_ended ||
+              !userStateInfo?.mint_a_deposit
+            }
           />
         </div>
 
@@ -120,55 +542,55 @@ export default function WarPage({ params }: { params: { id: string } }) {
         <div className="col-span-1 flex flex-col items-center justify-start">
           <div className="sticky top-4 w-full">
             <div className="text-6xl font-bold mb-8 text-center">VS</div>
-            
+
             {/* Coin Ratio */}
             <div className="mb-6 text-center">
               <div className="text-sm text-muted-foreground mb-1">Price Ratio</div>
               <div className="font-mono text-lg">
-                1 : {(warData.coin2.price / warData.coin1.price).toFixed(4)}
+                1 : {(warData.coin2.price / warData.coin1.price || 0).toFixed(8)}
               </div>
               <div className="text-xs text-muted-foreground mt-1">
                 {warData.coin1.ticker} : {warData.coin2.ticker}
               </div>
             </div>
-            
+
             {/* War Share Bar */}
             <div className="space-y-4">
               <div className="text-center text-sm text-muted-foreground">
                 War Share
               </div>
-              
+
               {/* Progress Labels */}
               <div className="flex justify-between text-xs mb-1">
                 <span className="text-primary font-medium">
-                  {((warData.coin1.amountPledged / warData.totalPledged) * 100).toFixed(1)}%
+                  {mintAPercentage.toFixed(1)}%
                 </span>
                 <span className="text-[#FF4444] font-medium">
-                  {((warData.coin2.amountPledged / warData.totalPledged) * 100).toFixed(1)}%
+                  {mintBPercentage.toFixed(1)}%
                 </span>
               </div>
 
               {/* Progress Bar */}
               <div className="h-3 bg-muted rounded-full overflow-hidden relative">
-                <motion.div 
+                <motion.div
                   className="absolute left-0 top-0 bottom-0 bg-primary"
-                  style={{ 
-                    width: `${(warData.coin1.amountPledged / warData.totalPledged) * 100}%`,
+                  style={{
+                    width: `${mintAPercentage}%`,
                     borderRadius: '9999px 0 0 9999px'
                   }}
-                  animate={{ 
-                    width: `${(warData.coin1.amountPledged / warData.totalPledged) * 100}%` 
+                  animate={{
+                    width: `${mintAPercentage}%`
                   }}
                   transition={{ duration: 0.5 }}
                 />
-                <motion.div 
+                <motion.div
                   className="absolute right-0 top-0 bottom-0 bg-[#FF4444]"
-                  style={{ 
-                    width: `${(warData.coin2.amountPledged / warData.totalPledged) * 100}%`,
+                  style={{
+                    width: `${mintBPercentage}%`,
                     borderRadius: '0 9999px 9999px 0'
                   }}
-                  animate={{ 
-                    width: `${(warData.coin2.amountPledged / warData.totalPledged) * 100}%` 
+                  animate={{
+                    width: `${mintBPercentage}%`
                   }}
                   transition={{ duration: 0.5 }}
                 />
@@ -196,21 +618,35 @@ export default function WarPage({ params }: { params: { id: string } }) {
 
               {/* Time Left */}
               <div className="mt-8 text-center">
-                <div className="text-sm text-muted-foreground mb-1">Time Left</div>
-                <motion.div 
+                <div className="text-sm text-muted-foreground mb-1">
+                  {memeWarStateInfo?.war_ended ? 'War Ended' : 'Time Left'}
+                </div>
+                <motion.div
                   className="text-xl font-mono"
                   animate={{ opacity: [1, 0.5, 1] }}
                   transition={{ duration: 2, repeat: Infinity }}
                 >
-                  {warData.timeLeft}
+                  {memeWarStateInfo?.war_ended ? endedTimeAgo : warData.timeLeft}
                 </motion.div>
               </div>
+
+              {/* Winner Declaration */}
+              {memeWarStateInfo?.winner_declared && (
+                <div className="mt-4 text-center">
+                  <div className="text-sm text-muted-foreground mb-1">Winner</div>
+                  <div className="text-xl font-mono">
+                    {memeWarStateInfo.winner_declared === mintA
+                      ? warData.coin1.ticker
+                      : warData.coin2.ticker}
+                  </div>
+                </div>
+              )}
 
               {/* Total Pledged */}
               <div className="mt-4 text-center">
                 <div className="text-sm text-muted-foreground mb-1">Total Pledged</div>
                 <div className="text-xl font-mono">
-                  ${formatNumber(warData.totalPledged)}
+                  ${formatNumber(warData.totalPledged * ((warData.coin1.price + warData.coin2.price) / 2))}
                 </div>
               </div>
             </div>
@@ -219,9 +655,31 @@ export default function WarPage({ params }: { params: { id: string } }) {
 
         {/* Right Token */}
         <div className="col-span-3">
-          <TokenCard 
+          <TokenCard
             token={warData.coin2}
             totalPledged={warData.totalPledged}
+            handleDeposit={() => handleDeposit(1, rightInput)}
+            handleWithdraw={() => handleWithdraw(1)}
+            pledgeAmount={rightInput}
+            setPledgeAmount={setRightInput}
+            tokenBalance={tokenBalanceMintB}
+            btnLoading={btnLoading === 1}
+            userState={userStateInfo}
+            formatDeposit={formatDeposit}
+            index={1}
+            publicKey={publicKey}
+            isWarEnded={memeWarStateInfo?.war_ended}
+            // disablePledgeBtn={
+            //   Number(rightInput) > tokenBalanceMintB || 
+            //   Number(rightInput) <= 0 || 
+            //   btnLoading === 1 
+            //   // !!memeWarStateInfo?.war_ended
+            // }
+            disableUnpledgeBtn={
+              btnLoading === 1 ||
+              !!memeWarStateInfo?.war_ended ||
+              !userStateInfo?.mint_b_deposit
+            }
           />
         </div>
       </div>
@@ -231,39 +689,58 @@ export default function WarPage({ params }: { params: { id: string } }) {
         {/* Combined Live Feed */}
         <div>
           <div className="bg-card border border-border rounded-lg">
-            <div className="p-4 border-b border-border">
+            <div className="p-4 border-b border-border flex justify-between">
               <h2 className="text-xl font-medium">Live Feed</h2>
+              <div onClick={handleRefresh} className="cursor-pointer text-sm">
+                Refresh
+              </div>
             </div>
             <div className="p-4">
-              <div className="space-y-2">
+              <div className="space-y-2 max-h-[400px] overflow-y-auto">
                 <AnimatePresence mode="popLayout">
-                  {Array.from({ length: 10 }).map((_, i) => {
-                    const isFirstCoin = Math.random() > 0.5
-                    const coin = isFirstCoin ? warData.coin1 : warData.coin2
-                    const amount = Math.random() * 10000
-                    
-                    return (
-                      <motion.div
-                        key={i}
-                        initial={{ opacity: 0, y: -10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, height: 0 }}
-                        className="flex items-center justify-between py-2 border-b border-border/50 last:border-0"
-                      >
-                        <div className="flex items-center gap-2">
-                          <span className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-sm">
-                            {coin.emoji}
-                          </span>
-                          <span className={`text-sm ${isFirstCoin ? 'text-primary' : 'text-[#FF4444]'}`}>
-                            +${formatNumber(amount)}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-2">
-                          <span className="text-sm text-muted-foreground">Whale{Math.floor(Math.random() * 1000)}</span>
-                        </div>
-                      </motion.div>
-                    )
-                  })}
+                  {displayTradesData && [
+                    ...(displayTradesData.mintA || []),
+                    ...(displayTradesData.mintB || [])
+                  ]
+                    .sort((a: TradeData, b: TradeData) => b.event_time - a.event_time)
+                    .slice(0, 10)
+                    .map((trade: TradeData, i: number) => {
+                      // console.log("Trade: ", trade);
+                      const isMintA = trade.mint === mintA;
+                      const coin = isMintA ? warData.coin1 : warData.coin2;
+                      const decimals = isMintA
+                        ? memeWarStateInfo?.mint_a_decimals
+                        : memeWarStateInfo?.mint_b_decimals;
+                      const amount = Number(trade.amount) / (10 ** (decimals || 9));
+
+                      return (
+                        <motion.div
+                          key={`${trade.wallet_address}-${trade.event_time}`}
+                          initial={{ opacity: 0, y: -10 }}
+                          animate={{ opacity: 1, y: 0 }}
+                          exit={{ opacity: 0, height: 0 }}
+                          className={`flex items-center justify-between py-2 border-b border-border/50 last:border-0 
+                            ${animateTrade.index === (isMintA ? 0 : 1) && 
+                              animateTrade.tradeId === (trade.tx_signature || `${trade.event_time}`) && 
+                              i === 0 ? 'animate-shake' : ''}`}
+                        >
+                          {/* HERE SOMEWHERE IS THE PROBLEM */}
+                          <div className="flex items-center gap-2">
+                            <span className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-sm">
+                              <img src={coin.image} alt={coin.ticker} className="w-5 h-5" />
+                            </span>
+                            <span className={`text-sm ${isMintA ? 'text-primary' : 'text-[#FF4444]'}`}>
+                              +${formatNumber(amount * coin.price)}
+                            </span>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-muted-foreground">
+                              {formatWalletAddress(trade.wallet_address)}
+                            </span>
+                          </div>
+                        </motion.div>
+                      )
+                    })}
                 </AnimatePresence>
               </div>
             </div>
@@ -273,44 +750,67 @@ export default function WarPage({ params }: { params: { id: string } }) {
         {/* Chat Section */}
         <div className="col-span-2">
           <div className="bg-card border border-border rounded-lg h-full flex flex-col">
-            <div className="p-4 border-b border-border">
+            <div className="p-4 border-b border-border flex justify-between">
               <h2 className="text-xl font-medium">Live Chat</h2>
+              <div onClick={() => refreshChat()} className="cursor-pointer text-sm">
+                Refresh
+              </div>
             </div>
-            
+
             {/* Chat Messages */}
             <div className="flex-1 p-4 space-y-4 overflow-y-auto max-h-[400px]">
               <AnimatePresence mode="popLayout">
-                {Array.from({ length: 10 }).map((_, i) => {
-                  const isSupporter = Math.random() > 0.5
-                  const coin = isSupporter ? warData.coin1 : warData.coin2
-                  return (
-                    <motion.div
-                      key={i}
-                      initial={{ opacity: 0, x: -20 }}
-                      animate={{ opacity: 1, x: 0 }}
-                      exit={{ opacity: 0, x: 20 }}
-                      className="flex items-start gap-3"
-                    >
-                      <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm shrink-0">
-                        {coin.emoji}
-                      </div>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-medium text-sm">Whale{Math.floor(Math.random() * 1000)}</span>
-                          <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-                            isSupporter ? 'bg-primary/10 text-primary' : 'bg-red-500/10 text-red-500'
-                          }`}>
-                            {coin.ticker} Supporter
-                          </span>
+                {displayMessages && [...displayMessages]
+                  .sort((a: ChatMessage, b: ChatMessage) => new Date(b.sender_time).getTime() - new Date(a.sender_time).getTime())
+                  .map((message: ChatMessage, i: number) => {
+                    // Determine if sender is supporting a coin based on deposit history
+                    const isCoin1Supporter = message.sender === pubKey && userStateInfo?.mint_a_deposit;
+                    const isCoin2Supporter = message.sender === pubKey && userStateInfo?.mint_b_deposit;
+                    const supporterType = isCoin1Supporter
+                      ? warData.coin1.ticker
+                      : isCoin2Supporter
+                        ? warData.coin2.ticker
+                        : null;
+
+                    return (
+                      <motion.div
+                        key={i}
+                        initial={{ opacity: 0, x: -20 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        exit={{ opacity: 0, x: 20 }}
+                        className={`flex items-start gap-3 ${message.id === lastMessageId ? 'animate-pulse' : ''}`}
+                      >
+                        <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm shrink-0">
+                          {isCoin1Supporter
+                            ? '1️⃣'
+                            : isCoin2Supporter
+                              ? '2️⃣'
+                              : '👤'}
                         </div>
-                        <p className="text-sm text-muted-foreground mt-1">
-                          {coin.ticker} to the moon! 🚀
-                        </p>
-                      </div>
-                      <span className="text-xs text-muted-foreground">just now</span>
-                    </motion.div>
-                  )
-                })}
+                        <div className="flex-1">
+                          <div className="flex items-center gap-2">
+                            <span className="font-medium text-sm">
+                              {formatWalletAddress(message.sender)}
+                            </span>
+                            {supporterType && (
+                              <span className={`text-xs px-1.5 py-0.5 rounded-full ${isCoin1Supporter
+                                  ? 'bg-primary/10 text-primary'
+                                  : 'bg-red-500/10 text-red-500'
+                                }`}>
+                                {supporterType} Supporter
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-sm text-muted-foreground mt-1">
+                            {message.message}
+                          </p>
+                        </div>
+                        <span className="text-xs text-muted-foreground">
+                          {new Date(message.sender_time).toLocaleTimeString()}
+                        </span>
+                      </motion.div>
+                    )
+                  })}
               </AnimatePresence>
             </div>
 
@@ -320,10 +820,17 @@ export default function WarPage({ params }: { params: { id: string } }) {
                 <input
                   type="text"
                   placeholder="Type a message..."
+                  value={newMessage}
+                  onChange={(e) => setNewMessage(e.target.value)}
+                  onKeyPress={handleKeyPress}
                   className="flex-1 bg-muted border-border rounded px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-primary"
                 />
-                <button className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded text-sm font-medium">
-                  Send
+                <button
+                  onClick={handleSendMessage}
+                  disabled={!newMessage.trim() || sendStatus === 'pending' || !pubKey}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded text-sm font-medium disabled:opacity-50"
+                >
+                  {sendStatus === 'pending' ? 'Sending...' : 'Send'}
                 </button>
               </div>
             </div>
@@ -334,12 +841,33 @@ export default function WarPage({ params }: { params: { id: string } }) {
   )
 }
 
-function TokenCard({ token, totalPledged }: { token: TokenData, totalPledged: number }) {
-  const [pledgeAmount, setPledgeAmount] = useState("")
-  const [isWarRoomOpen, setIsWarRoomOpen] = useState(false)
-  const [selectedTemplate, setSelectedTemplate] = useState<TweetTemplate | null>(null)
-  
-  const tweetTemplates = [
+// Token Card Component
+function TokenCard({
+  token,
+  totalPledged,
+  handleDeposit,
+  handleWithdraw,
+  pledgeAmount,
+  setPledgeAmount,
+  tokenBalance,
+  btnLoading,
+  userState,
+  formatDeposit,
+  index,
+  publicKey,
+  isWarEnded,
+  disablePledgeBtn,
+  disableUnpledgeBtn
+}: TokenCardProps) {
+  const [isWarRoomOpen, setIsWarRoomOpen] = useState<boolean>(false);
+  const [selectedTemplate, setSelectedTemplate] = useState<TweetTemplate | null>(null);
+
+  interface TweetTemplate {
+    text: string;
+    hashtags: string[];
+  }
+
+  const tweetTemplates: TweetTemplate[] = [
     {
       text: `${token.ticker} is crushing it in the meme wars! Join me in supporting the future of memes 🚀`,
       hashtags: ['MemeCoin', 'Crypto', token.ticker]
@@ -352,40 +880,54 @@ function TokenCard({ token, totalPledged }: { token: TokenData, totalPledged: nu
       text: `${token.ticker} army assemble! We're making history in the meme wars 🔥`,
       hashtags: ['CryptoGems', 'MemeWar', token.ticker]
     }
-  ]
+  ];
 
-  const generateTwitterIntent = (template: TweetTemplate) => {
-    const text = encodeURIComponent(template.text)
-    const hashtags = template.hashtags.join(',')
-    return `https://twitter.com/intent/tweet?text=${text}&hashtags=${hashtags}`
-  }
+  const generateTwitterIntent = (template: TweetTemplate): string => {
+    const text = encodeURIComponent(template.text);
+    const hashtags = template.hashtags.join(',');
+    return `https://twitter.com/intent/tweet?text=${text}&hashtags=${hashtags}`;
+  };
 
-  const percentage = (token.amountPledged / totalPledged) * 100
+  const percentage = (token.amountPledged / totalPledged) * 100;
 
   // Calculate expected payout
-  const calculateExpectedPayout = (amount: number) => {
-    if (!amount) return 0
+  const calculateExpectedPayout = (amount: number): number => {
+    if (!amount) return 0;
     // If this side wins, pledger gets their amount plus proportional share of losing side
-    const otherSideAmount = totalPledged - token.amountPledged
-    const shareOfPledge = amount / token.amountPledged
-    const expectedReward = amount + (otherSideAmount * shareOfPledge)
-    return expectedReward
-  }
+    const otherSideAmount = totalPledged - token.amountPledged;
+    const shareOfPledge = amount / token.amountPledged;
+    const expectedReward = amount + (otherSideAmount * shareOfPledge);
+    return expectedReward;
+  };
 
   // Calculate ROI percentage
-  const calculateROI = (amount: number) => {
-    if (!amount) return 0
-    const payout = calculateExpectedPayout(amount)
-    return ((payout - amount) / amount) * 100
-  }
+  const calculateROI = (amount: number): number => {
+    if (!amount) return 0;
+    const payout = calculateExpectedPayout(amount);
+    return ((payout - amount) / amount) * 100;
+  };
+
+  // Handler for max button
+  const handleMax = (): void => {
+    setPledgeAmount(tokenBalance.toString());
+  };
+
+  // Handler for half button
+  const handleHalf = (): void => {
+    setPledgeAmount((tokenBalance / 2).toString());
+  };
 
   return (
     <div className="bg-card border border-border rounded-lg p-6">
-      {/* Token Header - Update to include fist button */}
+      {/* Token Header */}
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center text-2xl">
-            {token.emoji}
+          <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center text-2xl overflow-hidden">
+            {token.image ? (
+              <img src={token.image} alt={token.name} className="w-full h-full object-cover" />
+            ) : (
+              token.emoji
+            )}
           </div>
           <div>
             <h3 className="font-bold text-lg">{token.name}</h3>
@@ -397,8 +939,8 @@ function TokenCard({ token, totalPledged }: { token: TokenData, totalPledged: nu
             </div>
           </div>
         </div>
-        
-        {/* Support Button - renamed from Fist Button */}
+
+        {/* Support Button */}
         <button
           onClick={() => setIsWarRoomOpen(true)}
           className="p-2 hover:bg-muted rounded-full transition-colors group"
@@ -409,8 +951,8 @@ function TokenCard({ token, totalPledged }: { token: TokenData, totalPledged: nu
 
       {/* Stats Grid */}
       <div className="grid grid-cols-2 gap-4 mb-6">
-        <Stat label="Market Cap" value={`$${formatNumber(token.marketCap)}`} />
-        <Stat label="24h Volume" value={`$${formatNumber(token.volume24h)}`} />
+        <Stat label="Market Cap" value={`${formatNumber(token.marketCap)}`} />
+        <Stat label="24h Volume" value={`${formatNumber(token.volume24h)}`} />
         <Stat label="Holders" value={formatNumber(token.holders)} />
         <Stat label="Total Supply" value={formatNumber(token.totalSupply)} />
       </div>
@@ -419,7 +961,7 @@ function TokenCard({ token, totalPledged }: { token: TokenData, totalPledged: nu
       <div className="bg-background/50 rounded-lg p-4 space-y-4">
         <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">Amount Pledged</span>
-          <span className="font-medium">${formatNumber(token.amountPledged)}</span>
+          <span className="font-medium">{formatNumber(token.amountPledged)} {token.ticker}</span>
         </div>
         <div className="flex justify-between text-sm">
           <span className="text-muted-foreground">Total Pledgers</span>
@@ -430,11 +972,32 @@ function TokenCard({ token, totalPledged }: { token: TokenData, totalPledged: nu
           <span className="font-medium">{percentage.toFixed(1)}%</span>
         </div>
 
+        {/* Balance and Utility Buttons */}
+        <div className="flex justify-between items-center text-sm mb-2">
+          <div className="flex gap-2">
+            <button
+              onClick={handleHalf}
+              className="px-2 py-1 bg-primary/20 text-primary rounded hover:bg-primary/30 transition-colors"
+            >
+              HALF
+            </button>
+            <button
+              onClick={handleMax}
+              className="px-2 py-1 bg-primary/20 text-primary rounded hover:bg-primary/30 transition-colors"
+            >
+              MAX
+            </button>
+          </div>
+          <div className="text-muted-foreground">
+            Balance: {formatNumber(tokenBalance)} {token.ticker}
+          </div>
+        </div>
+
         <input
-          type="number"
+          type="text"
           value={pledgeAmount}
           onChange={(e) => setPledgeAmount(e.target.value)}
-          placeholder="Enter amount"
+          placeholder={`Enter amount`}
           className="w-full bg-muted border-border rounded px-3 py-2 text-sm"
         />
 
@@ -456,9 +1019,51 @@ function TokenCard({ token, totalPledged }: { token: TokenData, totalPledged: nu
           </div>
         )}
 
-        <button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-2 rounded text-sm font-medium">
-          Pledge {token.ticker}
-        </button>
+        {/* Action Buttons */}
+        {publicKey ? (
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              onClick={handleDeposit}
+              disabled={disablePledgeBtn}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground py-2 rounded text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {btnLoading ? 'Processing...' : `Pledge ${token.ticker}`}
+            </button>
+            <button
+              onClick={handleWithdraw}
+              disabled={disableUnpledgeBtn}
+              className="bg-muted hover:bg-muted/90 text-foreground py-2 rounded text-sm font-medium border border-border disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              {btnLoading ? 'Processing...' : 'Unpledge'}
+            </button>
+          </div>
+        ) : (
+          <button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-2 rounded text-sm font-medium">
+            Connect Wallet
+          </button>
+        )}
+
+        {/* User Stats */}
+        {userState && (
+          <div className="mt-2 space-y-1 text-sm border-t border-border/50 pt-2">
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Deposited:</span>
+              <span>{formatDeposit(index === 0 ? userState.mint_a_deposit : userState.mint_b_deposit, index)} {token.ticker}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Risk Free:</span>
+              <span>{formatDeposit(index === 0 ? userState.mint_a_risk_free_deposit : userState.mint_b_risk_free_deposit, index)} {token.ticker}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Withdrawn:</span>
+              <span>{formatDeposit(index === 0 ? userState.mint_a_withdrawn : userState.mint_b_withdrawn, index)} {token.ticker}</span>
+            </div>
+            <div className="flex justify-between">
+              <span className="text-muted-foreground">Penalty:</span>
+              <span>{formatDeposit(index === 0 ? userState.mint_a_penalty : userState.mint_b_penalty, index)} {token.ticker}</span>
+            </div>
+          </div>
+        )}
       </div>
 
       {/* War Room Modal */}
@@ -470,7 +1075,7 @@ function TokenCard({ token, totalPledged }: { token: TokenData, totalPledged: nu
               {token.ticker} War Room
             </DialogTitle>
           </DialogHeader>
-          
+
           <div className="space-y-4 py-4">
             <div className="text-sm text-muted-foreground">
               Support {token.ticker} by spreading the word! Choose a message to share:
@@ -481,16 +1086,15 @@ function TokenCard({ token, totalPledged }: { token: TokenData, totalPledged: nu
                 <div
                   key={index}
                   onClick={() => setSelectedTemplate(template)}
-                  className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                    selectedTemplate === template 
-                      ? 'border-primary bg-primary/5' 
+                  className={`p-3 rounded-lg border cursor-pointer transition-all ${selectedTemplate === template
+                      ? 'border-primary bg-primary/5'
                       : 'border-border hover:border-primary/50'
-                  }`}
+                    }`}
                 >
                   <p className="text-sm mb-2">{template.text}</p>
                   <div className="flex flex-wrap gap-2">
                     {template.hashtags.map(tag => (
-                      <span 
+                      <span
                         key={tag}
                         className="text-xs px-2 py-1 rounded-full bg-muted text-muted-foreground"
                       >
@@ -508,14 +1112,14 @@ function TokenCard({ token, totalPledged }: { token: TokenData, totalPledged: nu
               rel="noopener noreferrer"
               className={`
                 w-full inline-flex justify-center items-center px-4 py-2 rounded
-                ${selectedTemplate 
+                ${selectedTemplate
                   ? 'bg-[#1DA1F2] hover:bg-[#1DA1F2]/90 text-white cursor-pointer'
                   : 'bg-muted text-muted-foreground cursor-not-allowed'
                 }
               `}
             >
               <svg className="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 24 24">
-                <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z"/>
+                <path d="M23.953 4.57a10 10 0 01-2.825.775 4.958 4.958 0 002.163-2.723c-.951.555-2.005.959-3.127 1.184a4.92 4.92 0 00-8.384 4.482C7.69 8.095 4.067 6.13 1.64 3.162a4.822 4.822 0 00-.666 2.475c0 1.71.87 3.213 2.188 4.096a4.904 4.904 0 01-2.228-.616v.06a4.923 4.923 0 003.946 4.827 4.996 4.996 0 01-2.212.085 4.936 4.936 0 004.604 3.417 9.867 9.867 0 01-6.102 2.105c-.39 0-.779-.023-1.17-.067a13.995 13.995 0 007.557 2.209c9.053 0 13.998-7.496 13.998-13.985 0-.21 0-.42-.015-.63A9.935 9.935 0 0024 4.59z" />
               </svg>
               {selectedTemplate ? 'Share on Twitter' : 'Select a message'}
             </a>

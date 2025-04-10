@@ -17,6 +17,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { getAssetFromMint } from "@/lib/utils";
 import { useWallet } from "@solana/wallet-adapter-react"; // Import wallet hook
+import { useCreateMemeWarRegistry } from "@/app/hooks/useCreateMemeWar"; // Import the hook
 
 // import { useGetMemeWarRegistry } from '../hooks/useGetMemeWarRegistry';
 
@@ -53,6 +54,17 @@ interface TokenResponse {
   id: string;
 }
 
+interface LaunchCoinData {
+  name: string;
+  symbol: string;
+  description: string;
+  twitter: string;
+  telegram: string;
+  website: string;
+  showName: boolean;
+  image: File | null;
+}
+
 const createDefaultCoinData = (overrides: Partial<CoinData> = {}): CoinData => {
   return {
     mintAddress: "",
@@ -65,6 +77,7 @@ const createDefaultCoinData = (overrides: Partial<CoinData> = {}): CoinData => {
     ...overrides, // This allows customizing specific fields if needed
   };
 };
+
 export default function StartWarPage() {
   const [selectedDuration, setSelectedDuration] = useState<number>(2);
   const [newMemeWarState, setNewMemeWarState] = useState<string | null>(null);
@@ -73,11 +86,38 @@ export default function StartWarPage() {
   const [showRedirect, setShowRedirect] = useState<boolean>(false);
   const [coin1Data, setCoin1Data] = useState<CoinData>(createDefaultCoinData());
   const [coin2Data, setCoin2Data] = useState<CoinData>(createDefaultCoinData());
+  const [showLaunchCoins, setShowLaunchCoins] = useState<boolean>(false);
+  const [launchCoin1, setLaunchCoin1] = useState<LaunchCoinData>({
+    name: "",
+    symbol: "",
+    description: "",
+    twitter: "",
+    telegram: "",
+    website: "https://example.com", // todo: add website link from the warpage
+    showName: true,
+    image: null,
+  });
+  const [launchCoin2, setLaunchCoin2] = useState<LaunchCoinData>({
+    name: "",
+    symbol: "",
+    description: "",
+    twitter: "",
+    telegram: "",
+    website: "https://example.com", // todo: add website link from the warpage
+    showName: true,
+    image: null,
+  });
 
   // const { data: mwrData } = useGetMemeWarRegistry(mintAddress, coin1Data.mintAddress === mintAddress ? coin2Data.mintAddress : coin1Data.mintAddress);
   // const { data: memeWarRegistry } = useGetMemeWarRegistry(coin1Data.mintAddress, coin2Data.mintAddress);
 
   const { publicKey } = useWallet(); // Get public key from wallet
+
+  // Add the useCreateMemeWarRegistry hook
+  const { createMemeRegistry, isCreateWarLoading } = useCreateMemeWarRegistry(
+    coin1Data.mintAddress,
+    coin2Data.mintAddress
+  );
 
   const [warData, setWarData] = useState<WarData>({
     description: "",
@@ -125,8 +165,6 @@ export default function StartWarPage() {
 
     try {
       setCoinData({ ...currentData, isLoading: true, error: null });
-      // Check if war already exists for these tokens
-
       const data = (await getAssetFromMint(mintAddress)) as TokenResponse;
       if (!data.result) {
         throw new Error("Invalid response from API");
@@ -163,7 +201,7 @@ export default function StartWarPage() {
       });
     }
   };
-
+  
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (coin1Data.mintAddress) {
@@ -182,14 +220,8 @@ export default function StartWarPage() {
     return () => clearTimeout(timeoutId);
   }, [coin2Data.mintAddress]);
 
-  const handleSubmit = (e: React.FormEvent): void => {
+  const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
-
-    // Log the public key when the user clicks "Start War"
-    console.log(
-      "User public key:",
-      publicKey ? publicKey.toString() : "Not connected"
-    );
 
     // Check if meme war registry exists
 
@@ -199,7 +231,6 @@ export default function StartWarPage() {
     //   toast.error("A meme war already exists for these tokens. Please wait for it to end.");
     //   return;
     // }
-
     console.log({
       userPublicKey: publicKey ? publicKey.toString() : null,
       warData,
@@ -273,7 +304,6 @@ export default function StartWarPage() {
             </div>
           </div>
         )}
-
         <div className="flex w-full border gap-4 ">
           {data.ticker && (
             <div className="flex justify-between border w-fit">
@@ -299,9 +329,227 @@ export default function StartWarPage() {
     </Card>
   );
 
+  const handleImageChange = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    setCoinData: React.Dispatch<React.SetStateAction<LaunchCoinData>>,
+    coinData: LaunchCoinData
+  ) => {
+    if (e.target.files && e.target.files[0]) {
+      setCoinData({
+        ...coinData,
+        image: e.target.files[0],
+      });
+    }
+  };
+
+  const handleLaunchCoins = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!publicKey) {
+      toast.error("Please connect your wallet to launch coins");
+      return;
+    }
+
+    if (!launchCoin1.image || !launchCoin2.image) {
+      toast.error("Please upload images for both coins");
+      return;
+    }
+
+    // todo: add functionality to launch coins
+    toast.info("Launching coins... This functionality is not yet implemented");
+    console.log("Launch data:", {
+      coin1: launchCoin1,
+      coin2: launchCoin2,
+      walletPublicKey: publicKey.toString(),
+    });
+  };
+
+  interface LaunchCoinFormProps {
+    data: LaunchCoinData;
+    setData: React.Dispatch<React.SetStateAction<LaunchCoinData>>;
+    title: string;
+  }
+
+  const LaunchCoinForm: React.FC<LaunchCoinFormProps> = ({
+    data,
+    setData,
+    title,
+  }) => (
+    <Card>
+      <CardHeader>
+        <CardTitle>{title}</CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="space-y-2">
+          <Label htmlFor={`${title}-name`}>Coin Name</Label>
+          <Input
+            id={`${title}-name`}
+            placeholder="e.g. Awesome Meme Coin"
+            value={data.name}
+            onChange={(e) => setData({ ...data, name: e.target.value })}
+            required
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor={`${title}-symbol`}>Ticker</Label>
+          <Input
+            id={`${title}-symbol`}
+            placeholder="e.g. AMC"
+            value={data.symbol}
+            onChange={(e) => setData({ ...data, symbol: e.target.value })}
+            maxLength={10}
+            required
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor={`${title}-desc`}>Description</Label>
+          <Textarea
+            id={`${title}-desc`}
+            placeholder="Describe your meme coin..."
+            value={data.description}
+            onChange={(e) => setData({ ...data, description: e.target.value })}
+            className="min-h-20"
+            required
+          />
+        </div>
+
+        <div className="space-y-2">
+          <Label htmlFor={`${title}-image`}>Coin Image</Label>
+          <Input
+            id={`${title}-image`}
+            type="file"
+            accept="image/*"
+            onChange={(e) => handleImageChange(e, setData, data)}
+            className="cursor-pointer"
+            required
+          />
+          {data.image && (
+            <div className="mt-2">
+              <p className="text-sm text-muted-foreground">
+                Image selected: {data.image.name}
+              </p>
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-4">
+          <h4 className="text-sm font-medium">Social Links</h4>
+          <div className="grid gap-2">
+            <div className="grid grid-cols-6 items-center gap-2">
+              <Label htmlFor={`${title}-twitter`} className="col-span-1">
+                Twitter
+              </Label>
+              <Input
+                id={`${title}-twitter`}
+                placeholder="Twitter URL"
+                className="col-span-5"
+                value={data.twitter}
+                onChange={(e) => setData({ ...data, twitter: e.target.value })}
+              />
+            </div>
+            <div className="grid grid-cols-6 items-center gap-2">
+              <Label htmlFor={`${title}-telegram`} className="col-span-1">
+                Telegram
+              </Label>
+              <Input
+                id={`${title}-telegram`}
+                placeholder="Telegram URL"
+                className="col-span-5"
+                value={data.telegram}
+                onChange={(e) => setData({ ...data, telegram: e.target.value })}
+              />
+            </div>
+            <div className="grid grid-cols-6 items-center gap-2">
+              <Label htmlFor={`${title}-website`} className="col-span-1">
+                Website
+              </Label>
+              <Input
+                id={`${title}-website`}
+                placeholder="Website URL"
+                className="col-span-5"
+                value={data.website}
+                onChange={(e) => setData({ ...data, website: e.target.value })}
+              />
+            </div>
+          </div>
+        </div>
+
+        <div className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            id={`${title}-showName`}
+            checked={data.showName}
+            onChange={(e) => setData({ ...data, showName: e.target.checked })}
+            className="rounded border-gray-300"
+          />
+          <Label htmlFor={`${title}-showName`}>Show Name</Label>
+        </div>
+      </CardContent>
+    </Card>
+  );
+
   return (
     <div className="container mx-auto px-4 py-8">
       <div className="max-w-4xl mx-auto">
+        {/* Launch 2 new Meme Coins dropdown section */}
+        <Card className="mb-8">
+          <CardHeader
+            className="cursor-pointer"
+            onClick={() => setShowLaunchCoins(!showLaunchCoins)}
+          >
+            <div className="flex justify-between items-center">
+              <div className="flex flex-col gap-2">
+                <CardTitle>Launch 2 new Meme Coins</CardTitle>
+                <CardDescription>
+                  Launch two new meme coins and start a war between them!
+                </CardDescription>
+              </div>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setShowLaunchCoins(!showLaunchCoins);
+                }}
+              >
+                {showLaunchCoins ? "Hide" : "Show"}
+              </Button>
+            </div>
+          </CardHeader>
+
+          {showLaunchCoins && (
+            <CardContent>
+              <form onSubmit={handleLaunchCoins} className="space-y-8">
+                <div className="grid grid-cols-2 gap-8">
+                  <LaunchCoinForm
+                    data={launchCoin1}
+                    setData={setLaunchCoin1}
+                    title="First Coin"
+                  />
+                  <LaunchCoinForm
+                    data={launchCoin2}
+                    setData={setLaunchCoin2}
+                    title="Second Coin"
+                  />
+                </div>
+
+                <div className="flex justify-center">
+                  <Button
+                    type="submit"
+                    size="lg"
+                    className="px-8"
+                    disabled={!publicKey}
+                  >
+                    Launch Coins
+                  </Button>
+                </div>
+              </form>
+            </CardContent>
+          )}
+        </Card>
+
         <h1 className="text-3xl font-bold mb-2">Start a Meme Coin War</h1>
         <p className="text-muted-foreground mb-8">
           Create an epic battle between two meme coins and let the community
@@ -415,7 +663,7 @@ export default function StartWarPage() {
               className="px-8"
               disabled={!publicKey || !isFormValid()}
             >
-              Start War
+              {isCreateWarLoading ? "Creating War..." : "Start War"}
             </Button>
           </div>
         </form>

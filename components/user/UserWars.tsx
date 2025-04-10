@@ -1,11 +1,12 @@
 "use client";
+
 import { useRouter } from 'next/navigation';
 import React from 'react';
 import useCountdown from '@/app/hooks/useCountdown';
 import { formatPublicKey } from '@/lib/utils';
-
 import { useParams } from 'next/navigation';
 import { useGetUserProfile } from '@/app/api/getUserProfile';
+import { motion } from 'framer-motion';
 
 export interface War {
   meme_war_state: string;
@@ -21,96 +22,113 @@ export interface War {
   mint_b: string;
 }
 
-interface MemeWarRowProps {
+interface MemeWarCardProps {
   war: War;
+  onClick: () => void;
 }
 
-const MemeWarRow: React.FC<MemeWarRowProps> = ({ war }) => {
-  const router = useRouter();
-  const handleRowClick = () => {
-    router.push(`/meme-wars/${war.meme_war_state}`);
-  };
-  
+const MemeWarCard: React.FC<MemeWarCardProps> = ({ war, onClick }) => {
   const { endedTimeAgo } = useCountdown(war.end_time);
 
   return (
-    <tr onClick={handleRowClick} className="!h-20 hover:bg-gray-900 cursor-pointer">
-      <td className="border p-2">
-        <div className="flex items-center gap-2">
-          <img
-            src={war.mint_a_image}
-            alt={war.mint_a_name}
-            className="w-12 h-12"
-          />
-          {war.mint_a.substring(0, 5)}... {'  '}
-          {war.mint_a_name}
+    <motion.div
+      whileHover={{ scale: 1.01 }}
+      onClick={onClick}
+      className="border border-border rounded-lg overflow-hidden bg-background hover:border-primary/50 transition-colors cursor-pointer mb-4"
+    >
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-4 p-4">
+        {/* Coin A */}
+        <div className="col-span-2 flex items-center space-x-3">
+          <div className="relative w-12 h-12 rounded-full bg-muted overflow-hidden flex-shrink-0">
+            <img
+              src={war.mint_a_image}
+              alt={war.mint_a_name}
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <div>
+            <p className="font-medium">{war.mint_a_name}</p>
+            <p className="text-sm text-muted-foreground">{war.mint_a_symbol}</p>
+            <p className="text-xs text-muted-foreground/70 font-mono">{formatPublicKey(war.mint_a)}</p>
+          </div>
         </div>
-      </td>
-      <td className="border p-2">{war.mint_a_symbol}</td>
-      <td className="border p-2">
-        <div className="flex items-center gap-2">
-          <img
-            src={war.mint_b_image}
-            alt={war.mint_b_name}
-            className="w-12 h-12"
-          />
-          {war.mint_b.substring(0, 5)}...{' '}
-          {war.mint_b_name}
+
+        {/* VS Badge */}
+        <div className="flex items-center justify-center">
+          <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold bg-muted/70">
+            VS
+          </div>
         </div>
-      </td>
-      <td className="border p-2">{war.mint_b_symbol}</td>
-      <td className="border p-2">
-        <div
-          className="break-all underline"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleRowClick();
-          }}
-        >
+
+        {/* Coin B */}
+        <div className="col-span-2 flex items-center space-x-3">
+          <div className="relative w-12 h-12 rounded-full bg-muted overflow-hidden flex-shrink-0">
+            <img
+              src={war.mint_b_image}
+              alt={war.mint_b_name}
+              className="w-full h-full object-cover"
+            />
+          </div>
+          <div>
+            <p className="font-medium">{war.mint_b_name}</p>
+            <p className="text-sm text-muted-foreground">{war.mint_b_symbol}</p>
+            <p className="text-xs text-muted-foreground/70 font-mono">{formatPublicKey(war.mint_b)}</p>
+          </div>
+        </div>
+      </div>
+
+      <div className="border-t border-border p-3 flex items-center justify-between bg-muted/30">
+        <div className="text-xs font-mono text-muted-foreground">
           {formatPublicKey(war.meme_war_state)}
         </div>
-      </td>
-      <td className={`border p-2 ${war.war_ended ? 'text-red-500' : 'text-green-500'}`}>
-        {!war.war_ended ? 'Active' : `War Ended ${endedTimeAgo}`}
-      </td>
-    </tr>
+        <div className={`text-sm px-2 py-1 rounded-full ${war.war_ended ? 'bg-red-500/10 text-red-500' : 'bg-green-500/10 text-green-500'}`}>
+          {!war.war_ended ? 'Active' : `Ended ${endedTimeAgo}`}
+        </div>
+      </div>
+    </motion.div>
   );
 };
 
-interface UserWarsProps {
-  wars?: War[];
-}
-
-const UserWars: React.FC<UserWarsProps> = ({ wars = [] }) => {
+const UserWars: React.FC = () => {
+  const router = useRouter();
   const params = useParams();
-  const { userProfile } = params;
-  const { data: userProfileDetails, isLoading, refetch, isFetching } = useGetUserProfile(typeof userProfile === 'string' ? userProfile : null);
+  const { userId } = params;
+  const { data: userProfileDetails = [], isLoading, refetch, isFetching } = useGetUserProfile(typeof userId === 'string' ? userId : null);
 
   if (isLoading || isFetching) {
-    return <div>Loading...</div>;
+    return (
+      <div className="flex items-center justify-center py-12">
+        <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full"></div>
+        <span className="ml-2 text-muted-foreground">Loading wars...</span>
+      </div>
+    );
   }
+
+  if (userProfileDetails.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <div className="w-16 h-16 mb-4 rounded-full bg-muted flex items-center justify-center">
+          <span className="text-2xl">🏆</span>
+        </div>
+        <h3 className="text-lg font-medium">No Wars Found</h3>
+        <p className="text-muted-foreground mt-2 max-w-md">
+          You haven't participated in any meme coin wars yet. Start a war or pledge to an existing one to see them here.
+        </p>
+      </div>
+    );
+  }
+
   return (
-    <div className="w-full overflow-x-auto">
-      {userProfileDetails?.length > 0 && (
-      <table className="w-full border-collapse">
-        <thead>
-          <tr>
-            <th className="border p-2">Mint A</th>
-            <th className="border p-2">Symbol A</th>
-            <th className="border p-2">Mint B</th>
-            <th className="border p-2">Symbol B</th>
-            <th className="border p-2">War ID</th>
-            <th className="border p-2">Status</th>
-          </tr>
-        </thead>
-        <tbody>
-          {userProfileDetails.map((war: War, index: number) => (
-            <MemeWarRow key={war.meme_war_state} war={war} />
-          ))}
-        </tbody>
-      </table>
-      )
-    }
+    <div>
+      <div className="space-y-4">
+        {userProfileDetails.map((war: War) => (
+          <MemeWarCard 
+            key={war.meme_war_state} 
+            war={war} 
+            onClick={() => router.push(`/meme-wars/${war.meme_war_state}`)}
+          />
+        ))}
+      </div>
     </div>
   );
 };
