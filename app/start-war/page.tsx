@@ -11,12 +11,16 @@ import {
   CardDescription,
   CardHeader,
   CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { getAssetFromMint } from "@/lib/utils";
-import { useWallet } from "@solana/wallet-adapter-react"; // Import wallet hook
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
+import { getAssetFromMint, getProgramDerivedAddressForPair } from '@/lib/utils';
+import { useWallet } from '@solana/wallet-adapter-react'; // Import wallet hook
+import { useCreateMemeWarDetails } from '../api/createMemeWarDetails';
+import useProgramDetails from '../hooks/useProgramDetails';
+import { PublicKey } from '@solana/web3.js';
+import { getPDAForMemeSigner, sortPublicKeys } from '../utils';
 
 // import { useGetMemeWarRegistry } from '../hooks/useGetMemeWarRegistry';
 
@@ -79,9 +83,8 @@ const createDefaultCoinData = (overrides: Partial<CoinData> = {}): CoinData => {
 
 export default function StartWarPage() {
   const [selectedDuration, setSelectedDuration] = useState<number>(2);
-  const [newMemeWarState, setNewMemeWarState] = useState<string | null>(null);
-  const [disableCreateWarBtn, setDisableCreateWarBtn] =
-    useState<boolean>(false);
+  const [newMemeWarState, setNewMemeWarState] = useState<PublicKey | null>(null);
+  const [disableCreateWarBtn, setDisableCreateWarBtn] = useState<boolean>(false);
   const [showRedirect, setShowRedirect] = useState<boolean>(false);
   const [coin1Data, setCoin1Data] = useState<CoinData>(createDefaultCoinData());
   const [coin2Data, setCoin2Data] = useState<CoinData>(createDefaultCoinData());
@@ -119,6 +122,61 @@ export default function StartWarPage() {
     showName: true,
     image: null,
   });
+
+  const { mutate: createMemeWarDetails } = useCreateMemeWarDetails();
+  const { memeProgram } = useProgramDetails()
+
+
+  const handleCreateMemeWarDetails = async () => {
+    try {
+      setDisableCreateWarBtn(true);
+      
+      const mintA = new PublicKey(coin1Data.mintAddress);
+      const mintB = new PublicKey(coin2Data.mintAddress);
+      
+      const sortedKeys = sortPublicKeys(mintA, mintB);
+      const memeWarRegistryAddress = getProgramDerivedAddressForPair(
+        sortedKeys[0], 
+        sortedKeys[1]
+      );
+      
+      let memeWarRegistry;
+      try {
+        memeWarRegistry = await memeProgram!.account.memeWarRegistry.fetch(memeWarRegistryAddress);
+      } catch (error) {
+        console.log("Registry doesn't exist yet, creating a new war");
+        setDisableCreateWarBtn(false);
+        return;
+      }
+      
+      const lastValidated = memeWarRegistry.lastValidated as number;
+      
+      const memeWarState = getPDAForMemeSigner(
+        sortedKeys[0], 
+        sortedKeys[1], 
+        lastValidated
+      );
+      
+      await createMemeWarDetails({ 
+        memeWarState: memeWarState, 
+        memeWarData: warData 
+      });
+      
+      setNewMemeWarState(memeWarState);
+      setShowRedirect(true);
+      
+      setWarData({
+        description: '',
+        twitter: '',
+        telegram: '',
+        website: ''
+      });
+    } catch (error) {
+      console.error("Error creating meme war details:", error);
+    } finally {
+      setDisableCreateWarBtn(false);
+    }
+  };
 
   const fetchTokenData = async (
     mintAddress: string,
@@ -167,7 +225,7 @@ export default function StartWarPage() {
   };
 
   // Debounce function to prevent too many API calls
-  
+
   useEffect(() => {
     const timeoutId = setTimeout(() => {
       if (coin1Data.mintAddress && coin1Data.mintAddress.length >= 32) {
@@ -188,7 +246,10 @@ export default function StartWarPage() {
 
   const handleSubmit = (e: React.FormEvent): void => {
     e.preventDefault();
-
+    if (warData && (warData.description || warData.telegram || warData.twitter || warData.website)) {
+      console.log("Validations work");
+      handleCreateMemeWarDetails();
+    }
     // Log the public key when the user clicks "Start War"
     console.log(
       "User public key:",
