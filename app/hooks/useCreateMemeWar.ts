@@ -1,4 +1,4 @@
-import { useCallback, useState } from "react";
+import { useCallback, useState, Dispatch, SetStateAction } from "react";
 
 import * as anchor from "@project-serum/anchor";
 import { useWallet } from "@solana/wallet-adapter-react";
@@ -24,7 +24,7 @@ import {
 import { toast } from "sonner";
 
 export function useCreateMemeWarRegistry(mint_a: string, mint_b: string) {
-  const [isCreateWarLoading, setIsCreateWarLoading] = useState(false);
+  const [isCreateWarLoading, setIsCreateWarLoading] = useState<boolean>(false);
   const [error, setError] = useState(null);
   const { publicKey } = useWalletInfo();
   const { sendTransaction } = useWallet();
@@ -155,14 +155,29 @@ export function useCreateMemeWarRegistry(mint_a: string, mint_b: string) {
         tx.add(validateIx);
 
         toast.message("Creating Meme war", { duration: 20000 });
-        sleep(5 * 1000);
-        // return await checkStatus({ signature, action: 'Creating Meme war', setIsLoading: setIsCreateWarLoading });
+
+        // Send transaction to wallet for approval
+        console.log("Sending transaction to wallet for approval");
+        const signature = await sendTransaction(tx, connection);
+        console.log(`Transaction signed with signature: ${signature}`);
+
+        toast.message("Creating and Validating Meme War", { duration: 20000 });
+        console.log("Waiting for transaction confirmation");
+
+        await sleep(5 * 1000);
+        console.log("Checking transaction status");
+        return await checkStatus({
+          signature,
+          action: "Creating Meme War",
+          setIsLoading: setIsCreateWarLoading,
+        });
       } catch (e) {
         toast.dismiss();
         setIsCreateWarLoading(false);
-        console.error(e);
+        console.error("Error creating meme war registry:", e);
         throw e;
       } finally {
+        console.log("Meme war registry creation process completed");
         setIsCreateWarLoading(false);
       }
     },
