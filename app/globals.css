@@ -10,24 +10,28 @@
 @layer base {
   :root {
     /* Trading platform dark theme */
-    --background: 0 0% 7%;  /* Very dark gray, almost black */
+    --background: 0 0% 7%;
+    /* Very dark gray, almost black */
     --foreground: 0 0% 95%;
-    
+
     --card: 0 0% 10%;
     --card-foreground: 0 0% 95%;
-    
-    --primary: 135 94% 39%;  /* Bright green */
+
+    --primary: 135 94% 39%;
+    /* Bright green */
     --primary-foreground: 0 0% 100%;
-    
-    --secondary: 0 72% 51%;  /* Red for negative values */
+
+    --secondary: 0 72% 51%;
+    /* Red for negative values */
     --secondary-foreground: 0 0% 100%;
-    
+
     --muted: 0 0% 15%;
     --muted-foreground: 0 0% 60%;
-    
-    --accent: 135 94% 39%;  /* Same as primary for consistency */
+
+    --accent: 135 94% 39%;
+    /* Same as primary for consistency */
     --accent-foreground: 0 0% 100%;
-    
+
     --border: 0 0% 15%;
     --input: 0 0% 15%;
     --ring: 135 94% 39%;
@@ -38,7 +42,7 @@
 
 /* Pixel art styles */
 .pixel-borders {
-  box-shadow: 
+  box-shadow:
     0 0 0 2px hsl(var(--primary)),
     0 0 0 4px hsl(var(--background)),
     0 0 0 6px hsl(var(--accent));
@@ -47,10 +51,9 @@
 
 .pixel-card {
   position: relative;
-  background: linear-gradient(135deg, 
-    hsl(var(--card)) 0%,
-    hsl(var(--muted)) 100%
-  );
+  background: linear-gradient(135deg,
+      hsl(var(--card)) 0%,
+      hsl(var(--muted)) 100%);
   border: 2px solid hsl(var(--border));
 }
 
@@ -68,7 +71,7 @@
 /* Retro text styles */
 .retro-text {
   font-family: 'PixelFont', monospace;
-  text-shadow: 
+  text-shadow:
     2px 2px 0 hsl(var(--primary)),
     4px 4px 0 hsl(var(--accent));
 }
@@ -79,30 +82,90 @@
   border: 1px solid hsl(var(--border));
   border-radius: var(--radius);
   transition: all 0.2s ease;
-  min-width: 300px; /* Ensure minimum width for content */
+  min-width: 300px;
+  /* Ensure minimum width for content */
 }
 
 .coin-card:hover {
   border-color: hsl(var(--primary) / 0.5);
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .top-war {
   border-color: hsl(var(--primary));
-  background: linear-gradient(
-    to bottom,
-    hsl(var(--card)) 0%,
-    color-mix(in srgb, hsl(var(--primary)) 10%, hsl(var(--card))) 100%
-  );
+  background: linear-gradient(to bottom,
+      hsl(var(--card)) 0%,
+      color-mix(in srgb, hsl(var(--primary)) 10%, hsl(var(--card))) 100%);
 }
 
 .vs-badge {
-  background: hsl(var(--muted));
+  background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.7));
   border: 1px solid hsl(var(--border));
-  color: hsl(var(--muted-foreground));
-  font-size: 0.75rem;
-  padding: 0.25rem 0.75rem;
-  border-radius: 0.25rem;
-  transition: opacity 0.2s ease;
+  color: hsl(var(--primary-foreground));
+  font-size: 1.25rem;
+  font-weight: bold;
+  padding: 0.5rem 1rem;
+  border-radius: 0.5rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 0 10px rgba(var(--primary-rgb), 0.3);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  position: relative;
+  overflow: hidden;
+}
+
+.vs-badge::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0) 70%);
+  transform: rotate(45deg);
+  animation: shine 3s infinite;
+}
+
+@keyframes shine {
+  0% {
+    transform: translateX(-100%) rotate(45deg);
+  }
+
+  20%,
+  100% {
+    transform: translateX(100%) rotate(45deg);
+  }
+}
+
+@keyframes pulse {
+
+  0%,
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 10px rgba(var(--primary-rgb), 0.3);
+  }
+
+  50% {
+    transform: scale(1.05);
+    box-shadow: 0 0 20px rgba(var(--primary-rgb), 0.5);
+  }
+}
+
+@keyframes glow {
+
+  0%,
+  100% {
+    text-shadow: 0 0 5px rgba(var(--primary-rgb), 0.5);
+  }
+
+  50% {
+    text-shadow: 0 0 15px rgba(var(--primary-rgb), 0.8), 0 0 25px rgba(var(--primary-rgb), 0.5);
+  }
+}
+
+.vs-badge.animated {
+  animation: pulse 2s infinite, glow 2s infinite;
 }
 
 .positive {
@@ -138,15 +201,26 @@
   * {
     @apply border-border;
   }
+
   body {
     @apply bg-background text-foreground;
   }
 }
 
 @keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  25% { transform: translateX(3px); }
-  75% { transform: translateX(-3px); }
+
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+
+  25% {
+    transform: translateX(3px);
+  }
+
+  75% {
+    transform: translateX(-3px);
+  }
 }
 
 .animate-shake {
@@ -155,18 +229,16 @@
 
 /* Add these styles for the holographic buttons */
 .holo-gradient {
-  background: linear-gradient(
-    45deg,
-    hsl(var(--primary)) 0%,
-    hsl(var(--primary)/0.8) 25%,
-    hsl(var(--secondary)) 50%,
-    hsl(var(--primary)/0.8) 75%,
-    hsl(var(--primary)) 100%
-  );
+  background: linear-gradient(45deg,
+      hsl(var(--primary)) 0%,
+      hsl(var(--primary)/0.8) 25%,
+      hsl(var(--secondary)) 50%,
+      hsl(var(--primary)/0.8) 75%,
+      hsl(var(--primary)) 100%);
   background-size: 200% 200%;
   animation: gradient-shift 3s linear infinite;
   border: 1px solid rgba(255, 255, 255, 0.2);
-  box-shadow: 
+  box-shadow:
     0 0 10px -2px hsl(var(--primary)/0.5),
     inset 0 0 10px -2px hsl(var(--primary)/0.3);
   backdrop-filter: blur(8px);
@@ -176,9 +248,11 @@
   0% {
     background-position: 0% 50%;
   }
+
   50% {
     background-position: 100% 50%;
   }
+
   100% {
     background-position: 0% 50%;
   }
@@ -186,14 +260,12 @@
 
 /* Update the Phantom wallet button styles */
 .phantom-button {
-  background: linear-gradient(
-    45deg,
-    hsl(273, 84%, 33%) 0%,
-    hsl(273, 84%, 40%) 25%,
-    hsl(283, 84%, 47%) 50%,
-    hsl(273, 84%, 40%) 75%,
-    hsl(273, 84%, 33%) 100%
-  ) !important;
+  background: linear-gradient(45deg,
+      hsl(273, 84%, 33%) 0%,
+      hsl(273, 84%, 40%) 25%,
+      hsl(283, 84%, 47%) 50%,
+      hsl(273, 84%, 40%) 75%,
+      hsl(273, 84%, 33%) 100%) !important;
   background-size: 200% 200% !important;
   animation: gradient-shift 3s linear infinite !important;
   color: white !important;
@@ -205,7 +277,7 @@
   font-weight: 600 !important;
   transition: all 0.2s !important;
   border: 1px solid rgba(255, 255, 255, 0.2) !important;
-  box-shadow: 
+  box-shadow:
     0 0 10px -2px rgba(138, 43, 226, 0.5),
     inset 0 0 10px -2px rgba(138, 43, 226, 0.3) !important;
   backdrop-filter: blur(8px) !important;
@@ -218,22 +290,20 @@
   content: "Connect Wallet" !important;
 }
 
-.phantom-button img, 
+.phantom-button img,
 .phantom-button svg {
   display: none !important;
 }
 
 .phantom-button:hover {
   transform: translateY(-1px) !important;
-  background: linear-gradient(
-    45deg,
-    hsl(273, 84%, 36%) 0%,
-    hsl(273, 84%, 43%) 25%,
-    hsl(283, 84%, 50%) 50%,
-    hsl(273, 84%, 43%) 75%,
-    hsl(273, 84%, 36%) 100%
-  ) !important;
-  box-shadow: 
+  background: linear-gradient(45deg,
+      hsl(273, 84%, 36%) 0%,
+      hsl(273, 84%, 43%) 25%,
+      hsl(283, 84%, 50%) 50%,
+      hsl(273, 84%, 43%) 75%,
+      hsl(273, 84%, 36%) 100%) !important;
+  box-shadow:
     0 0 15px -2px rgba(138, 43, 226, 0.7),
     inset 0 0 15px -2px rgba(138, 43, 226, 0.4) !important;
 }
@@ -248,29 +318,25 @@
 
 /* When wallet is connected */
 .phantom-button[data-connected="true"] {
-  background: linear-gradient(
-    45deg,
-    hsl(153, 84%, 33%) 0%,
-    hsl(153, 84%, 40%) 25%,
-    hsl(163, 84%, 47%) 50%,
-    hsl(153, 84%, 40%) 75%,
-    hsl(153, 84%, 33%) 100%
-  ) !important;
-  box-shadow: 
+  background: linear-gradient(45deg,
+      hsl(153, 84%, 33%) 0%,
+      hsl(153, 84%, 40%) 25%,
+      hsl(163, 84%, 47%) 50%,
+      hsl(153, 84%, 40%) 75%,
+      hsl(153, 84%, 33%) 100%) !important;
+  box-shadow:
     0 0 10px -2px rgba(46, 226, 138, 0.5),
     inset 0 0 10px -2px rgba(46, 226, 138, 0.3) !important;
 }
 
 .phantom-button[data-connected="true"]:hover {
-  background: linear-gradient(
-    45deg,
-    hsl(153, 84%, 36%) 0%,
-    hsl(153, 84%, 43%) 25%,
-    hsl(163, 84%, 50%) 50%,
-    hsl(153, 84%, 43%) 75%,
-    hsl(153, 84%, 36%) 100%
-  ) !important;
-  box-shadow: 
+  background: linear-gradient(45deg,
+      hsl(153, 84%, 36%) 0%,
+      hsl(153, 84%, 43%) 25%,
+      hsl(163, 84%, 50%) 50%,
+      hsl(153, 84%, 43%) 75%,
+      hsl(153, 84%, 36%) 100%) !important;
+  box-shadow:
     0 0 15px -2px rgba(46, 226, 138, 0.7),
     inset 0 0 15px -2px rgba(46, 226, 138, 0.4) !important;
 }
@@ -283,6 +349,7 @@
   0% {
     transform: translateX(0);
   }
+
   100% {
     transform: translateX(-50%);
   }
@@ -290,4 +357,150 @@
 
 .animate-scroll {
   animation: scroll 20s linear infinite;
+}
+
+/* Wallet Button Styling */
+.wallet-button-wrapper {
+  display: inline-block;
+}
+
+.wallet-button-wrapper button {
+  background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.7)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  padding: 0.5rem 1rem !important;
+  border-radius: 0.5rem !important;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 0 10px rgba(var(--primary-rgb), 0.3) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  position: relative !important;
+  overflow: hidden !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  height: auto !important;
+  line-height: 1.5 !important;
+  cursor: pointer !important;
+}
+
+.wallet-button-wrapper button:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 0 15px rgba(var(--primary-rgb), 0.5) !important;
+}
+
+.wallet-button-wrapper button:active {
+  transform: translateY(0) !important;
+}
+
+.wallet-button-wrapper button::before {
+  content: '' !important;
+  position: absolute !important;
+  top: -50% !important;
+  left: -50% !important;
+  width: 200% !important;
+  height: 200% !important;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0) 70%) !important;
+  transform: rotate(45deg) !important;
+  animation: shine 3s infinite !important;
+}
+
+/* Override the default wallet adapter styles */
+.wallet-adapter-button {
+  background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.7)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  color: hsl(var(--primary-foreground)) !important;
+  font-size: 0.875rem !important;
+  font-weight: 500 !important;
+  padding: 0.5rem 1rem !important;
+  border-radius: 0.5rem !important;
+  transition: all 0.3s ease !important;
+  box-shadow: 0 0 10px rgba(var(--primary-rgb), 0.3) !important;
+  text-transform: uppercase !important;
+  letter-spacing: 0.05em !important;
+  position: relative !important;
+  overflow: hidden !important;
+  display: flex !important;
+  align-items: center !important;
+  gap: 0.5rem !important;
+  height: auto !important;
+  line-height: 1.5 !important;
+  cursor: pointer !important;
+}
+
+.wallet-adapter-button:hover {
+  transform: translateY(-1px) !important;
+  box-shadow: 0 0 15px rgba(var(--primary-rgb), 0.5) !important;
+}
+
+.wallet-adapter-button:active {
+  transform: translateY(0) !important;
+}
+
+.wallet-adapter-button::before {
+  content: '' !important;
+  position: absolute !important;
+  top: -50% !important;
+  left: -50% !important;
+  width: 200% !important;
+  height: 200% !important;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.2) 0%, rgba(255, 255, 255, 0) 70%) !important;
+  transform: rotate(45deg) !important;
+  animation: shine 3s infinite !important;
+}
+
+/* Style the wallet modal */
+.wallet-adapter-modal {
+  background: hsl(var(--card)) !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: 0.5rem !important;
+  box-shadow: 0 0 20px rgba(0, 0, 0, 0.5) !important;
+}
+
+.wallet-adapter-modal-title {
+  color: hsl(var(--primary-foreground)) !important;
+  font-weight: 600 !important;
+}
+
+.wallet-adapter-modal-button-close {
+  background: transparent !important;
+  border: none !important;
+  color: hsl(var(--muted-foreground)) !important;
+}
+
+.wallet-adapter-modal-button-close:hover {
+  color: hsl(var(--foreground)) !important;
+}
+
+.wallet-adapter-modal-list {
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+.wallet-adapter-modal-list-item {
+  background: transparent !important;
+  border: 1px solid hsl(var(--border)) !important;
+  border-radius: 0.5rem !important;
+  margin-bottom: 0.5rem !important;
+  transition: all 0.2s ease !important;
+}
+
+.wallet-adapter-modal-list-item:hover {
+  background: hsl(var(--muted)) !important;
+  border-color: hsl(var(--primary)) !important;
+}
+
+.wallet-adapter-modal-list-item:last-child {
+  margin-bottom: 0 !important;
+}
+
+.wallet-adapter-modal-list-more {
+  color: hsl(var(--primary)) !important;
+  font-weight: 500 !important;
+}
+
+.wallet-adapter-modal-list-more:hover {
+  color: hsl(var(--primary-foreground)) !important;
 }
