@@ -5,7 +5,7 @@ import {
   formatNumber,
   formatWalletAddress,
   validateSolanaAddress,
-  showErrorToast,
+  showErrorToast
 } from "@/lib/utils";
 import Link from "next/link";
 import { useEffect, useState, useCallback, useMemo } from "react";
@@ -185,6 +185,7 @@ export default function WarPage() {
     isLoading,
   } = useMemeWarStateInfo(memeWarState);
 
+
   // Initialize deposit/withdraw hooks
   const { depositTokens } = useDepositTokens(mintA, mintB);
   const { withdrawTokens } = useWithdrawTokens(mintA, mintB);
@@ -312,12 +313,12 @@ export default function WarPage() {
           const updatedData = { ...prevData };
 
           if (isMatchingMintA) {
-            const newTrades = [message, ...updatedData.mintA];
+            const newTrades = [message, ...updatedData?.mintA];
             updatedData.mintA = newTrades.sort(
               (a, b) => b.event_time - a.event_time
             );
           } else if (isMatchingMintB) {
-            const newTrades = [message, ...updatedData.mintB];
+            const newTrades = [message, ...updatedData?.mintB];
             updatedData.mintB = newTrades.sort(
               (a, b) => b.event_time - a.event_time
             );
@@ -748,7 +749,7 @@ export default function WarPage() {
                   $
                   {formatNumber(
                     warData.totalPledged *
-                      ((warData.coin1.price + warData.coin2.price) / 2)
+                    ((warData.coin1.price + warData.coin2.price) / 2)
                   )}
                 </div>
               </div>
@@ -796,18 +797,18 @@ export default function WarPage() {
               <div className="space-y-2 max-h-[400px] overflow-y-auto">
                 <AnimatePresence mode="popLayout">
                   {displayTradesData &&
-                    [
-                      ...(displayTradesData.mintA || []),
-                      ...(displayTradesData.mintB || []),
-                    ]
-                      .sort(
-                        (a: TradeData, b: TradeData) =>
-                          b.event_time - a.event_time
+                    [...(displayTradesData.mintA || []), ...(displayTradesData.mintB || [])]
+                      .map(trade => ({
+                        ...trade,
+                        uniqueId: trade.tx_signature || `${trade.wallet_address}-${trade.event_time}`
+                      }))
+                      .filter((trade, index, self) =>
+                        index === self.findIndex(t => t.uniqueId === trade.uniqueId)
                       )
+                      .sort((a, b) => b.event_time - a.event_time)
                       .slice(0, 10)
-                      .map((trade: TradeData, i: number) => {
-                        // console.log("Trade: ", trade);
-                        const isMintA = trade.mint === warData.coin1.ticker;
+                      .map((trade, i) => {
+                        const isMintA = trade.mint === warData.coin1.address;
                         const coin = isMintA ? warData.coin1 : warData.coin2;
                         const decimals = isMintA
                           ? memeWarStateInfo?.mint_a_decimals
@@ -822,38 +823,41 @@ export default function WarPage() {
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, height: 0 }}
                             className={`flex items-center justify-between py-2 border-b border-border/50 last:border-0 
-                            ${
-                              animateTrade.index === (isMintA ? 0 : 1) &&
-                              animateTrade.tradeId ===
+                            ${animateTrade.index === (isMintA ? 0 : 1) &&
+                                animateTrade.tradeId ===
                                 (trade.tx_signature || `${trade.event_time}`) &&
-                              i === 0
+                                i === 0
                                 ? "animate-shake"
                                 : ""
-                            }`}
+                              }`}
                           >
-                            {/* HERE SOMEWHERE IS THE PROBLEM */}
-                            <div className="flex items-center gap-2">
-                              <span className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-sm">
-                                <img
-                                  src={coin.image}
-                                  alt={coin.ticker}
-                                  className="w-5 h-5"
-                                />
-                              </span>
-                              <span
-                                className={`text-sm ${
-                                  isMintA ? "text-primary" : "text-[#FF4444]"
-                                }`}
-                              >
-                                +${formatNumber(amount * coin.price)}
-                              </span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                              <span className="text-sm text-muted-foreground">
-                                {formatWalletAddress(trade.wallet_address)}
-                              </span>
-                            </div>
+                            <a
+                              href={`https://solscan.io/tx/${trade.tx_signature}?cluster=devnet`}
+                              target='_blank'
+                            >
+                              <div className="flex items-center gap-2">
+                                <span className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-sm">
+                                  <img
+                                    src={isMintA ? memeWarStateInfo?.mint_a_image : memeWarStateInfo?.mint_b_image}
+                                    alt={coin.ticker}
+                                    className="w-5 h-5"
+                                  />
+                                </span>
+                                <span
+                                  className={`text-sm ${isMintA ? "text-primary" : "text-[#FF4444]"
+                                    }`}
+                                >
+                                  +${formatNumber(amount)}
+                                </span>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-sm text-muted-foreground">
+                                  {formatWalletAddress(trade.wallet_address)}
+                                </span>
+                              </div>
+                            </a>
                           </motion.div>
+
                         );
                       })}
                 </AnimatePresence>
@@ -896,8 +900,8 @@ export default function WarPage() {
                       const supporterType = isCoin1Supporter
                         ? warData.coin1.ticker
                         : isCoin2Supporter
-                        ? warData.coin2.ticker
-                        : null;
+                          ? warData.coin2.ticker
+                          : null;
 
                       return (
                         <motion.div
@@ -905,16 +909,15 @@ export default function WarPage() {
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
                           exit={{ opacity: 0, x: 20 }}
-                          className={`flex items-start gap-3 ${
-                            message.id === lastMessageId ? "animate-pulse" : ""
-                          }`}
+                          className={`flex items-start gap-3 ${message.id === lastMessageId ? "animate-pulse" : ""
+                            }`}
                         >
                           <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm shrink-0">
                             {isCoin1Supporter
                               ? "1️⃣"
                               : isCoin2Supporter
-                              ? "2️⃣"
-                              : "👤"}
+                                ? "2️⃣"
+                                : "👤"}
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
@@ -923,11 +926,10 @@ export default function WarPage() {
                               </span>
                               {supporterType && (
                                 <span
-                                  className={`text-xs px-1.5 py-0.5 rounded-full ${
-                                    isCoin1Supporter
-                                      ? "bg-primary/10 text-primary"
-                                      : "bg-red-500/10 text-red-500"
-                                  }`}
+                                  className={`text-xs px-1.5 py-0.5 rounded-full ${isCoin1Supporter
+                                    ? "bg-primary/10 text-primary"
+                                    : "bg-red-500/10 text-red-500"
+                                    }`}
                                 >
                                   {supporterType} Supporter
                                 </span>
@@ -971,7 +973,7 @@ export default function WarPage() {
           </div>
         </div>
       </div>
-    </div>
+    </div >
   );
 }
 
@@ -1144,9 +1146,8 @@ function TokenCard({
                   ${token.price.toFixed(8)}
                 </span>
                 <span
-                  className={`text-sm ${
-                    token.priceChange24h >= 0 ? "text-primary" : "text-red-500"
-                  }`}
+                  className={`text-sm ${token.priceChange24h >= 0 ? "text-primary" : "text-red-500"
+                    }`}
                 >
                   {token.priceChange24h >= 0 ? "+" : ""}
                   {token.priceChange24h.toFixed(2)}%
@@ -1388,11 +1389,10 @@ function TokenCard({
                 <div
                   key={index}
                   onClick={() => setSelectedTemplate(template)}
-                  className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                    selectedTemplate === template
-                      ? "border-primary bg-primary/5"
-                      : "border-border hover:border-primary/50"
-                  }`}
+                  className={`p-3 rounded-lg border cursor-pointer transition-all ${selectedTemplate === template
+                    ? "border-primary bg-primary/5"
+                    : "border-border hover:border-primary/50"
+                    }`}
                 >
                   <p className="text-sm mb-2">{template.text}</p>
                   <div className="flex flex-wrap gap-2">
@@ -1417,10 +1417,9 @@ function TokenCard({
               rel="noopener noreferrer"
               className={`
                 w-full inline-flex justify-center items-center px-4 py-2 rounded
-                ${
-                  selectedTemplate
-                    ? "bg-[#1DA1F2] hover:bg-[#1DA1F2]/90 text-white cursor-pointer"
-                    : "bg-muted text-muted-foreground cursor-not-allowed"
+                ${selectedTemplate
+                  ? "bg-[#1DA1F2] hover:bg-[#1DA1F2]/90 text-white cursor-pointer"
+                  : "bg-muted text-muted-foreground cursor-not-allowed"
                 }
               `}
             >

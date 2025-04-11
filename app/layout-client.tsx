@@ -11,6 +11,7 @@ import { MemeWarProvider } from "./context/memeWarStateContext"
 import { SolanaProvider } from "@/components/solana/solana-provider"
 import { ClusterProvider } from "@/components/cluster/cluster-data-access"
 import { ReactQueryProvider } from "./react-query-provider"
+import { SolPriceProvider } from "./context/solPriceContext"
 
 // Can be set to 'devnet', 'testnet', or 'mainnet-beta'
 const network = WalletAdapterNetwork.Devnet
@@ -27,21 +28,23 @@ export function LayoutClient({
       <ClusterProvider>
         <SolanaProvider>
           <MemeWarProvider>
-            <ConnectionProvider endpoint={endpoint}>
-              <WalletProvider wallets={wallets} autoConnect>
-                <WalletModalProvider>
-                  <div className="flex flex-col min-h-screen">
-                    <Header />
-                    <LiveFeedCarousel />
-                    <main className="flex-1">
-                      <div className="min-h-screen bg-background/95 backdrop-blur-sm">
-                        {children}
-                      </div>
-                    </main>
-                  </div>
-                </WalletModalProvider>
-              </WalletProvider>
-            </ConnectionProvider>
+            <SolPriceProvider>
+              <ConnectionProvider endpoint={endpoint}>
+                <WalletProvider wallets={wallets} autoConnect>
+                  <WalletModalProvider>
+                    <div className="flex flex-col min-h-screen">
+                      <Header />
+                      <LiveFeedCarousel />
+                      <main className="flex-1">
+                        <div className="min-h-screen bg-background/95 backdrop-blur-sm">
+                          {children}
+                        </div>
+                      </main>
+                    </div>
+                  </WalletModalProvider>
+                </WalletProvider>
+              </ConnectionProvider>
+            </SolPriceProvider>
           </MemeWarProvider>
         </SolanaProvider>
       </ClusterProvider>
