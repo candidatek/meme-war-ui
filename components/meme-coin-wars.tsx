@@ -192,12 +192,12 @@ export function MemeCoinWars() {
   }
 
   return (
-    <div className="container mx-auto px-4 h-full flex flex-col">
-      <div className="flex items-center justify-between mb-6">
-        <h2 className="text-xl font-medium">MARKET</h2>
+    <div className="container mx-auto px-2 sm:px-4 h-full flex flex-col">
+      <div className="flex flex-wrap items-center justify-between mb-4 sm:mb-6 gap-2">
+        <h2 className="text-lg sm:text-xl font-medium">MARKET</h2>
         <motion.button
           onClick={toggleAnimations}
-          className="relative flex items-center gap-1 px-3 py-1 rounded text-xs font-medium bg-muted hover:bg-muted/80 transition-colors overflow-hidden group"
+          className="relative flex items-center gap-1 px-2 sm:px-3 py-1 rounded text-xs font-medium bg-muted hover:bg-muted/80 transition-colors overflow-hidden group"
           aria-label={
             animationsEnabled ? "Disable animations" : "Enable animations"
           }
@@ -247,7 +247,7 @@ export function MemeCoinWars() {
             )}
           </motion.div>
           <motion.span
-            className="relative z-10"
+            className="relative z-10 hidden sm:inline"
             initial={false}
             animate={{
               opacity: [1, 0.8, 1],
@@ -315,7 +315,7 @@ export function MemeCoinWars() {
         </motion.button>
       </div>
       <div className="flex-1 overflow-y-auto">
-        <div className="space-y-4">
+        <div className="space-y-3 sm:space-y-4">
           {animationsEnabled ? (
             <AnimatePresence mode="popLayout">
               {wars.map((war, index) => (
@@ -389,9 +389,9 @@ function WarItem({
 
   const WarItemContent = () => (
     <>
-      <div className="grid grid-cols-5 gap-4">
+      <div className="grid grid-cols-11 gap-1 sm:gap-2 md:gap-4">
         {/* Left Side */}
-        <div className="col-span-2">
+        <div className="col-span-5 sm:col-span-5">
           <CoinCard
             coin={updatedCoin1}
             isTopWar={index === 0}
@@ -408,12 +408,12 @@ function WarItem({
                   animate={{ opacity: 1, y: 0, x: 0 }}
                   exit={{ opacity: 0, x: -20 }}
                   transition={{ duration: 0.2 }}
-                  className="mt-2 text-xs text-right"
+                  className="mt-1 sm:mt-2 text-xs text-right"
                 >
                   <span className="text-primary">
                     +${formatNumber(war.coin1.recentPledges[0].amount)}
                   </span>
-                  <span className="text-muted-foreground ml-2">
+                  <span className="text-muted-foreground ml-1 sm:ml-2 hidden xs:inline">
                     by {war.coin1.recentPledges[0].pledger}
                   </span>
                 </motion.div>
@@ -422,11 +422,11 @@ function WarItem({
           )}
           {/* Static pledge notification when animations disabled */}
           {!animationsEnabled && war.coin1.recentPledges?.[0] && (
-            <div className="mt-2 text-xs text-right">
+            <div className="mt-1 sm:mt-2 text-xs text-right">
               <span className="text-primary">
                 +${formatNumber(war.coin1.recentPledges[0].amount)}
               </span>
-              <span className="text-muted-foreground ml-2">
+              <span className="text-muted-foreground ml-1 sm:ml-2 hidden xs:inline">
                 by {war.coin1.recentPledges[0].pledger}
               </span>
             </div>
@@ -434,10 +434,10 @@ function WarItem({
         </div>
 
         {/* Center VS */}
-        <div className="flex items-center justify-center">
+        <div className="col-span-1 flex items-center justify-center">
           {animationsEnabled ? (
             <motion.div
-              className="vs-badge animated"
+              className="vs-badge animated text-xs sm:text-sm"
               animate={{
                 scale: isShaking ? 1.2 : 1,
                 rotate: isShaking ? [0, -5, 5, -5, 0] : 0,
@@ -454,12 +454,12 @@ function WarItem({
               VS
             </motion.div>
           ) : (
-            <div className="vs-badge">VS</div>
+            <div className="vs-badge text-xs sm:text-sm">VS</div>
           )}
         </div>
 
         {/* Right Side */}
-        <div className="col-span-2">
+        <div className="col-span-5 sm:col-span-5">
           <CoinCard
             coin={updatedCoin2}
             isTopWar={index === 0}
@@ -476,12 +476,12 @@ function WarItem({
                   animate={{ opacity: 1, y: 0, x: 0 }}
                   exit={{ opacity: 0, x: 20 }}
                   transition={{ duration: 0.2 }}
-                  className="mt-2 text-xs text-left"
+                  className="mt-1 sm:mt-2 text-xs text-left"
                 >
                   <span className="text-primary">
                     +${formatNumber(war.coin2.recentPledges[0].amount)}
                   </span>
-                  <span className="text-muted-foreground ml-2">
+                  <span className="text-muted-foreground ml-1 sm:ml-2 hidden xs:inline">
                     by {war.coin2.recentPledges[0].pledger}
                   </span>
                 </motion.div>
@@ -490,11 +490,11 @@ function WarItem({
           )}
           {/* Static pledge notification when animations disabled */}
           {!animationsEnabled && war.coin2.recentPledges?.[0] && (
-            <div className="mt-2 text-xs text-left">
+            <div className="mt-1 sm:mt-2 text-xs text-left">
               <span className="text-primary">
                 +${formatNumber(war.coin2.recentPledges[0].amount)}
               </span>
-              <span className="text-muted-foreground ml-2">
+              <span className="text-muted-foreground ml-1 sm:ml-2 hidden xs:inline">
                 by {war.coin2.recentPledges[0].pledger}
               </span>
             </div>
@@ -503,7 +503,7 @@ function WarItem({
       </div>
 
       {/* Divider */}
-      {index < 9 && <div className="h-px bg-border mt-4" />}
+      {index < 9 && <div className="h-px bg-border mt-3 sm:mt-4" />}
     </>
   );
 
@@ -549,54 +549,74 @@ function CoinCard({ coin, isTopWar, align, onClick }: CoinCardProps) {
 
   return (
     <div
-      className={`coin-card p-4 ${isTopWar ? "top-war" : ""} cursor-pointer`}
+      className={`coin-card p-2 sm:p-3 md:p-4 ${
+        isTopWar ? "top-war" : ""
+      } cursor-pointer`}
       onClick={onClick}
     >
-      <div className="flex flex-col gap-3">
+      <div className="flex flex-col gap-2 sm:gap-3">
         {/* Header: Ticker, Change %, and Social Links */}
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center">
+          <div className="flex items-center gap-1 sm:gap-2">
+            <div className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full bg-muted flex items-center justify-center text-sm sm:text-base">
               {coin.emoji}
             </div>
             <div>
-              <div className="flex items-center gap-2">
-                <span className="ticker font-semibold">{coin.ticker}</span>
+              <div className="flex items-center gap-1 sm:gap-2">
+                <span className="ticker font-semibold text-xs sm:text-sm">
+                  {coin.ticker}
+                </span>
                 <span
-                  className={`text-xs ${isPositive ? "positive" : "negative"}`}
+                  className={`text-xs ${
+                    isPositive ? "positive" : "negative"
+                  } hidden xs:inline`}
                 >
                   {isPositive ? "+" : ""}
                   {percentChange.toFixed(2)}%
                 </span>
               </div>
-              <div className="text-xs text-muted-foreground">{coin.name}</div>
+              <div className="text-xs text-muted-foreground truncate max-w-[80px] sm:max-w-none">
+                {coin.name}
+              </div>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2">
             <a
               href="#"
-              className="text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground hidden sm:block"
               onClick={(e) => e.stopPropagation()}
             >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+              <svg
+                className="w-3 h-3 sm:w-4 sm:h-4"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
                 <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
               </svg>
             </a>
             <a
               href="#"
-              className="text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground hidden xs:block"
               onClick={(e) => e.stopPropagation()}
             >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+              <svg
+                className="w-3 h-3 sm:w-4 sm:h-4"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm4.64 6.8c-.15 1.58-.8 5.42-1.13 7.19-.14.75-.42 1-.68 1.03-.58.05-1.02-.38-1.58-.75-.88-.58-1.38-.94-2.23-1.5-.99-.65-.35-1.01.22-1.59.15-.15 2.71-2.48 2.76-2.69a.2.2 0 0 0-.05-.18c-.06-.05-.14-.03-.21-.02-.09.02-1.49.95-4.22 2.79-.4.27-.76.41-1.08.4-.36-.01-1.04-.2-1.55-.37-.63-.2-1.12-.31-1.08-.66.02-.18.27-.36.74-.55 2.92-1.27 4.86-2.11 5.83-2.51 2.78-1.16 3.35-1.36 3.73-1.36.08 0 .27.02.39.12.1.08.13.19.14.27-.01.06.01.24 0 .38z" />
               </svg>
             </a>
             <a
               href="#"
-              className="text-muted-foreground hover:text-foreground"
+              className="text-muted-foreground hover:text-foreground hidden md:block"
               onClick={(e) => e.stopPropagation()}
             >
-              <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+              <svg
+                className="w-3 h-3 sm:w-4 sm:h-4"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
                 <path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 17.93c-3.95-.49-7-3.85-7-7.93 0-.62.08-1.21.21-1.79L9 15v1c0 1.1.9 2 2 2v1.93zm6.9-2.54c-.26-.81-1-1.39-1.9-1.39h-1v-3c0-.55-.45-1-1-1H8v-2h2c.55 0 1-.45 1-1V7h2c1.1 0 2-.9 2-2v-.41c2.93 1.19 5 4.06 5 7.41 0 2.08-.8 3.97-2.1 5.39z" />
               </svg>
             </a>
@@ -604,22 +624,28 @@ function CoinCard({ coin, isTopWar, align, onClick }: CoinCardProps) {
         </div>
 
         {/* Stats Grid */}
-        <div className="grid grid-cols-2 gap-2 text-sm">
+        <div className="grid grid-cols-2 gap-1 sm:gap-2 text-xs sm:text-sm">
           <div className="flex flex-col">
-            <span className="text-muted-foreground text-xs">Market Cap</span>
-            <span className="stat-value">${formatNumber(coin.marketCap)}</span>
+            <span className="text-muted-foreground text-[10px] sm:text-xs">
+              Market Cap
+            </span>
+            <span className="stat-value truncate">
+              ${formatNumber(coin.marketCap)}
+            </span>
           </div>
           <div className="flex flex-col">
-            <span className="text-muted-foreground text-xs">
+            <span className="text-muted-foreground text-[10px] sm:text-xs">
               Total Pledgers
             </span>
-            <span className="stat-value">{formatNumber(coin.pledgers)}</span>
+            <span className="stat-value truncate">
+              {formatNumber(coin.pledgers)}
+            </span>
           </div>
           <div className="flex flex-col">
-            <span className="text-muted-foreground text-xs">
+            <span className="text-muted-foreground text-[10px] sm:text-xs">
               Amount Pledged
             </span>
-            <span className="stat-value text-primary">
+            <span className="stat-value text-primary truncate">
               ${formatNumber(coin.amountPledged)}
             </span>
           </div>
@@ -629,7 +655,7 @@ function CoinCard({ coin, isTopWar, align, onClick }: CoinCardProps) {
                 e.stopPropagation();
                 onClick();
               }}
-              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground px-3 py-1 rounded text-xs font-medium transition-colors"
+              className="w-full bg-primary hover:bg-primary/90 text-primary-foreground px-2 sm:px-3 py-1 rounded text-[10px] sm:text-xs font-medium transition-colors"
             >
               Pledge
             </button>

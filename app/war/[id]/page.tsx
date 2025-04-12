@@ -1,50 +1,39 @@
 "use client";
 
-import {
-  useCallback,
-  useEffect,
-  useMemo,
-  useState,
-} from 'react';
+import { useCallback, useEffect, useMemo, useState } from "react";
 
-import {
-  AnimatePresence,
-  motion,
-} from 'framer-motion';
-import { Megaphone } from 'lucide-react';
-import { useParams } from 'next/navigation';
-import {
-  io,
-  Socket,
-} from 'socket.io-client';
+import { AnimatePresence, motion } from "framer-motion";
+import { Megaphone } from "lucide-react";
+import { useParams } from "next/navigation";
+import { io, Socket } from "socket.io-client";
 
-import { useGetChatMessages } from '@/app/api/getChatMessages';
-import { useMemeWarStateInfo } from '@/app/api/getMemeWarStateInfo';
-import { useRecentTrades } from '@/app/api/getRecentTrades';
-import { useGetUserStateInfo } from '@/app/api/getUserState';
-import { useSendChatMessage } from '@/app/api/sendChatMessage';
-import { useMemeWarContext } from '@/app/context/memeWarStateContext';
-import { useAuth } from '@/app/hooks/useAuth';
-import useCountdown from '@/app/hooks/useCountdown';
-import useDepositTokens from '@/app/hooks/useDeposit';
-import { useTokenBalance } from '@/app/hooks/useUserBalance';
-import useWalletInfo from '@/app/hooks/useWalletInfo';
-import useWithdrawTokens from '@/app/hooks/useWithdraw';
+import { useGetChatMessages } from "@/app/api/getChatMessages";
+import { useMemeWarStateInfo } from "@/app/api/getMemeWarStateInfo";
+import { useRecentTrades } from "@/app/api/getRecentTrades";
+import { useGetUserStateInfo } from "@/app/api/getUserState";
+import { useSendChatMessage } from "@/app/api/sendChatMessage";
+import { useMemeWarContext } from "@/app/context/memeWarStateContext";
+import { useAuth } from "@/app/hooks/useAuth";
+import useCountdown from "@/app/hooks/useCountdown";
+import useDepositTokens from "@/app/hooks/useDeposit";
+import { useTokenBalance } from "@/app/hooks/useUserBalance";
+import useWalletInfo from "@/app/hooks/useWalletInfo";
+import useWithdrawTokens from "@/app/hooks/useWithdraw";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from '@/components/ui/dialog';
+} from "@/components/ui/dialog";
 import {
   formatNumber,
   formatWalletAddress,
   showErrorToast,
   validateSolanaAddress,
-} from '@/lib/utils';
-import { useWallet } from '@solana/wallet-adapter-react';
-import { PublicKey } from '@solana/web3.js';
-import { useQueryClient } from '@tanstack/react-query';
+} from "@/lib/utils";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { PublicKey } from "@solana/web3.js";
+import { useQueryClient } from "@tanstack/react-query";
 
 const REFRESH_DELAY = 5000;
 
@@ -607,9 +596,9 @@ export default function WarPage() {
 
   return (
     <div className="container mx-auto px-4 py-6">
-      <div className="grid grid-cols-7 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-7 gap-4 md:gap-6">
         {/* Left Token */}
-        <div className="col-span-3">
+        <div className="col-span-1 md:col-span-3">
           <TokenCard
             token={warData.coin1}
             totalPledged={warData.totalPledged}
@@ -624,6 +613,11 @@ export default function WarPage() {
             index={0}
             publicKey={publicKey}
             isWarEnded={memeWarStateInfo?.war_ended}
+            disablePledgeBtn={
+              btnLoading === 0 ||
+              !!memeWarStateInfo?.war_ended ||
+              !userStateInfo?.mint_a_deposit
+            }
             disableUnpledgeBtn={
               btnLoading === 0 ||
               !!memeWarStateInfo?.war_ended ||
@@ -633,16 +627,18 @@ export default function WarPage() {
         </div>
 
         {/* Center VS Section */}
-        <div className="col-span-1 flex flex-col items-center justify-start">
-          <div className="sticky top-4 w-full">
-            <div className="text-6xl font-bold mb-8 text-center">VS</div>
+        <div className="col-span-1 flex flex-col items-center justify-start my-8 md:my-0">
+          <div className="w-full md:sticky md:top-4">
+            <div className="text-4xl md:text-6xl font-bold mb-4 md:mb-8 text-center">
+              VS
+            </div>
 
             {/* Coin Ratio */}
-            <div className="mb-6 text-center">
+            <div className="mb-4 md:mb-6 text-center">
               <div className="text-sm text-muted-foreground mb-1">
                 Price Ratio
               </div>
-              <div className="font-mono text-lg">
+              <div className="font-mono text-base md:text-lg">
                 1 :{" "}
                 {(warData.coin2.price / warData.coin1.price || 0).toFixed(8)}
               </div>
@@ -652,7 +648,7 @@ export default function WarPage() {
             </div>
 
             {/* War Share Bar */}
-            <div className="space-y-4">
+            <div className="space-y-3 md:space-y-4">
               <div className="text-center text-sm text-muted-foreground">
                 War Share
               </div>
@@ -668,7 +664,7 @@ export default function WarPage() {
               </div>
 
               {/* Progress Bar */}
-              <div className="h-3 bg-muted rounded-full overflow-hidden relative">
+              <div className="h-2 sm:h-3 bg-muted rounded-full overflow-hidden relative">
                 <motion.div
                   className="absolute left-0 top-0 bottom-0 bg-primary"
                   style={{
@@ -698,7 +694,9 @@ export default function WarPage() {
                 <div className="text-left">
                   <div className="text-primary font-medium">
                     {formatNumber(warData.coin1.amountPledged)}{" "}
-                    {warData.coin1.ticker}
+                    <span className="hidden sm:inline">
+                      {warData.coin1.ticker}
+                    </span>
                   </div>
                   <div className="text-muted-foreground mt-0.5">
                     $
@@ -710,7 +708,9 @@ export default function WarPage() {
                 <div className="text-right">
                   <div className="text-[#FF4444] font-medium">
                     {formatNumber(warData.coin2.amountPledged)}{" "}
-                    {warData.coin2.ticker}
+                    <span className="hidden sm:inline">
+                      {warData.coin2.ticker}
+                    </span>
                   </div>
                   <div className="text-muted-foreground mt-0.5">
                     $
@@ -722,12 +722,12 @@ export default function WarPage() {
               </div>
 
               {/* Time Left */}
-              <div className="mt-8 text-center">
+              <div className="mt-6 sm:mt-8 text-center">
                 <div className="text-sm text-muted-foreground mb-1">
                   {memeWarStateInfo?.war_ended ? "War Ended" : "Time Left"}
                 </div>
                 <motion.div
-                  className="text-xl font-mono"
+                  className="text-base sm:text-xl font-mono"
                   animate={{ opacity: [1, 0.5, 1] }}
                   transition={{ duration: 2, repeat: Infinity }}
                 >
@@ -739,11 +739,11 @@ export default function WarPage() {
 
               {/* Winner Declaration */}
               {memeWarStateInfo?.winner_declared && (
-                <div className="mt-4 text-center">
+                <div className="mt-3 sm:mt-4 text-center">
                   <div className="text-sm text-muted-foreground mb-1">
                     Winner
                   </div>
-                  <div className="text-xl font-mono">
+                  <div className="text-base sm:text-xl font-mono">
                     {memeWarStateInfo.winner_declared === warData.coin1.ticker
                       ? warData.coin1.ticker
                       : warData.coin2.ticker}
@@ -752,11 +752,11 @@ export default function WarPage() {
               )}
 
               {/* Total Pledged */}
-              <div className="mt-4 text-center">
+              <div className="mt-3 sm:mt-4 text-center">
                 <div className="text-sm text-muted-foreground mb-1">
                   Total Pledged
                 </div>
-                <div className="text-xl font-mono">
+                <div className="text-base sm:text-xl font-mono">
                   $
                   {formatNumber(
                     warData.totalPledged *
@@ -769,7 +769,7 @@ export default function WarPage() {
         </div>
 
         {/* Right Token */}
-        <div className="col-span-3">
+        <div className="col-span-1 md:col-span-3">
           <TokenCard
             token={warData.coin2}
             totalPledged={warData.totalPledged}
@@ -784,6 +784,11 @@ export default function WarPage() {
             index={1}
             publicKey={publicKey}
             isWarEnded={memeWarStateInfo?.war_ended}
+            disablePledgeBtn={
+              btnLoading === 1 ||
+              !!memeWarStateInfo?.war_ended ||
+              !userStateInfo?.mint_b_deposit
+            }
             disableUnpledgeBtn={
               btnLoading === 1 ||
               !!memeWarStateInfo?.war_ended ||
@@ -794,18 +799,18 @@ export default function WarPage() {
       </div>
 
       {/* Live Feed and Chat Section */}
-      <div className="mt-8 grid grid-cols-3 gap-8">
+      <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
         {/* Combined Live Feed */}
-        <div>
+        <div className="lg:col-span-1">
           <div className="bg-card border border-border rounded-lg">
             <div className="p-4 border-b border-border flex justify-between">
-              <h2 className="text-xl font-medium">Live Feed</h2>
+              <h2 className="text-lg md:text-xl font-medium">Live Feed</h2>
               <div onClick={handleRefresh} className="cursor-pointer text-sm">
                 Refresh
               </div>
             </div>
             <div className="p-4">
-              <div className="space-y-2 max-h-[400px] overflow-y-auto">
+              <div className="space-y-2 max-h-[300px] md:max-h-[400px] overflow-y-auto">
                 <AnimatePresence mode="popLayout">
                   {displayTradesData &&
                     [
@@ -843,7 +848,6 @@ export default function WarPage() {
                                 : ""
                             }`}
                           >
-                            {/* HERE SOMEWHERE IS THE PROBLEM */}
                             <div className="flex items-center gap-2">
                               <span className="w-6 h-6 rounded-full bg-muted flex items-center justify-center text-sm">
                                 <img
@@ -875,10 +879,10 @@ export default function WarPage() {
         </div>
 
         {/* Chat Section */}
-        <div className="col-span-2">
+        <div className="lg:col-span-2">
           <div className="bg-card border border-border rounded-lg h-full flex flex-col">
             <div className="p-4 border-b border-border flex justify-between">
-              <h2 className="text-xl font-medium">Live Chat</h2>
+              <h2 className="text-lg md:text-xl font-medium">Live Chat</h2>
               <div
                 onClick={() => refreshChat()}
                 className="cursor-pointer text-sm"
@@ -888,7 +892,7 @@ export default function WarPage() {
             </div>
 
             {/* Chat Messages */}
-            <div className="flex-1 p-4 space-y-4 overflow-y-auto max-h-[400px]">
+            <div className="flex-1 p-4 space-y-4 overflow-y-auto max-h-[300px] md:max-h-[400px]">
               <AnimatePresence mode="popLayout">
                 {displayMessages &&
                   [...displayMessages]
@@ -928,8 +932,8 @@ export default function WarPage() {
                               ? "2️⃣"
                               : "👤"}
                           </div>
-                          <div className="flex-1">
-                            <div className="flex items-center gap-2">
+                          <div className="flex-1 min-w-0">
+                            <div className="flex flex-wrap items-center gap-2">
                               <span className="font-medium text-sm">
                                 {formatWalletAddress(message.sender)}
                               </span>
@@ -945,11 +949,11 @@ export default function WarPage() {
                                 </span>
                               )}
                             </div>
-                            <p className="text-sm text-muted-foreground mt-1">
+                            <p className="text-sm text-muted-foreground mt-1 break-words">
                               {message.message}
                             </p>
                           </div>
-                          <span className="text-xs text-muted-foreground">
+                          <span className="text-xs text-muted-foreground shrink-0">
                             {new Date(message.sender_time).toLocaleTimeString()}
                           </span>
                         </motion.div>
@@ -974,7 +978,7 @@ export default function WarPage() {
                   disabled={
                     !newMessage.trim() || sendStatus === "pending" || !pubKey
                   }
-                  className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded text-sm font-medium disabled:opacity-50"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground px-4 py-2 rounded text-sm font-medium disabled:opacity-50 whitespace-nowrap"
                 >
                   {sendStatus === "pending" ? "Sending..." : "Send"}
                 </button>
@@ -1072,11 +1076,12 @@ function TokenCard({
   };
 
   return (
-    <div className="bg-card border border-border rounded-lg p-6">
+    <div className="bg-card border border-border rounded-lg p-4 sm:p-6">
       {/* Token Header */}
-      <div className="flex items-center justify-between mb-6">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center text-2xl overflow-hidden">
+      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4 sm:mb-6">
+        {/* Left Side: Icon, Name, Socials */}
+        <div className="flex items-center gap-3 sm:gap-4">
+          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-muted flex items-center justify-center text-xl sm:text-2xl overflow-hidden shrink-0">
             {token.image ? (
               <img
                 src={token.image}
@@ -1087,9 +1092,9 @@ function TokenCard({
               token.emoji
             )}
           </div>
-          <div>
-            <div className="flex items-center gap-2">
-              <h3 className="font-bold text-lg">{token.name}</h3>
+          <div className="flex-grow">
+            <div className="flex items-center gap-2 mb-1">
+              <h3 className="font-bold text-base sm:text-lg">{token.name}</h3>
               <div className="flex items-center gap-2">
                 {token.socialLinks.twitter && (
                   <a
@@ -1100,7 +1105,7 @@ function TokenCard({
                     aria-label="Twitter"
                   >
                     <svg
-                      className="w-4 h-4"
+                      className="w-3 h-3 sm:w-4 sm:h-4"
                       fill="currentColor"
                       viewBox="0 0 24 24"
                     >
@@ -1117,7 +1122,7 @@ function TokenCard({
                     aria-label="Telegram"
                   >
                     <svg
-                      className="w-4 h-4"
+                      className="w-3 h-3 sm:w-4 sm:h-4"
                       fill="currentColor"
                       viewBox="0 0 24 24"
                     >
@@ -1134,7 +1139,7 @@ function TokenCard({
                     aria-label="Website"
                   >
                     <svg
-                      className="w-4 h-4"
+                      className="w-3 h-3 sm:w-4 sm:h-4"
                       fill="none"
                       stroke="currentColor"
                       viewBox="0 0 24 24"
@@ -1150,13 +1155,15 @@ function TokenCard({
                 )}
               </div>
             </div>
-            <div className="flex items-center justify-between gap-2">
+
+            {/* Price and Contract Address Section (Under Name/Socials) */}
+            <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
               <div className="flex items-center gap-2">
-                <span className="text-xl font-mono">
+                <span className="text-lg sm:text-xl font-mono">
                   ${token.price.toFixed(8)}
                 </span>
                 <span
-                  className={`text-sm ${
+                  className={`text-xs sm:text-sm ${
                     token.priceChange24h >= 0 ? "text-primary" : "text-red-500"
                   }`}
                 >
@@ -1199,17 +1206,19 @@ function TokenCard({
           </div>
         </div>
 
-        {/* Support Button */}
-        <button
-          onClick={() => setIsWarRoomOpen(true)}
-          className="p-2 hover:bg-muted rounded-full transition-colors group"
-        >
-          <Megaphone className="w-6 h-6 text-muted-foreground group-hover:text-primary transition-colors" />
-        </button>
+        {/* Right Side: Support Button */}
+        <div className="sm:ml-4 shrink-0">
+          <button
+            onClick={() => setIsWarRoomOpen(true)}
+            className="p-2 hover:bg-muted rounded-full transition-colors group"
+          >
+            <Megaphone className="w-5 h-5 sm:w-6 sm:h-6 text-muted-foreground group-hover:text-primary transition-colors" />
+          </button>
+        </div>
       </div>
 
       {/* Stats Grid */}
-      <div className="flex items-center justify-between gap-4 mb-6 text-sm">
+      <div className="grid grid-cols-2 sm:flex sm:items-center sm:justify-between gap-2 sm:gap-4 mb-4 sm:mb-6 text-xs sm:text-sm">
         <div className="flex items-center gap-1">
           <span className="text-muted-foreground">MC:</span>
           <span className="font-mono">${formatNumber(token.marketCap)}</span>
@@ -1229,20 +1238,20 @@ function TokenCard({
       </div>
 
       {/* Pledge Section */}
-      <div className="bg-background/50 rounded-lg p-4 space-y-4">
-        <div className="flex justify-between text-sm">
+      <div className="bg-background/50 rounded-lg p-3 sm:p-4 space-y-3 sm:space-y-4">
+        <div className="flex justify-between text-xs sm:text-sm">
           <span className="text-muted-foreground">Amount Pledged</span>
           <span className="font-medium">
             {formatNumber(token.amountPledged || 0)} {token.ticker}
           </span>
         </div>
-        <div className="flex justify-between text-sm">
+        <div className="flex justify-between text-xs sm:text-sm">
           <span className="text-muted-foreground">Total Pledgers</span>
           <span className="font-medium">
             {formatNumber(token.pledgers || 0)}
           </span>
         </div>
-        <div className="flex justify-between text-sm">
+        <div className="flex justify-between text-xs sm:text-sm">
           <span className="text-muted-foreground">War Share</span>
           <span className="font-medium">
             {formatSharePercentage(token.amountPledged, totalPledged)}%
@@ -1250,7 +1259,7 @@ function TokenCard({
         </div>
 
         {/* Balance and Utility Buttons */}
-        <div className="flex justify-between items-center text-sm mb-2">
+        <div className="flex justify-between items-center text-xs sm:text-sm mb-2">
           <div className="flex gap-2">
             <button
               onClick={handleHalf}
@@ -1265,7 +1274,7 @@ function TokenCard({
               MAX
             </button>
           </div>
-          <div className="text-muted-foreground">
+          <div className="text-muted-foreground truncate ml-2">
             Balance: {formatNumber(tokenBalance)} {token.ticker}
           </div>
         </div>
@@ -1280,13 +1289,13 @@ function TokenCard({
 
         {/* Expected Payout Section */}
         {pledgeAmount && Number(pledgeAmount) > 0 && (
-          <div className="bg-muted/30 rounded-lg p-3 space-y-2">
+          <div className="bg-muted/30 rounded-lg p-2 sm:p-3 space-y-1 sm:space-y-2">
             <div className="text-xs text-muted-foreground">
               Expected Payout if {token.ticker} Wins
             </div>
-            <div className="flex items-baseline gap-2">
-              <span className="text-lg font-mono text-primary">
-                ${formatNumber(calculateExpectedPayout(Number(pledgeAmount)))}
+            <div className="flex flex-wrap items-baseline gap-1 sm:gap-2">
+              <span className="text-base sm:text-lg font-mono text-primary">
+                {formatNumber(calculateExpectedPayout(Number(pledgeAmount)))}
               </span>
               <span className="text-xs text-primary">
                 (+{calculateROI(Number(pledgeAmount)).toFixed(2)}% ROI)
@@ -1305,28 +1314,28 @@ function TokenCard({
           <div className="grid grid-cols-2 gap-2">
             <button
               onClick={handleDeposit}
-              disabled={disablePledgeBtn}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground py-2 rounded text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={btnLoading || isWarEnded || disablePledgeBtn}
+              className="bg-primary hover:bg-primary/90 text-primary-foreground py-2 rounded text-xs sm:text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {btnLoading ? "Processing..." : `Pledge ${token.ticker}`}
             </button>
             <button
               onClick={handleWithdraw}
               disabled={disableUnpledgeBtn}
-              className="bg-muted hover:bg-muted/90 text-foreground py-2 rounded text-sm font-medium border border-border disabled:opacity-50 disabled:cursor-not-allowed"
+              className="bg-muted hover:bg-muted/90 text-foreground py-2 rounded text-xs sm:text-sm font-medium border border-border disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {btnLoading ? "Processing..." : "Unpledge"}
             </button>
           </div>
         ) : (
-          <button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-2 rounded text-sm font-medium">
+          <button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-2 rounded text-xs sm:text-sm font-medium">
             Connect Wallet
           </button>
         )}
 
         {/* User Stats */}
         {userState && (
-          <div className="mt-2 space-y-1 text-sm border-t border-border/50 pt-2">
+          <div className="mt-2 space-y-1 text-xs sm:text-sm border-t border-border/50 pt-2">
             <div className="flex justify-between">
               <span className="text-muted-foreground">Deposited:</span>
               <span>
@@ -1381,37 +1390,37 @@ function TokenCard({
 
       {/* War Room Modal */}
       <Dialog open={isWarRoomOpen} onOpenChange={setIsWarRoomOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
+        <DialogContent className="sm:max-w-[425px] max-w-[90vw] p-4 sm:p-6">
+          <DialogHeader className="pb-2">
+            <DialogTitle className="text-base sm:text-lg flex items-center gap-2">
               <span>{token.emoji}</span>
               {token.ticker} War Room
             </DialogTitle>
           </DialogHeader>
 
-          <div className="space-y-4 py-4">
-            <div className="text-sm text-muted-foreground">
+          <div className="space-y-3 sm:space-y-4 py-2 sm:py-4">
+            <div className="text-xs sm:text-sm text-muted-foreground">
               Support {token.ticker} by spreading the word! Choose a message to
               share:
             </div>
 
-            <div className="space-y-3">
+            <div className="space-y-2 sm:space-y-3">
               {tweetTemplates.map((template, index) => (
                 <div
                   key={index}
                   onClick={() => setSelectedTemplate(template)}
-                  className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                  className={`p-2 sm:p-3 rounded-lg border cursor-pointer transition-all ${
                     selectedTemplate === template
                       ? "border-primary bg-primary/5"
                       : "border-border hover:border-primary/50"
                   }`}
                 >
-                  <p className="text-sm mb-2">{template.text}</p>
-                  <div className="flex flex-wrap gap-2">
+                  <p className="text-xs sm:text-sm mb-2">{template.text}</p>
+                  <div className="flex flex-wrap gap-1 sm:gap-2">
                     {template.hashtags.map((tag) => (
                       <span
                         key={tag}
-                        className="text-xs px-2 py-1 rounded-full bg-muted text-muted-foreground"
+                        className="text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full bg-muted text-muted-foreground"
                       >
                         #{tag}
                       </span>
@@ -1428,7 +1437,7 @@ function TokenCard({
               target="_blank"
               rel="noopener noreferrer"
               className={`
-                w-full inline-flex justify-center items-center px-4 py-2 rounded
+                w-full inline-flex justify-center items-center px-3 sm:px-4 py-2 rounded text-xs sm:text-sm
                 ${
                   selectedTemplate
                     ? "bg-[#1DA1F2] hover:bg-[#1DA1F2]/90 text-white cursor-pointer"
@@ -1437,7 +1446,7 @@ function TokenCard({
               `}
             >
               <svg
-                className="w-4 h-4 mr-2"
+                className="w-3 h-3 sm:w-4 sm:h-4 mr-2"
                 fill="currentColor"
                 viewBox="0 0 24 24"
               >
