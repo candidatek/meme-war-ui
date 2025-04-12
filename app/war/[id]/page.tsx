@@ -1,38 +1,50 @@
 "use client";
 
-import { motion, AnimatePresence } from "framer-motion";
 import {
-  formatNumber,
-  formatWalletAddress,
-  validateSolanaAddress,
-  showErrorToast,
-} from "@/lib/utils";
-import Link from "next/link";
-import { useEffect, useState, useCallback, useMemo } from "react";
-import { Megaphone } from "lucide-react";
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
+
+import {
+  AnimatePresence,
+  motion,
+} from 'framer-motion';
+import { Megaphone } from 'lucide-react';
+import { useParams } from 'next/navigation';
+import {
+  io,
+  Socket,
+} from 'socket.io-client';
+
+import { useGetChatMessages } from '@/app/api/getChatMessages';
+import { useMemeWarStateInfo } from '@/app/api/getMemeWarStateInfo';
+import { useRecentTrades } from '@/app/api/getRecentTrades';
+import { useGetUserStateInfo } from '@/app/api/getUserState';
+import { useSendChatMessage } from '@/app/api/sendChatMessage';
+import { useMemeWarContext } from '@/app/context/memeWarStateContext';
+import { useAuth } from '@/app/hooks/useAuth';
+import useCountdown from '@/app/hooks/useCountdown';
+import useDepositTokens from '@/app/hooks/useDeposit';
+import { useTokenBalance } from '@/app/hooks/useUserBalance';
+import useWalletInfo from '@/app/hooks/useWalletInfo';
+import useWithdrawTokens from '@/app/hooks/useWithdraw';
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-} from "@/components/ui/dialog";
-import { useParams } from "next/navigation";
-import { useMemeWarContext } from "@/app/context/memeWarStateContext";
-import { useMemeWarStateInfo } from "@/app/api/getMemeWarStateInfo";
-import { useGetUserStateInfo } from "@/app/api/getUserState";
-import { useRecentTrades } from "@/app/api/getRecentTrades";
-import useWalletInfo from "@/app/hooks/useWalletInfo";
-import { useTokenBalance } from "@/app/hooks/useUserBalance";
-import useDepositTokens from "@/app/hooks/useDeposit";
-import useWithdrawTokens from "@/app/hooks/useWithdraw";
-import useCountdown from "@/app/hooks/useCountdown";
-import { useGetChatMessages } from "@/app/api/getChatMessages";
-import { useSendChatMessage } from "@/app/api/sendChatMessage";
-import { useAuth } from "@/app/hooks/useAuth";
-import { useWallet } from "@solana/wallet-adapter-react";
-import { PublicKey } from "@solana/web3.js";
-import { io, Socket } from "socket.io-client";
-import { useQueryClient } from "@tanstack/react-query";
+} from '@/components/ui/dialog';
+import {
+  formatNumber,
+  formatWalletAddress,
+  showErrorToast,
+  validateSolanaAddress,
+} from '@/lib/utils';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { PublicKey } from '@solana/web3.js';
+import { useQueryClient } from '@tanstack/react-query';
 
 const REFRESH_DELAY = 5000;
 

@@ -1,8 +1,16 @@
 "use client";
 
-import { useEffect, useState } from "react";
-import { toast } from "sonner";
-import { Button } from "@/components/ui/button";
+import {
+  useEffect,
+  useState,
+} from 'react';
+
+import { toast } from 'sonner';
+
+import {
+  useCreateMemeWarRegistry,
+} from '@/app/hooks/useCreateMemeWar'; // Import the hook
+import { Button } from '@/components/ui/button';
 import {
   Card,
   CardContent,
@@ -13,14 +21,20 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
-import { getAssetFromMint, getProgramDerivedAddressForPair } from '@/lib/utils';
+import {
+  getAssetFromMint,
+  getProgramDerivedAddressForPair,
+} from '@/lib/utils';
 import { useWallet } from '@solana/wallet-adapter-react'; // Import wallet hook
-import { useCreateMemeWarDetails } from '../api/createMemeWarDetails';
-import useProgramDetails from '../hooks/useProgramDetails';
 import { PublicKey } from '@solana/web3.js';
-import { getPDAForMemeSigner, sortPublicKeys } from '../utils';
 
-import { useCreateMemeWarRegistry } from "../hooks/useCreateMemeWar";
+import { useCreateMemeWarDetails } from '../api/createMemeWarDetails';
+import useCreatePumpToken from '../hooks/useCreatePumpToken';
+import useProgramDetails from '../hooks/useProgramDetails';
+import {
+  getPDAForMemeSigner,
+  sortPublicKeys,
+} from '../utils';
 
 interface WarData {
   description: string;
@@ -83,6 +97,7 @@ export default function StartWarPage() {
   const [selectedDuration, setSelectedDuration] = useState<number>(2);
   const [newMemeWarState, setNewMemeWarState] = useState<PublicKey | null>(null);
   const [disableCreateWarBtn, setDisableCreateWarBtn] = useState<boolean>(false);
+  const [isCreatingTokens, setIsCreatingTokens] = useState<number | boolean>(false);
   const [showRedirect, setShowRedirect] = useState<boolean>(false);
   const [coin1Data, setCoin1Data] = useState<CoinData>(createDefaultCoinData());
   const [coin2Data, setCoin2Data] = useState<CoinData>(createDefaultCoinData());
@@ -93,6 +108,8 @@ export default function StartWarPage() {
     createMemeRegistry,
   } = useCreateMemeWarRegistry(coin1Data.mintAddress, coin2Data.mintAddress);
 
+  const { createPumpToken, error: createTokenError } = useCreatePumpToken();
+
   const [warData, setWarData] = useState<WarData>({
     description: "",
     twitter: "",
@@ -101,6 +118,8 @@ export default function StartWarPage() {
   });
 
   const [showLaunchCoins, setShowLaunchCoins] = useState<boolean>(false);
+  const [filePreview1, setFilePreview1] = useState<string | null>(null);
+  const [filePreview2, setFilePreview2] = useState<string | null>(null);
   const [launchCoin1, setLaunchCoin1] = useState<LaunchCoinData>({
     name: "",
     symbol: "",
@@ -257,7 +276,7 @@ export default function StartWarPage() {
     try {
       await createMemeRegistry(selectedDuration, publicKey);
       toast.success("Meme war started successfully!");
-      setNewMemeWarState("created");
+     // setNewMemeWarState("created");
       setDisableCreateWarBtn(true);
       setTimeout(() => setShowRedirect(true), 3000);
     } catch (error) {
@@ -349,43 +368,165 @@ export default function StartWarPage() {
 
   const handleImageChange = (
     e: React.ChangeEvent<HTMLInputElement>,
-    setCoinData: React.Dispatch<React.SetStateAction<LaunchCoinData>>,
-    coinData: LaunchCoinData
+    coinIndex: number
   ) => {
-    if (e.target.files && e.target.files[0]) {
-      setCoinData({
-        ...coinData,
-        image: e.target.files[0],
-      });
+    console.log("File input changed", e.target.files);
+    const file = e.target.files?.[0];
+    if (file) {
+      console.log(`File selected for coin ${coinIndex}:`, file.name, file.type, file.size);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        if (event.target?.result) {
+          if (coinIndex === 1) {
+            setFilePreview1(event.target.result as string);
+            setLaunchCoin1(prev => ({ ...prev, image: file }));
+          } else {
+            setFilePreview2(event.target.result as string);
+            setLaunchCoin2(prev => ({ ...prev, image: file }));
+          }
+        }
+      };
+      reader.readAsDataURL(file);
+    } else {
+      console.log(`No file selected for coin ${coinIndex}`);
+      if (coinIndex === 1) {
+        setFilePreview1(null);
+      } else {
+        setFilePreview2(null);
+      }
     }
   };
 
   const handleLaunchCoins = async (e: React.FormEvent) => {
     e.preventDefault();
+    console.log("Form submitted");
+    console.log("Coin 1 data:", launchCoin1);
+    console.log("Coin 2 data:", launchCoin2);
 
     if (!publicKey) {
       toast.error("Please connect your wallet to launch coins");
       return;
     }
 
-    if (!launchCoin1.image || !launchCoin2.image) {
-      toast.error("Please upload images for both coins");
-      return;
+    // Manual validation for required fields
+    const requiredFields = [
+      { field: launchCoin1.name, message: "Coin 1 name is required" },
+      { field: launchCoin1.symbol, message: "Coin 1 symbol is required" },
+      { field: launchCoin1.description, message: "Coin 1 description is required" },
+      { field: launchCoin1.image, message: "Coin 1 image is required" },
+      { field: launchCoin2.name, message: "Coin 2 name is required" },
+      { field: launchCoin2.symbol, message: "Coin 2 symbol is required" },
+      { field: launchCoin2.description, message: "Coin 2 description is required" },
+      { field: launchCoin2.image, message: "Coin 2 image is required" },
+    ];
+
+    for (const { field, message } of requiredFields) {
+      if (!field) {
+        toast.error(message);
+        return;
+      }
     }
 
-    toast.info("Launching coins... This functionality is not yet implemented");
+    try {
+      console.log("Creating form data for upload");
+      
+      // At this point, we've verified the images are not null
+      if (!launchCoin1.image || !launchCoin2.image) {
+        toast.error("Images must be provided for both coins");
+        return;
+      }
+      
+      // Upload first coin to IPFS
+      const formData1 = new FormData();
+      formData1.append("file", launchCoin1.image);
+      formData1.append("name", launchCoin1.name);
+      formData1.append("symbol", launchCoin1.symbol);
+      formData1.append("description", launchCoin1.description);
+      if (launchCoin1.twitter) formData1.append("twitter", launchCoin1.twitter);
+      if (launchCoin1.telegram) formData1.append("telegram", launchCoin1.telegram);
+      if (launchCoin1.website) formData1.append("website", launchCoin1.website);
+
+      console.log("Uploading coin 1 to IPFS");
+      const response1 = await fetch("http://localhost:3000/ipfs", {
+        method: "POST",
+        body: formData1,
+      });
+
+      if (!response1.ok) {
+        throw new Error(`Failed to upload first coin to IPFS: ${response1.status} ${response1.statusText}`);
+      }
+
+      const ipfsData1 = await response1.json();
+      console.log("Coin 1 IPFS response:", ipfsData1);
+
+      // Upload second coin to IPFS
+      const formData2 = new FormData();
+      formData2.append("file", launchCoin2.image);
+      formData2.append("name", launchCoin2.name);
+      formData2.append("symbol", launchCoin2.symbol);
+      formData2.append("description", launchCoin2.description);
+      if (launchCoin2.twitter) formData2.append("twitter", launchCoin2.twitter);
+      if (launchCoin2.telegram) formData2.append("telegram", launchCoin2.telegram);
+      if (launchCoin2.website) formData2.append("website", launchCoin2.website);
+
+      console.log("Uploading coin 2 to IPFS");
+      const response2 = await fetch("http://localhost:3000/ipfs", {
+        method: "POST",
+        body: formData2,
+      });
+
+      if (!response2.ok) {
+        throw new Error(`Failed to upload second coin to IPFS: ${response2.status} ${response2.statusText}`);
+      }
+
+      const ipfsData2 = await response2.json();
+      console.log("Coin 2 IPFS response:", ipfsData2);
+
+      toast.success("Coins uploaded to IPFS successfully!");
+      console.log("IPFS Data:", {
+        coin1: ipfsData1,
+        coin2: ipfsData2,
+      });
+
+      // Create tokens using the IPFS data
+      setIsCreatingTokens(true);
+      await createPumpToken(
+        launchCoin1.name,
+        launchCoin1.symbol,
+        ipfsData1.url, // Use the IPFS URL for the metadata
+        launchCoin2.name,
+        launchCoin2.symbol,
+        ipfsData2.url, // Use the IPFS URL for the metadata
+        setIsCreatingTokens,
+        () => {
+          // Refresh function - you can add any refresh logic here
+          console.log("Tokens created successfully!");
+        }
+      );
+      
+    } catch (error) {
+      console.error("Error launching coins:", error);
+      toast.error(`Failed to launch coins: ${error instanceof Error ? error.message : String(error)}`);
+      setIsCreatingTokens(false);
+    }
   };
 
   interface LaunchCoinFormProps {
     data: LaunchCoinData;
     setData: React.Dispatch<React.SetStateAction<LaunchCoinData>>;
     title: string;
+    coinIndex: number;
+    filePreview: string | null;
   }
 
   const LaunchCoinForm: React.FC<LaunchCoinFormProps> = ({
     data,
     setData,
     title,
+    coinIndex,
+    filePreview,
   }) => (
     <Card>
       <CardHeader>
@@ -428,22 +569,55 @@ export default function StartWarPage() {
         </div>
 
         <div className="space-y-2">
-          <Label htmlFor={`${title}-image`}>Coin Image</Label>
-          <Input
-            id={`${title}-image`}
-            type="file"
-            accept="image/*"
-            onChange={(e) => handleImageChange(e, setData, data)}
-            className="cursor-pointer"
-            required
-          />
-          {data.image && (
-            <div className="mt-2">
-              <p className="text-sm text-muted-foreground">
-                Image selected: {data.image.name}
-              </p>
+          <Label htmlFor={`coin${coinIndex}-image-display`}>Coin Image</Label>
+          <div className="flex flex-col gap-2">
+            <div
+              id={`coin${coinIndex}-image-display`}
+              className={`border border-dashed rounded-md p-4 text-center cursor-pointer hover:bg-gray-50 ${
+                !data.image ? 'border-amber-300' : 'border-gray-300'
+              }`}
+              onClick={() => document.getElementById(`coin${coinIndex}-image`)?.click()}
+            >
+              {filePreview ? (
+                <div className="flex flex-col items-center">
+                  <img 
+                    src={filePreview} 
+                    alt="Preview" 
+                    className="w-32 h-32 object-cover rounded-md"
+                  />
+                  <p className="mt-2 text-sm text-muted-foreground">
+                    Click to change image
+                  </p>
+                </div>
+              ) : (
+                <div className="py-4">
+                  <p className="text-gray-500">Click to select an image</p>
+                  {!data.image && (
+                    <p className="text-xs text-amber-500 mt-1">
+                      * Image is required
+                    </p>
+                  )}
+                </div>
+              )}
             </div>
-          )}
+            
+            {/* File input without required attribute */}
+            <input
+              id={`coin${coinIndex}-image`}
+              name={`coin${coinIndex}-image`}
+              type="file"
+              accept="image/*"
+              onChange={(e) => handleImageChange(e, coinIndex)}
+              className="hidden"
+            />
+            
+            {data.image && (
+              <div className="text-sm text-muted-foreground">
+                <p>Selected: {data.image.name}</p>
+                <p>Size: {(data.image.size / 1024).toFixed(2)} KB</p>
+              </div>
+            )}
+          </div>
         </div>
 
         <div className="space-y-4">
@@ -538,11 +712,15 @@ export default function StartWarPage() {
                     data={launchCoin1}
                     setData={setLaunchCoin1}
                     title="First Coin"
+                    coinIndex={1}
+                    filePreview={filePreview1}
                   />
                   <LaunchCoinForm
                     data={launchCoin2}
                     setData={setLaunchCoin2}
                     title="Second Coin"
+                    coinIndex={2}
+                    filePreview={filePreview2}
                   />
                 </div>
 
