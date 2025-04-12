@@ -788,6 +788,172 @@
         }
       ],
       "args": []
+    },
+    {
+      "name": "createPumpToken",
+      "accounts": [
+        {
+          "name": "mintAAddress",
+          "isMut": true,
+          "isSigner": true,
+          "docs": [
+            "CHECK : No check needed"
+          ]
+        },
+        {
+          "name": "mintBAddress",
+          "isMut": true,
+          "isSigner": true,
+          "docs": [
+            "CHECK : No check needed"
+          ]
+        },
+        {
+          "name": "mintAuthority",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "CHECK : No check needed"
+          ]
+        },
+        {
+          "name": "mintABondingCurve",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "CHECK : No check needed"
+          ]
+        },
+        {
+          "name": "mintBBondingCurve",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "CHECK : No check needed"
+          ]
+        },
+        {
+          "name": "mintAAssociatedBondingCurve",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "CHECK : No check needed"
+          ]
+        },
+        {
+          "name": "mintBAssociatedBondingCurve",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "CHECK : No check needed"
+          ]
+        },
+        {
+          "name": "global",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "CHECK : No check needed"
+          ]
+        },
+        {
+          "name": "mplTokenMetadata",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "CHECK : No check needed"
+          ]
+        },
+        {
+          "name": "mintAMetadata",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "CHECK : No check needed"
+          ]
+        },
+        {
+          "name": "mintBMetadata",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "CHECK : No check needed"
+          ]
+        },
+        {
+          "name": "user",
+          "isMut": true,
+          "isSigner": true,
+          "docs": [
+            "CHECK : No check needed"
+          ]
+        },
+        {
+          "name": "systemProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "tokenProgram",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "associatedTokenProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "Associated Token program"
+          ]
+        },
+        {
+          "name": "rent",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "eventAuthority",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "CHECK : No check needed"
+          ]
+        },
+        {
+          "name": "pumpFunProgram",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "CHECK : No check needed"
+          ]
+        }
+      ],
+      "args": [
+        {
+          "name": "mintAName",
+          "type": "string"
+        },
+        {
+          "name": "mintASymbol",
+          "type": "string"
+        },
+        {
+          "name": "mintAUri",
+          "type": "string"
+        },
+        {
+          "name": "mintBName",
+          "type": "string"
+        },
+        {
+          "name": "mintBSymbol",
+          "type": "string"
+        },
+        {
+          "name": "mintBUri",
+          "type": "string"
+        }
+      ]
     }
   ],
   "accounts": [
@@ -1584,6 +1750,31 @@
         {
           "name": "mint",
           "type": "publicKey",
+          "index": false
+        }
+      ]
+    },
+    {
+      "name": "TokensCreated",
+      "fields": [
+        {
+          "name": "user",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "mintA",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "mintB",
+          "type": "publicKey",
+          "index": false
+        },
+        {
+          "name": "timestamp",
+          "type": "i64",
           "index": false
         }
       ]

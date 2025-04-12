@@ -449,7 +449,7 @@ export default function StartWarPage() {
       if (launchCoin1.website) formData1.append("website", launchCoin1.website);
 
       console.log("Uploading coin 1 to IPFS");
-      const response1 = await fetch("http://localhost:3000/ipfs", {
+      const response1 = await fetch(process.env.NEXT_PUBLIC_SERVER_URL + "/ipfs", {
         method: "POST",
         body: formData1,
       });
@@ -472,7 +472,7 @@ export default function StartWarPage() {
       if (launchCoin2.website) formData2.append("website", launchCoin2.website);
 
       console.log("Uploading coin 2 to IPFS");
-      const response2 = await fetch("http://localhost:3000/ipfs", {
+      const response2 = await fetch(process.env.NEXT_PUBLIC_SERVER_URL + "/ipfs", {
         method: "POST",
         body: formData2,
       });
@@ -500,10 +500,6 @@ export default function StartWarPage() {
         launchCoin2.symbol,
         ipfsData2.url, // Use the IPFS URL for the metadata
         setIsCreatingTokens,
-        () => {
-          // Refresh function - you can add any refresh logic here
-          console.log("Tokens created successfully!");
-        }
       );
       
     } catch (error) {
