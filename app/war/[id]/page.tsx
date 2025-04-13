@@ -1105,6 +1105,9 @@ function TokenCard({
           <div className="flex-grow">
             <div className="flex items-center gap-2 mb-1">
               <h3 className="font-bold text-base sm:text-lg">{token.name}</h3>
+              <span className="text-sm font-bold text-primary px-2 py-0.5 bg-primary/10 rounded-full">
+                ${token.ticker.toUpperCase()}
+              </span>
               <div className="flex items-center gap-2">
                 {token.socialLinks.twitter && (
                   <a

@@ -1,17 +1,16 @@
 "use client";
 
-import React, { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
+import React, { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
-import { useMemeWarContext } from '@/app/context/memeWarStateContext';
-import { useMemeWarCalculations } from '@/app/hooks/useMemeWarCalculations';
+import { useMemeWarContext } from "@/app/context/memeWarStateContext";
+import { useMemeWarCalculations } from "@/app/hooks/useMemeWarCalculations";
 
-import useCountdown from '@/app/hooks/useCountdown';
+import useCountdown from "@/app/hooks/useCountdown";
 
-import { useGetHomePageDetails } from '../api/getHomePageDetails';
-import StartMemeWarButton from '@/components/wars/StartMemeWarBtn';
-import SearchMemeWars from '@/components/wars/searchMemeWars';
-
+import { useGetHomePageDetails } from "../api/getHomePageDetails";
+import StartMemeWarButton from "@/components/wars/StartMemeWarBtn";
+import SearchMemeWars from "@/components/wars/searchMemeWars";
 
 export interface IDashboardWar {
   mint_a: string;
@@ -34,80 +33,120 @@ export interface IDashboardWar {
   // tokenPerSol: number;
 }
 const Home: React.FC = () => {
-
-  const { data: warArray, isError, isLoading, error } = useGetHomePageDetails()
-  const [dashboardWar, setDashboardWar] = useState<IDashboardWar>()
-  const { setMemeWarState, setMintA, setMintB } = useMemeWarContext()
+  const { data: warArray, isError, isLoading, error } = useGetHomePageDetails();
+  const [dashboardWar, setDashboardWar] = useState<IDashboardWar>();
+  const { setMemeWarState, setMintA, setMintB } = useMemeWarContext();
 
   useEffect(() => {
     if (warArray?.length > 0) {
-      setDashboardWar(warArray[0])
+      setDashboardWar(warArray[0]);
     }
-  }, [warArray])
+  }, [warArray]);
 
-  const { rfPlusMintADeposited, rfPlusMintBDeposited, mintBRiskFreeDeposited, mintARiskFreeDeposited } = useMemeWarCalculations(dashboardWar)
-  const router = useRouter()
+  const {
+    rfPlusMintADeposited,
+    rfPlusMintBDeposited,
+    mintBRiskFreeDeposited,
+    mintARiskFreeDeposited,
+  } = useMemeWarCalculations(dashboardWar);
+  const router = useRouter();
 
-  const handleClick = (memeWarState: string | undefined, memeWarReg: IDashboardWar) => {
+  const handleClick = (
+    memeWarState: string | undefined,
+    memeWarReg: IDashboardWar
+  ) => {
     if (memeWarState) {
-      setMemeWarState(memeWarState)
-      setMintA(memeWarReg?.mint_a)
-      setMintB(memeWarReg?.mint_b)
+      setMemeWarState(memeWarState);
+      setMintA(memeWarReg?.mint_a);
+      setMintB(memeWarReg?.mint_b);
     }
-    router.push('war/' + memeWarState)
-  }
+    router.push("war/" + memeWarState);
+  };
 
-  const {timeLeft, warEnded, endedTimeAgo} = useCountdown(dashboardWar?.end_time)
+  const { timeLeft, warEnded, endedTimeAgo } = useCountdown(
+    dashboardWar?.end_time
+  );
 
   return (
     <div className="bg-black text-white flex flex-col items-center justify-center p-4">
-      {isLoading ? <div>Loading...</div> :
+      {isLoading ? (
+        <div>Loading...</div>
+      ) : (
         <>
-          <div className=' max-w-5xl w-[100vw] mt-2'>
+          <div className=" max-w-5xl w-[100vw] mt-2">
             <StartMemeWarButton />
-            <div className="text-[50px] text-red-1 font-bold text-center flex items-center sm:text-2xl justify-center"> WORLD WAR
-              <div className='text-3xl ml-2 text-green-2'> {'>'} join</div> </div>
-
+            <div className="text-[50px] text-red-1 font-bold text-center flex items-center sm:text-2xl justify-center">
+              {" "}
+              WORLD WAR
+              <div className="text-3xl ml-2 text-green-2"> {">"} join</div>{" "}
+            </div>
           </div>
           <div
-            onClick={() => handleClick(dashboardWar?.meme_war_state, dashboardWar!)}
-            className='flex w-[45vw] sm:w-[90vw] justify-between mt-5 items-center cursor-pointer'>
+            onClick={() =>
+              handleClick(dashboardWar?.meme_war_state, dashboardWar!)
+            }
+            className="flex w-[45vw] sm:w-[90vw] justify-between mt-5 items-center cursor-pointer"
+          >
             <div>
-              <img src={dashboardWar?.mint_a_image!} alt="War 1" width={200} height={200} className="object-cover  w-[200px] h-[200px]" />
-              <div className='sm:text-sm'>
-                {'>'} {rfPlusMintADeposited} ${dashboardWar?.mint_a_symbol} Pledged
+              <img
+                src={dashboardWar?.mint_a_image!}
+                alt="War 1"
+                width={200}
+                height={200}
+                className="object-cover w-[200px] h-[200px] rounded-lg"
+              />
+              <div className="sm:text-sm mt-2 flex items-center gap-2">
+                <span className="text-lg font-bold">
+                  ${dashboardWar?.mint_a_symbol}
+                </span>
+                <span className="text-sm text-muted-foreground">
+                  {">"} {rfPlusMintADeposited} Pledged
+                </span>
               </div>
-              <div className='sm:text-sm'>
-              {'>'} {mintARiskFreeDeposited ? `Risk free bonded` : `Risk Free Deposit Opportunity`}
+              <div className="sm:text-sm text-muted-foreground">
+                {">"}{" "}
+                {mintARiskFreeDeposited
+                  ? `Risk free bonded`
+                  : `Risk Free Deposit Opportunity`}
               </div>
             </div>
-            <div className='text-[48px] font-bold'>
-              VS
-            </div>
+            <div className="text-[48px] font-bold">VS</div>
             <div>
-              <img src={dashboardWar?.mint_b_image!} alt="War 1" width={200} height={200} className="object-cover w-[200px] h-[200px]" />
-              <div className='sm:text-sm'>
-                {'>'} {rfPlusMintBDeposited} ${dashboardWar?.mint_b_symbol} Pledged
+              <img
+                src={dashboardWar?.mint_b_image!}
+                alt="War 1"
+                width={200}
+                height={200}
+                className="object-cover w-[200px] h-[200px] rounded-lg"
+              />
+              <div className="sm:text-sm mt-2 flex items-center gap-2">
+                <span className="text-lg font-bold">
+                  ${dashboardWar?.mint_b_symbol}
+                </span>
+                <span className="text-sm text-muted-foreground">
+                  {">"} {rfPlusMintBDeposited} Pledged
+                </span>
               </div>
-              <div className='sm:text-sm'>
-                {'>'} {mintBRiskFreeDeposited ? `Risk free bonded` : `Risk Free Deposit Opportunity`}
+              <div className="sm:text-sm text-muted-foreground">
+                {">"}{" "}
+                {mintBRiskFreeDeposited
+                  ? `Risk free bonded`
+                  : `Risk Free Deposit Opportunity`}
               </div>
             </div>
           </div>
-          {dashboardWar?.end_time && <div className='text-red-3 text-lg'>
-            {'>'} {warEnded ? `War Ended ${endedTimeAgo}` :  `Time Left ${timeLeft}`}
-          </div>}
+          {dashboardWar?.end_time && (
+            <div className="text-red-3 text-lg">
+              {">"}{" "}
+              {warEnded ? `War Ended ${endedTimeAgo}` : `Time Left ${timeLeft}`}
+            </div>
+          )}
 
           <SearchMemeWars warArray={warArray} handleClick={handleClick} />
-
         </>
-
-      }
-
+      )}
     </div>
   );
-
-
 };
 
 export default Home;
