@@ -1,40 +1,29 @@
 "use client";
 
-import {
-  useEffect,
-  useState,
-} from 'react';
+import { useEffect, useState } from "react";
 
-import { toast } from 'sonner';
+import { toast } from "sonner";
 
-import {
-  useCreateMemeWarRegistry,
-} from '@/app/hooks/useCreateMemeWar'; // Import the hook
-import { Button } from '@/components/ui/button';
+import { useCreateMemeWarRegistry } from "@/app/hooks/useCreateMemeWar"; // Import the hook
+import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
-} from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
-import {
-  getAssetFromMint,
-  getProgramDerivedAddressForPair,
-} from '@/lib/utils';
-import { useWallet } from '@solana/wallet-adapter-react'; // Import wallet hook
-import { PublicKey } from '@solana/web3.js';
+} from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
+import { getAssetFromMint, getProgramDerivedAddressForPair } from "@/lib/utils";
+import { useWallet } from "@solana/wallet-adapter-react"; // Import wallet hook
+import { PublicKey } from "@solana/web3.js";
 
-import { useCreateMemeWarDetails } from '../api/createMemeWarDetails';
-import useCreatePumpToken from '../hooks/useCreatePumpToken';
-import useProgramDetails from '../hooks/useProgramDetails';
-import {
-  getPDAForMemeSigner,
-  sortPublicKeys,
-} from '../utils';
+import { useCreateMemeWarDetails } from "../api/createMemeWarDetails";
+import useCreatePumpToken from "../hooks/useCreatePumpToken";
+import useProgramDetails from "../hooks/useProgramDetails";
+import { getPDAForMemeSigner, sortPublicKeys } from "../utils";
 
 interface WarData {
   description: string;
@@ -95,9 +84,14 @@ const createDefaultCoinData = (overrides: Partial<CoinData> = {}): CoinData => {
 
 export default function StartWarPage() {
   const [selectedDuration, setSelectedDuration] = useState<number>(2);
-  const [newMemeWarState, setNewMemeWarState] = useState<PublicKey | null>(null);
-  const [disableCreateWarBtn, setDisableCreateWarBtn] = useState<boolean>(false);
-  const [isCreatingTokens, setIsCreatingTokens] = useState<number | boolean>(false);
+  const [newMemeWarState, setNewMemeWarState] = useState<PublicKey | null>(
+    null
+  );
+  const [disableCreateWarBtn, setDisableCreateWarBtn] =
+    useState<boolean>(false);
+  const [isCreatingTokens, setIsCreatingTokens] = useState<number | boolean>(
+    false
+  );
   const [showRedirect, setShowRedirect] = useState<boolean>(false);
   const [coin1Data, setCoin1Data] = useState<CoinData>(createDefaultCoinData());
   const [coin2Data, setCoin2Data] = useState<CoinData>(createDefaultCoinData());
@@ -142,52 +136,53 @@ export default function StartWarPage() {
   });
 
   const { mutate: createMemeWarDetails } = useCreateMemeWarDetails();
-  const { memeProgram } = useProgramDetails()
-
+  const { memeProgram } = useProgramDetails();
 
   const handleCreateMemeWarDetails = async () => {
     try {
       setDisableCreateWarBtn(true);
-      
+
       const mintA = new PublicKey(coin1Data.mintAddress);
       const mintB = new PublicKey(coin2Data.mintAddress);
-      
+
       const sortedKeys = sortPublicKeys(mintA, mintB);
       const memeWarRegistryAddress = getProgramDerivedAddressForPair(
-        sortedKeys[0], 
+        sortedKeys[0],
         sortedKeys[1]
       );
-      
+
       let memeWarRegistry;
       try {
-        memeWarRegistry = await memeProgram!.account.memeWarRegistry.fetch(memeWarRegistryAddress);
+        memeWarRegistry = await memeProgram!.account.memeWarRegistry.fetch(
+          memeWarRegistryAddress
+        );
       } catch (error) {
         console.log("Registry doesn't exist yet, creating a new war");
         setDisableCreateWarBtn(false);
         return;
       }
-      
+
       const lastValidated = memeWarRegistry.lastValidated as number;
-      
+
       const memeWarState = getPDAForMemeSigner(
-        sortedKeys[0], 
-        sortedKeys[1], 
+        sortedKeys[0],
+        sortedKeys[1],
         lastValidated
       );
-      
-      await createMemeWarDetails({ 
-        memeWarState: memeWarState, 
-        memeWarData: warData 
+
+      await createMemeWarDetails({
+        memeWarState: memeWarState,
+        memeWarData: warData,
       });
-      
+
       setNewMemeWarState(memeWarState);
       setShowRedirect(true);
-      
+
       setWarData({
-        description: '',
-        twitter: '',
-        telegram: '',
-        website: ''
+        description: "",
+        twitter: "",
+        telegram: "",
+        website: "",
       });
     } catch (error) {
       console.error("Error creating meme war details:", error);
@@ -255,7 +250,13 @@ export default function StartWarPage() {
 
   const handleSubmit = async (e: React.FormEvent): Promise<void> => {
     e.preventDefault();
-    if (warData && (warData.description || warData.telegram || warData.twitter || warData.website)) {
+    if (
+      warData &&
+      (warData.description ||
+        warData.telegram ||
+        warData.twitter ||
+        warData.website)
+    ) {
       handleCreateMemeWarDetails();
     }
     if (!publicKey) {
@@ -276,7 +277,7 @@ export default function StartWarPage() {
     try {
       await createMemeRegistry(selectedDuration, publicKey);
       toast.success("Meme war started successfully!");
-     // setNewMemeWarState("created");
+      // setNewMemeWarState("created");
       setDisableCreateWarBtn(true);
       setTimeout(() => setShowRedirect(true), 3000);
     } catch (error) {
@@ -331,34 +332,40 @@ export default function StartWarPage() {
 
         {data.image && (
           <div className="flex justify-center mb-4">
-            <div className="relative w-24 h-24 rounded-full overflow-hidden">
+            <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden">
               <img
                 src={data.image}
                 alt={`${data.name} logo`}
-                className="object-cover"
+                className="object-cover w-full h-full"
                 width={96}
                 height={96}
               />
             </div>
           </div>
         )}
-        <div className="flex w-full border gap-4 ">
+        <div className="flex flex-col sm:flex-row w-full border gap-2 sm:gap-4 p-2">
           {data.ticker && (
-            <div className="flex justify-between border w-fit">
-              <Label htmlFor={`${title}-ticker`}>Ticker Symbol</Label>
-              <Input
-                id={`${title}-ticker`}
-                placeholder="e.g. DOGE"
-                value={data.ticker}
-                maxLength={10}
-              />
-              <Label htmlFor={`${title}-name`}>Coin Name</Label>
-              <Input
-                id={`${title}-ticker`}
-                placeholder="e.g. Dogecoin"
-                value={data.name}
-                onChange={(e) => setData({ ...data, name: e.target.value })}
-              />
+            <div className="flex flex-col sm:flex-row sm:justify-between w-full gap-2 sm:gap-4">
+              <div className="space-y-1 w-full">
+                <Label htmlFor={`${title}-ticker`}>Ticker Symbol</Label>
+                <Input
+                  id={`${title}-ticker`}
+                  placeholder="e.g. DOGE"
+                  value={data.ticker}
+                  maxLength={10}
+                  className="w-full"
+                />
+              </div>
+              <div className="space-y-1 w-full">
+                <Label htmlFor={`${title}-name`}>Coin Name</Label>
+                <Input
+                  id={`${title}-name`}
+                  placeholder="e.g. Dogecoin"
+                  value={data.name}
+                  onChange={(e) => setData({ ...data, name: e.target.value })}
+                  className="w-full"
+                />
+              </div>
             </div>
           )}
         </div>
@@ -373,18 +380,23 @@ export default function StartWarPage() {
     console.log("File input changed", e.target.files);
     const file = e.target.files?.[0];
     if (file) {
-      console.log(`File selected for coin ${coinIndex}:`, file.name, file.type, file.size);
-      
+      console.log(
+        `File selected for coin ${coinIndex}:`,
+        file.name,
+        file.type,
+        file.size
+      );
+
       // Create preview
       const reader = new FileReader();
       reader.onload = (event) => {
         if (event.target?.result) {
           if (coinIndex === 1) {
             setFilePreview1(event.target.result as string);
-            setLaunchCoin1(prev => ({ ...prev, image: file }));
+            setLaunchCoin1((prev) => ({ ...prev, image: file }));
           } else {
             setFilePreview2(event.target.result as string);
-            setLaunchCoin2(prev => ({ ...prev, image: file }));
+            setLaunchCoin2((prev) => ({ ...prev, image: file }));
           }
         }
       };
@@ -414,11 +426,17 @@ export default function StartWarPage() {
     const requiredFields = [
       { field: launchCoin1.name, message: "Coin 1 name is required" },
       { field: launchCoin1.symbol, message: "Coin 1 symbol is required" },
-      { field: launchCoin1.description, message: "Coin 1 description is required" },
+      {
+        field: launchCoin1.description,
+        message: "Coin 1 description is required",
+      },
       { field: launchCoin1.image, message: "Coin 1 image is required" },
       { field: launchCoin2.name, message: "Coin 2 name is required" },
       { field: launchCoin2.symbol, message: "Coin 2 symbol is required" },
-      { field: launchCoin2.description, message: "Coin 2 description is required" },
+      {
+        field: launchCoin2.description,
+        message: "Coin 2 description is required",
+      },
       { field: launchCoin2.image, message: "Coin 2 image is required" },
     ];
 
@@ -431,13 +449,13 @@ export default function StartWarPage() {
 
     try {
       console.log("Creating form data for upload");
-      
+
       // At this point, we've verified the images are not null
       if (!launchCoin1.image || !launchCoin2.image) {
         toast.error("Images must be provided for both coins");
         return;
       }
-      
+
       // Upload first coin to IPFS
       const formData1 = new FormData();
       formData1.append("file", launchCoin1.image);
@@ -445,17 +463,23 @@ export default function StartWarPage() {
       formData1.append("symbol", launchCoin1.symbol);
       formData1.append("description", launchCoin1.description);
       if (launchCoin1.twitter) formData1.append("twitter", launchCoin1.twitter);
-      if (launchCoin1.telegram) formData1.append("telegram", launchCoin1.telegram);
+      if (launchCoin1.telegram)
+        formData1.append("telegram", launchCoin1.telegram);
       if (launchCoin1.website) formData1.append("website", launchCoin1.website);
 
       console.log("Uploading coin 1 to IPFS");
-      const response1 = await fetch(process.env.NEXT_PUBLIC_SERVER_URL + "/ipfs", {
-        method: "POST",
-        body: formData1,
-      });
+      const response1 = await fetch(
+        process.env.NEXT_PUBLIC_SERVER_URL + "/ipfs",
+        {
+          method: "POST",
+          body: formData1,
+        }
+      );
 
       if (!response1.ok) {
-        throw new Error(`Failed to upload first coin to IPFS: ${response1.status} ${response1.statusText}`);
+        throw new Error(
+          `Failed to upload first coin to IPFS: ${response1.status} ${response1.statusText}`
+        );
       }
 
       const ipfsData1 = await response1.json();
@@ -468,17 +492,23 @@ export default function StartWarPage() {
       formData2.append("symbol", launchCoin2.symbol);
       formData2.append("description", launchCoin2.description);
       if (launchCoin2.twitter) formData2.append("twitter", launchCoin2.twitter);
-      if (launchCoin2.telegram) formData2.append("telegram", launchCoin2.telegram);
+      if (launchCoin2.telegram)
+        formData2.append("telegram", launchCoin2.telegram);
       if (launchCoin2.website) formData2.append("website", launchCoin2.website);
 
       console.log("Uploading coin 2 to IPFS");
-      const response2 = await fetch(process.env.NEXT_PUBLIC_SERVER_URL + "/ipfs", {
-        method: "POST",
-        body: formData2,
-      });
+      const response2 = await fetch(
+        process.env.NEXT_PUBLIC_SERVER_URL + "/ipfs",
+        {
+          method: "POST",
+          body: formData2,
+        }
+      );
 
       if (!response2.ok) {
-        throw new Error(`Failed to upload second coin to IPFS: ${response2.status} ${response2.statusText}`);
+        throw new Error(
+          `Failed to upload second coin to IPFS: ${response2.status} ${response2.statusText}`
+        );
       }
 
       const ipfsData2 = await response2.json();
@@ -499,12 +529,15 @@ export default function StartWarPage() {
         launchCoin2.name,
         launchCoin2.symbol,
         ipfsData2.url, // Use the IPFS URL for the metadata
-        setIsCreatingTokens,
+        setIsCreatingTokens
       );
-      
     } catch (error) {
       console.error("Error launching coins:", error);
-      toast.error(`Failed to launch coins: ${error instanceof Error ? error.message : String(error)}`);
+      toast.error(
+        `Failed to launch coins: ${
+          error instanceof Error ? error.message : String(error)
+        }`
+      );
       setIsCreatingTokens(false);
     }
   };
@@ -570,16 +603,18 @@ export default function StartWarPage() {
             <div
               id={`coin${coinIndex}-image-display`}
               className={`border border-dashed rounded-md p-4 text-center cursor-pointer hover:bg-gray-50 ${
-                !data.image ? 'border-amber-300' : 'border-gray-300'
+                !data.image ? "border-amber-300" : "border-gray-300"
               }`}
-              onClick={() => document.getElementById(`coin${coinIndex}-image`)?.click()}
+              onClick={() =>
+                document.getElementById(`coin${coinIndex}-image`)?.click()
+              }
             >
               {filePreview ? (
                 <div className="flex flex-col items-center">
-                  <img 
-                    src={filePreview} 
-                    alt="Preview" 
-                    className="w-32 h-32 object-cover rounded-md"
+                  <img
+                    src={filePreview}
+                    alt="Preview"
+                    className="w-24 h-24 sm:w-32 sm:h-32 object-cover rounded-md"
                   />
                   <p className="mt-2 text-sm text-muted-foreground">
                     Click to change image
@@ -596,7 +631,7 @@ export default function StartWarPage() {
                 </div>
               )}
             </div>
-            
+
             {/* File input without required attribute */}
             <input
               id={`coin${coinIndex}-image`}
@@ -606,7 +641,7 @@ export default function StartWarPage() {
               onChange={(e) => handleImageChange(e, coinIndex)}
               className="hidden"
             />
-            
+
             {data.image && (
               <div className="text-sm text-muted-foreground">
                 <p>Selected: {data.image.name}</p>
@@ -619,38 +654,38 @@ export default function StartWarPage() {
         <div className="space-y-4">
           <h4 className="text-sm font-medium">Social Links</h4>
           <div className="grid gap-2">
-            <div className="grid grid-cols-6 items-center gap-2">
-              <Label htmlFor={`${title}-twitter`} className="col-span-1">
+            <div className="grid grid-cols-1 sm:grid-cols-6 items-center gap-2">
+              <Label htmlFor={`${title}-twitter`} className="sm:col-span-1">
                 Twitter
               </Label>
               <Input
                 id={`${title}-twitter`}
                 placeholder="Twitter URL"
-                className="col-span-5"
+                className="sm:col-span-5"
                 value={data.twitter}
                 onChange={(e) => setData({ ...data, twitter: e.target.value })}
               />
             </div>
-            <div className="grid grid-cols-6 items-center gap-2">
-              <Label htmlFor={`${title}-telegram`} className="col-span-1">
+            <div className="grid grid-cols-1 sm:grid-cols-6 items-center gap-2">
+              <Label htmlFor={`${title}-telegram`} className="sm:col-span-1">
                 Telegram
               </Label>
               <Input
                 id={`${title}-telegram`}
                 placeholder="Telegram URL"
-                className="col-span-5"
+                className="sm:col-span-5"
                 value={data.telegram}
                 onChange={(e) => setData({ ...data, telegram: e.target.value })}
               />
             </div>
-            <div className="grid grid-cols-6 items-center gap-2">
-              <Label htmlFor={`${title}-website`} className="col-span-1">
+            <div className="grid grid-cols-1 sm:grid-cols-6 items-center gap-2">
+              <Label htmlFor={`${title}-website`} className="sm:col-span-1">
                 Website
               </Label>
               <Input
                 id={`${title}-website`}
                 placeholder="Website URL"
-                className="col-span-5"
+                className="sm:col-span-5"
                 value={data.website}
                 onChange={(e) => setData({ ...data, website: e.target.value })}
               />
@@ -673,14 +708,14 @@ export default function StartWarPage() {
   );
 
   return (
-    <div className="container mx-auto px-4 py-8">
+    <div className="container mx-auto px-4 py-6 sm:py-8">
       <div className="max-w-4xl mx-auto">
-        <Card className="mb-8">
+        <Card className="mb-6 sm:mb-8">
           <CardHeader
             className="cursor-pointer"
             onClick={() => setShowLaunchCoins(!showLaunchCoins)}
           >
-            <div className="flex justify-between items-center">
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0">
               <div className="flex flex-col gap-2">
                 <CardTitle>Launch 2 new Meme Coins</CardTitle>
                 <CardDescription>
@@ -703,7 +738,7 @@ export default function StartWarPage() {
           {showLaunchCoins && (
             <CardContent>
               <form onSubmit={handleLaunchCoins} className="space-y-8">
-                <div className="grid grid-cols-2 gap-8">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
                   <LaunchCoinForm
                     data={launchCoin1}
                     setData={setLaunchCoin1}
@@ -724,7 +759,7 @@ export default function StartWarPage() {
                   <Button
                     type="submit"
                     size="lg"
-                    className="px-8"
+                    className="w-full sm:w-auto sm:px-8"
                     disabled={!publicKey}
                   >
                     Launch Coins
@@ -735,8 +770,10 @@ export default function StartWarPage() {
           )}
         </Card>
 
-        <h1 className="text-3xl font-bold mb-2">Start a Meme Coin War</h1>
-        <p className="text-muted-foreground mb-8">
+        <h1 className="text-2xl sm:text-3xl font-bold mb-2">
+          Start a Meme Coin War
+        </h1>
+        <p className="text-muted-foreground mb-6 sm:mb-8">
           Create an epic battle between two meme coins and let the community
           decide the winner!
         </p>
@@ -754,8 +791,8 @@ export default function StartWarPage() {
           )}
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-8">
-          <div className="grid grid-cols-2 gap-8">
+        <form onSubmit={handleSubmit} className="space-y-6 sm:space-y-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
             <CoinForm
               data={coin1Data}
               setData={setCoin1Data}
@@ -797,8 +834,10 @@ export default function StartWarPage() {
             <Button
               type="submit"
               size="lg"
-              className="px-8"
-              disabled={!publicKey || isCreateWarLoading || disableCreateWarBtn}
+              className="w-full sm:w-auto sm:px-8"
+              disabled={
+                Boolean(!publicKey || isCreateWarLoading || Boolean(disableCreateWarBtn))
+              }
             >
               {isCreateWarLoading
                 ? "Starting War..."

@@ -24,7 +24,9 @@ import {
 import { toast } from "sonner";
 
 export function useCreateMemeWarRegistry(mint_a: string, mint_b: string) {
-  const [isCreateWarLoading, setIsCreateWarLoading] = useState<boolean>(false);
+  const [isCreateWarLoading, setIsCreateWarLoading] = useState<
+    boolean | number
+  >(false);
   const [error, setError] = useState(null);
   const { publicKey } = useWalletInfo();
   const { sendTransaction } = useWallet();
@@ -157,15 +159,11 @@ export function useCreateMemeWarRegistry(mint_a: string, mint_b: string) {
         toast.message("Creating Meme war", { duration: 20000 });
 
         // Send transaction to wallet for approval
-        console.log("Sending transaction to wallet for approval");
         const signature = await sendTransaction(tx, connection);
-        console.log(`Transaction signed with signature: ${signature}`);
 
         toast.message("Creating and Validating Meme War", { duration: 20000 });
-        console.log("Waiting for transaction confirmation");
 
         await sleep(5 * 1000);
-        console.log("Checking transaction status");
         return await checkStatus({
           signature,
           action: "Creating Meme War",
@@ -174,10 +172,8 @@ export function useCreateMemeWarRegistry(mint_a: string, mint_b: string) {
       } catch (e) {
         toast.dismiss();
         setIsCreateWarLoading(false);
-        console.error("Error creating meme war registry:", e);
         throw e;
       } finally {
-        console.log("Meme war registry creation process completed");
         setIsCreateWarLoading(false);
       }
     },
