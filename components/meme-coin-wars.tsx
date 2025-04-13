@@ -22,6 +22,7 @@ interface CoinData {
   amountPledged: number;
   emoji: string;
   recentPledges?: Pledge[];
+  imageUrl?: string;
 }
 
 interface War {
@@ -82,6 +83,7 @@ export function MemeCoinWars() {
             pledgers: Math.floor(Math.random() * 50000) + 1000,
             amountPledged: 0, // Will be calculated in WarItem
             emoji: coinEmojis[warData.mint_a_symbol] || "🪙",
+            imageUrl: warData.mint_a_image,
           },
           coin2: {
             ticker: warData.mint_b_symbol || "Unknown",
@@ -90,6 +92,7 @@ export function MemeCoinWars() {
             pledgers: Math.floor(Math.random() * 40000) + 1000,
             amountPledged: 0, // Will be calculated in WarItem
             emoji: coinEmojis[warData.mint_b_symbol] || "🪙",
+            imageUrl: warData.mint_b_image,
           },
           warId: warData.meme_war_state,
           warData: warData, // Pass the raw data for calculations
@@ -375,16 +378,14 @@ function WarItem({
   // Update the amountPledged values with the calculated ones
   const updatedCoin1 = {
     ...war.coin1,
-    amountPledged:
-      war.coin1.amountPledged +
-      (parseFloat(rfPlusMintADeposited.replace(/,/g, "")) || 0),
+    amountPledged: parseFloat(rfPlusMintADeposited.replace(/,/g, "")) || 0,
+    imageUrl: war.warData?.mint_a_image,
   };
 
   const updatedCoin2 = {
     ...war.coin2,
-    amountPledged:
-      war.coin2.amountPledged +
-      (parseFloat(rfPlusMintBDeposited.replace(/,/g, "")) || 0),
+    amountPledged: parseFloat(rfPlusMintBDeposited.replace(/,/g, "")) || 0,
+    imageUrl: war.warData?.mint_b_image,
   };
 
   const WarItemContent = () => (
@@ -558,8 +559,27 @@ function CoinCard({ coin, isTopWar, align, onClick }: CoinCardProps) {
         {/* Header: Ticker, Change %, and Social Links */}
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1 sm:gap-2">
-            <div className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full bg-muted flex items-center justify-center text-sm sm:text-base">
-              {coin.emoji}
+            <div className="w-6 h-6 sm:w-7 sm:h-7 md:w-8 md:h-8 rounded-full bg-muted flex items-center justify-center overflow-hidden">
+              {coin.imageUrl ? (
+                <img
+                  src={coin.imageUrl}
+                  alt={`${coin.name} logo`}
+                  className="w-full h-full object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    const parent = target.parentElement;
+                    if (parent) {
+                      const span = document.createElement("span");
+                      span.className = "text-sm sm:text-base";
+                      span.textContent = coin.emoji;
+                      parent.innerHTML = "";
+                      parent.appendChild(span);
+                    }
+                  }}
+                />
+              ) : (
+                <span className="text-sm sm:text-base">{coin.emoji}</span>
+              )}
             </div>
             <div>
               <div className="flex items-center gap-1 sm:gap-2">
