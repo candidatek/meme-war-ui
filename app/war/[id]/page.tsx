@@ -45,6 +45,7 @@ import {
 import { useWallet } from '@solana/wallet-adapter-react';
 import { PublicKey } from '@solana/web3.js';
 import { useQueryClient } from '@tanstack/react-query';
+import { useMintInfo } from '@/app/hooks/useMintInfo';
 
 const REFRESH_DELAY = 5000;
 
@@ -193,13 +194,12 @@ export default function WarPage() {
   // Get meme war state data
   const {
     data: memeWarStateInfo,
-    error,
-    isLoading,
   } = useMemeWarStateInfo(memeWarState);
-
+   
   // Initialize deposit/withdraw hooks
   const { depositTokens } = useDepositTokens(mintA, mintB);
   const { withdrawTokens } = useWithdrawTokens(mintA, mintB);
+  
 
   // Get token balances
   const { data: tokenBalanceData, refreshTokenBalance } = useTokenBalance(
@@ -432,18 +432,15 @@ export default function WarPage() {
   };
 
   // Handle withdraw for a token
-  const handleWithdraw = useCallback(
-    async (index: 0 | 1) => {
-      try {
-        setBtnLoading(index);
-        await withdrawTokens(index, setBtnLoading, refreshTokenBalance);
-      } catch (e) {
-        showErrorToast("Failed to Withdraw Tokens");
-        setBtnLoading(-1);
-      }
-    },
-    [withdrawTokens, refreshTokenBalance]
-  );
+  const handleWithdraw = async (index: 0 | 1) => {
+    try {
+      setBtnLoading(index);
+      await withdrawTokens(index, setBtnLoading, refreshTokenBalance);
+    } catch (e) {
+      showErrorToast("Failed to Withdraw Tokens");
+      setBtnLoading(-1);
+    }
+  }
 
   // Auto refresh on invalid state
   useEffect(() => {
@@ -760,7 +757,7 @@ export default function WarPage() {
                   $
                   {formatNumber(
                     warData.totalPledged *
-                      ((warData.coin1.price + warData.coin2.price) / 2)
+                    ((warData.coin1.price + warData.coin2.price) / 2)
                   )}
                 </div>
               </div>
@@ -834,14 +831,13 @@ export default function WarPage() {
                             animate={{ opacity: 1, y: 0 }}
                             exit={{ opacity: 0, height: 0 }}
                             className={`flex items-center justify-between py-2 border-b border-border/50 last:border-0 
-                            ${
-                              animateTrade.index === (isMintA ? 0 : 1) &&
-                              animateTrade.tradeId ===
+                            ${animateTrade.index === (isMintA ? 0 : 1) &&
+                                animateTrade.tradeId ===
                                 (trade.tx_signature || `${trade.event_time}`) &&
-                              i === 0
+                                i === 0
                                 ? "animate-shake"
                                 : ""
-                            }`}
+                              }`}
                           >
                             {/* HERE SOMEWHERE IS THE PROBLEM */}
                             <div className="flex items-center gap-2">
@@ -853,9 +849,8 @@ export default function WarPage() {
                                 />
                               </span>
                               <span
-                                className={`text-sm ${
-                                  isMintA ? "text-primary" : "text-[#FF4444]"
-                                }`}
+                                className={`text-sm ${isMintA ? "text-primary" : "text-[#FF4444]"
+                                  }`}
                               >
                                 +${formatNumber(amount * coin.price)}
                               </span>
@@ -908,8 +903,8 @@ export default function WarPage() {
                       const supporterType = isCoin1Supporter
                         ? warData.coin1.ticker
                         : isCoin2Supporter
-                        ? warData.coin2.ticker
-                        : null;
+                          ? warData.coin2.ticker
+                          : null;
 
                       return (
                         <motion.div
@@ -917,16 +912,15 @@ export default function WarPage() {
                           initial={{ opacity: 0, x: -20 }}
                           animate={{ opacity: 1, x: 0 }}
                           exit={{ opacity: 0, x: 20 }}
-                          className={`flex items-start gap-3 ${
-                            message.id === lastMessageId ? "animate-pulse" : ""
-                          }`}
+                          className={`flex items-start gap-3 ${message.id === lastMessageId ? "animate-pulse" : ""
+                            }`}
                         >
                           <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-sm shrink-0">
                             {isCoin1Supporter
                               ? "1️⃣"
                               : isCoin2Supporter
-                              ? "2️⃣"
-                              : "👤"}
+                                ? "2️⃣"
+                                : "👤"}
                           </div>
                           <div className="flex-1">
                             <div className="flex items-center gap-2">
@@ -935,11 +929,10 @@ export default function WarPage() {
                               </span>
                               {supporterType && (
                                 <span
-                                  className={`text-xs px-1.5 py-0.5 rounded-full ${
-                                    isCoin1Supporter
+                                  className={`text-xs px-1.5 py-0.5 rounded-full ${isCoin1Supporter
                                       ? "bg-primary/10 text-primary"
                                       : "bg-red-500/10 text-red-500"
-                                  }`}
+                                    }`}
                                 >
                                   {supporterType} Supporter
                                 </span>
@@ -1156,9 +1149,8 @@ function TokenCard({
                   ${token.price.toFixed(8)}
                 </span>
                 <span
-                  className={`text-sm ${
-                    token.priceChange24h >= 0 ? "text-primary" : "text-red-500"
-                  }`}
+                  className={`text-sm ${token.priceChange24h >= 0 ? "text-primary" : "text-red-500"
+                    }`}
                 >
                   {token.priceChange24h >= 0 ? "+" : ""}
                   {token.priceChange24h.toFixed(2)}%
@@ -1400,11 +1392,10 @@ function TokenCard({
                 <div
                   key={index}
                   onClick={() => setSelectedTemplate(template)}
-                  className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                    selectedTemplate === template
+                  className={`p-3 rounded-lg border cursor-pointer transition-all ${selectedTemplate === template
                       ? "border-primary bg-primary/5"
                       : "border-border hover:border-primary/50"
-                  }`}
+                    }`}
                 >
                   <p className="text-sm mb-2">{template.text}</p>
                   <div className="flex flex-wrap gap-2">
@@ -1429,10 +1420,9 @@ function TokenCard({
               rel="noopener noreferrer"
               className={`
                 w-full inline-flex justify-center items-center px-4 py-2 rounded
-                ${
-                  selectedTemplate
-                    ? "bg-[#1DA1F2] hover:bg-[#1DA1F2]/90 text-white cursor-pointer"
-                    : "bg-muted text-muted-foreground cursor-not-allowed"
+                ${selectedTemplate
+                  ? "bg-[#1DA1F2] hover:bg-[#1DA1F2]/90 text-white cursor-pointer"
+                  : "bg-muted text-muted-foreground cursor-not-allowed"
                 }
               `}
             >

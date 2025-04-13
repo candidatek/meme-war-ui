@@ -1,5 +1,5 @@
 /* eslint-disable @typescript-eslint/no-non-null-assertion */
-
+"use client";
 import { useState, useCallback, Dispatch, SetStateAction } from 'react';
 import * as anchor from '@project-serum/anchor';
 import { PublicKey, Transaction } from '@solana/web3.js';
@@ -23,8 +23,8 @@ const useWithdrawTokens = (mintAKey: string | null, mintBKey: string | null) => 
   const { memeProgram } = useProgramDetails()
   const connection = getConnection();
 
-  const { data: mintAInfo, isLoading: isMintALoading } = useMintInfo(mintAKey!);
-  const { data: mintBInfo, isLoading: isMintBLoading } = useMintInfo(mintBKey!);
+  const { data: mintAInfo } = useMintInfo(mintAKey);
+  const { data: mintBInfo } = useMintInfo(mintBKey);
 
 
   const withdrawTokens = useCallback(async (mintIdentifier: number,
@@ -89,7 +89,7 @@ const useWithdrawTokens = (mintAKey: string | null, mintBKey: string | null) => 
       console.log(err);
       throw new Error("Error in withdrawing tokens");
     }
-  }, [mintAKey, mintBKey, memeProgram, publicKey]);
+  }, [mintAKey, mintBKey, memeProgram, publicKey, mintAInfo, mintBInfo]);
 
   return {
     error,

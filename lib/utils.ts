@@ -120,7 +120,7 @@ export const showErrorToast = (
   toast.error(message, {
     description: options?.description,
     duration: options?.duration ?? 5000, // Default to 5 seconds
-    style: { backgroundColor: "#FF8A8A", color: "#EE9191" }, // Custom styles for error
+    style: { backgroundColor: "#FF8A8A", color: "#FFFFFF" }, // Custom styles for error
   });
 };
 

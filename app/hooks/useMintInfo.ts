@@ -3,7 +3,7 @@ import { useQuery } from '@tanstack/react-query';
 import { SERVER_URL } from '@/lib/constants';
 
 // Define the async function to fetch the mint info
-const fetchMintInfo = async (mintAddress: string) => {
+const fetchMintInfo = async (mintAddress: string | null) => {
     // const heliusResponse = await fetch(SOLANA_RPC_URL, {
     //   method: 'POST',
     //   headers: {
@@ -21,19 +21,23 @@ const fetchMintInfo = async (mintAddress: string) => {
 
     // const heliusData = await heliusResponse.json();
     // optimize later
-
+    console.log(mintAddress, 'mint Address *')
+    if(!mintAddress) {
+        console.log('no mint fount')
+        return
+    }
     const response = await axios.get(SERVER_URL + `/getMintInfoV2`, {
         params: { mintAddress }
     });
+    console.log(response.data.data, 'mint info response')
     return response.data.data;
 };
 
 // Custom hook to use the fetchMintInfo query
-export const useMintInfo = (mintAddress: string) => {
+export const useMintInfo = (mintAddress: string| null) => {
     return useQuery({
         queryKey: ['mintInfo', mintAddress],
         queryFn: () => fetchMintInfo(mintAddress),
-        enabled: mintAddress !== '' && mintAddress !== undefined,
         staleTime: 1000 * 20, // 5 minutes
         refetchInterval: 1000 * 60 * 3, // 3 minute
         refetchIntervalInBackground: true,

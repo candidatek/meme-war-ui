@@ -789,53 +789,7 @@ export default function StartWarPage() {
                 />
               </div>
 
-              <div className="space-y-4">
-                <h4 className="text-sm font-medium">Social Links</h4>
-                <div className="grid gap-2">
-                  <div className="grid grid-cols-6 items-center gap-2">
-                    <Label htmlFor="war-twitter" className="col-span-1">
-                      Twitter
-                    </Label>
-                    <Input
-                      id="war-twitter"
-                      placeholder="Twitter URL"
-                      className="col-span-5"
-                      value={warData.twitter}
-                      onChange={(e) =>
-                        setWarData({ ...warData, twitter: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div className="grid grid-cols-6 items-center gap-2">
-                    <Label htmlFor="war-telegram" className="col-span-1">
-                      Telegram
-                    </Label>
-                    <Input
-                      id="war-telegram"
-                      placeholder="Telegram URL"
-                      className="col-span-5"
-                      value={warData.telegram}
-                      onChange={(e) =>
-                        setWarData({ ...warData, telegram: e.target.value })
-                      }
-                    />
-                  </div>
-                  <div className="grid grid-cols-6 items-center gap-2">
-                    <Label htmlFor="war-website" className="col-span-1">
-                      Website
-                    </Label>
-                    <Input
-                      id="war-website"
-                      placeholder="Website URL"
-                      className="col-span-5"
-                      value={warData.website}
-                      onChange={(e) =>
-                        setWarData({ ...warData, website: e.target.value })
-                      }
-                    />
-                  </div>
-                </div>
-              </div>
+            
             </CardContent>
           </Card>
 
