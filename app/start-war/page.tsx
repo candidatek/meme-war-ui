@@ -455,6 +455,7 @@ export default function StartWarPage() {
     try {
       const createdMemeStateString = await createMemeRegistry(
         selectedDuration,
+        riskFreeSol,
         publicKey
       );
 

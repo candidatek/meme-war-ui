@@ -33,17 +33,28 @@ export function useCreateMemeWarRegistry(mint_a: string, mint_b: string) {
   const payer = publicKey;
   const { checkStatus } = useTransactionStatus();
   const { memeProgram } = useProgramDetails();
+
   const createMemeRegistry = useCallback(
-    async (hours: number, indexerPublicKey: PublicKey) => {
+    async (
+      hours: number,
+      riskFreeSolAmount: number,
+      indexerPublicKey: PublicKey
+    ): Promise<string | null> => {
       const connection = getConnection();
       setIsCreateWarLoading(true);
       setError(null);
+      let calculatedMemeWarState: PublicKey | null = null;
+
       if (!payer) {
         throw new Error("User not connected");
       }
 
       if (hours > 48) {
         throw new Error("Meme War duration cannot be more than 48 hours");
+      }
+
+      if (riskFreeSolAmount < 0 || riskFreeSolAmount > 20) {
+        throw new Error("Invalid Risk Free SOL amount");
       }
 
       try {
@@ -118,33 +129,35 @@ export function useCreateMemeWarRegistry(mint_a: string, mint_b: string) {
           initialValidationIndex = 1;
         }
 
-        const memeWarState = await getPDAForMemeSigner(
+        calculatedMemeWarState = await getPDAForMemeSigner(
           mintA,
           mintB,
           initialValidationIndex
         );
 
         const mintAAta = await findAssociatedTokenAddress({
-          walletAddress: memeWarState,
+          walletAddress: calculatedMemeWarState,
           tokenMintAddress: mintA,
         });
 
         const mintBAta = await findAssociatedTokenAddress({
-          walletAddress: memeWarState,
+          walletAddress: calculatedMemeWarState,
           tokenMintAddress: mintB,
         });
 
-        const riskFreeDeposit = 2;
+        const riskFreeLamports = new anchor.BN(
+          riskFreeSolAmount * anchor.web3.LAMPORTS_PER_SOL
+        );
 
         const validateIx = await memeProgram!.methods
-          .validateMemeWar(new anchor.BN(riskFreeDeposit))
+          .validateMemeWar(riskFreeLamports)
           .accounts({
             payer: payer,
             mintA: mintA,
             mintB: mintB,
             memeWarGlobalAccount: memeWarGlobalAccount,
             memeWarRegistry: memeWarRegistryAddr,
-            memeWarState: memeWarState,
+            memeWarState: calculatedMemeWarState,
             mintAAta: mintAAta,
             mintBAta: mintBAta,
             creator: payer,
@@ -164,14 +177,23 @@ export function useCreateMemeWarRegistry(mint_a: string, mint_b: string) {
         toast.message("Creating and Validating Meme War", { duration: 20000 });
 
         await sleep(5 * 1000);
-        return await checkStatus({
+
+        const statusSuccess = await checkStatus({
           signature,
           action: "Creating Meme War",
           setIsLoading: setIsCreateWarLoading,
         });
+
+        if (statusSuccess && calculatedMemeWarState) {
+          return calculatedMemeWarState.toString();
+        }
+
+        return null;
       } catch (e) {
         toast.dismiss();
         setIsCreateWarLoading(false);
+        console.error("Error in createMemeRegistry:", e);
+        setError(e as any);
         throw e;
       } finally {
         setIsCreateWarLoading(false);
