@@ -155,12 +155,12 @@ export function MemeCoinWars() {
       });
     };
 
-    // Simulate pledges every 400-500ms (2-2.5 pledges per second)
-    const interval = setInterval(() => {
-      simulatePledge();
-    }, Math.random() * 100 + 400);
+    // // Simulate pledges every 400-500ms (2-2.5 pledges per second)
+    // const interval = setInterval(() => {
+    //   simulatePledge();
+    // }, Math.random() * 100 + 400);
 
-    return () => clearInterval(interval);
+    // return () => clearInterval(interval);
   }, [wars, animationsEnabled]);
 
   // Toggle animations handler
