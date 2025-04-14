@@ -1,5 +1,6 @@
 import { formatNumber } from '@/lib/utils';
 import { useMemo } from 'react';
+import { useSolPrice } from '../api/getSolPrice';
 
 interface MemeWarCalculations {
   rfPlusMintADeposited: string;
@@ -12,15 +13,20 @@ interface MemeWarCalculations {
   mintBRiskFreeDeposited: number;
   mintARFPercentage: number;
   mintBRFPercentage: number;
+  mintADepositedRaw: number;
+  mintBDepositedRaw: number;
+  mintADepositedInDollar: number;
+  mintBDepositedInDollar: number
 }
 
 export const useMemeWarCalculations = (memeWarState: any): MemeWarCalculations => { // This useMemeWarCalculations is being used w 3 types: IDashboardWar, War, IMemeWarState. 
+  const {data: solPrice} = useSolPrice()
   const mintADepositedRaw = useMemo(() => {                                         // Would need to make all the types same in order to use it for this. If they are all the same, I will refactor to use one for all.
     if(memeWarState) {
       return ((Number(memeWarState.mint_a_deposit) + Number(memeWarState?.mint_a_risk_free_deposit)) -
       Number(memeWarState.mint_a_withdrawn) -
       Number(memeWarState?.mint_a_penalty)) /
-    10 ** memeWarState.mint_a_decimals;
+    10 ** 6;
     }
     return 0;
 
@@ -62,10 +68,12 @@ export const useMemeWarCalculations = (memeWarState: any): MemeWarCalculations =
   }, [memeWarState]);
 
   const mintBDepositedInSol = useMemo(() => {
+
     if (memeWarState) {
+
       return formatNumber(
-        (Number(memeWarState.mint_b_deposit) + Number(memeWarState?.mint_b_risk_free_deposit))  /
-        Number(memeWarState?.mint_b_sol_ratio)
+        ((Number(memeWarState.mint_b_deposit) + Number(memeWarState?.mint_b_risk_free_deposit))  /
+        Number(memeWarState?.mint_b_sol_ratio))  / 10 ** 6 
       );
     }
     return '0';
@@ -73,9 +81,32 @@ export const useMemeWarCalculations = (memeWarState: any): MemeWarCalculations =
 
   const mintADepositedInSol = useMemo(() => {
     if (memeWarState) {
+
       return formatNumber(
-        (Number(memeWarState.mint_a_deposit) + Number(memeWarState?.mint_a_risk_free_deposit))  /
-        Number(memeWarState?.mint_a_sol_ratio)
+        (((Number(memeWarState.mint_a_deposit) + Number(memeWarState?.mint_a_risk_free_deposit))  /
+        Number(memeWarState?.mint_a_sol_ratio)) / 10 ** 6)   
+      );
+    }
+    return '0';
+  }, [memeWarState]);
+  const mintBDepositedInDollar = useMemo(() => {
+
+    if (memeWarState) {
+
+      return (
+        (((Number(memeWarState.mint_b_deposit) + Number(memeWarState?.mint_b_risk_free_deposit))  /
+        Number(memeWarState?.mint_b_sol_ratio))  / 10 ** 6)  * Number(solPrice?.price)
+      );
+    }
+    return '0';
+  }, [memeWarState]);
+
+  const mintADepositedInDollar = useMemo(() => {
+    if (memeWarState) {
+
+      return formatNumber(
+        (((Number(memeWarState.mint_a_deposit) + Number(memeWarState?.mint_a_risk_free_deposit))  /
+        Number(memeWarState?.mint_a_sol_ratio)) / 10 ** 6)  * Number(solPrice?.price)
       );
     }
     return '0';
@@ -150,7 +181,11 @@ export const useMemeWarCalculations = (memeWarState: any): MemeWarCalculations =
     mintARiskFreeDeposited,
     mintBRiskFreeDeposited,
     mintARFPercentage,
-    mintBRFPercentage
+    mintBRFPercentage,
+    mintADepositedRaw,
+    mintBDepositedRaw,
+    mintADepositedInDollar,
+    mintBDepositedInDollar
   };
 };
 

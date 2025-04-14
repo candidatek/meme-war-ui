@@ -23,6 +23,7 @@ interface CoinData {
   emoji: string;
   recentPledges?: Pledge[];
   imageUrl?: string;
+  amountPledgedInSol?: number;
 }
 
 interface War {
@@ -371,21 +372,21 @@ function WarItem({
   animationsEnabled,
 }: WarItemProps) {
   // Now we can safely use the hook at the top level of this component
-  const { rfPlusMintADeposited, rfPlusMintBDeposited } = useMemeWarCalculations(
+  const { mintADepositedRaw, mintADepositedInDollar, mintBDepositedInDollar, mintBDepositedRaw } = useMemeWarCalculations(
     war.warData
   );
 
   // Update the amountPledged values with the calculated ones
   const updatedCoin1 = {
     ...war.coin1,
-    amountPledged: parseFloat(rfPlusMintADeposited.replace(/,/g, "")) || 0,
-    imageUrl: war.warData?.mint_a_image,
+    amountPledged: mintADepositedRaw,
+    amountPledgedInSol: mintADepositedInDollar,
   };
 
   const updatedCoin2 = {
     ...war.coin2,
-    amountPledged: parseFloat(rfPlusMintBDeposited.replace(/,/g, "")) || 0,
-    imageUrl: war.warData?.mint_b_image,
+    amountPledged: mintBDepositedRaw,
+    amountPledgedInSol: mintBDepositedInDollar,
   };
 
   const WarItemContent = () => (
@@ -663,10 +664,11 @@ function CoinCard({ coin, isTopWar, align, onClick }: CoinCardProps) {
           </div>
           <div className="flex flex-col">
             <span className="text-muted-foreground text-[10px] sm:text-xs">
-              Amount Pledged
+              Tokens Pledged
             </span>
             <span className="stat-value text-primary truncate">
-              ${formatNumber(coin.amountPledged)}
+             <span className="text-white"> {formatNumber(coin.amountPledged)}</span> 
+              {coin.amountPledgedInSol && ' $' + (coin.amountPledgedInSol)}
             </span>
           </div>
           <div className="flex items-end">

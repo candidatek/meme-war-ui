@@ -68,10 +68,17 @@ export const fetchTokenBalance = async (
 };
 
 export function formatNumber(num: number): string {
-  return new Intl.NumberFormat('en-US', {
-    notation: 'compact',
-    maximumFractionDigits: 1
-  }).format(num)
+  const absNum = Math.abs(num);
+  
+  if (absNum >= 1_000_000_000) {
+    return (num / 1_000_000_000).toFixed(1) + 'B';
+  } else if (absNum >= 1_000_000) {
+    return (num / 1_000_000).toFixed(1) + 'M';
+  } else if (absNum >= 1_000) {
+    return (num / 1_000).toFixed(1) + 'K';
+  } else {
+    return num ? num.toFixed(2) : '0';
+  }
 }
 
 export function formatWalletAddress(address: string): string {
