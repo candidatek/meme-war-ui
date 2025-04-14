@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
 
 import { Info } from "lucide-react";
 import { toast } from "sonner";
@@ -260,6 +261,7 @@ const LaunchCoinForm: React.FC<LaunchCoinFormProps> = ({
 );
 
 export default function StartWarPage() {
+  const router = useRouter();
   const [selectedDuration, setSelectedDuration] = useState<number>(2);
   const [riskFreeSol, setRiskFreeSol] = useState<number>(0);
   const [newMemeWarState, setNewMemeWarState] = useState<PublicKey | null>(
@@ -468,7 +470,10 @@ export default function StartWarPage() {
         toast.success("Meme war started successfully!");
         setNewMemeWarState(createdMemeStatePublicKey);
         setDisableCreateWarBtn(true);
-        setTimeout(() => setShowRedirect(true), 3000);
+        setTimeout(() => {
+          setShowRedirect(true);
+          router.push(`/war/${createdMemeStatePublicKey.toString()}`);
+        }, 3000);
       } else {
         console.error(
           "Failed to get valid public key string from createMemeRegistry"
