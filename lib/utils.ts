@@ -1,11 +1,8 @@
 import * as anchor from "@coral-xyz/anchor";
 import { PROGRAM_ID } from "./constants";
-import { Connection, PublicKey } from '@solana/web3.js';
-import {
-  type ClassValue,
-  clsx,
-} from 'clsx';
-import { twMerge } from 'tailwind-merge';
+import { Connection, PublicKey } from "@solana/web3.js";
+import { type ClassValue, clsx } from "clsx";
+import { twMerge } from "tailwind-merge";
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   TOKEN_PROGRAM_ID,
@@ -13,7 +10,7 @@ import {
 import { toast } from "sonner";
 
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
 
 export const formatToDollar = (amount: number): string => {
@@ -21,10 +18,13 @@ export const formatToDollar = (amount: number): string => {
 };
 
 export const getConnection = () => {
-  if(!process.env.NEXT_PUBLIC_SOLANA_CLUSTER_URL) {
-    throw new Error('Solana cluster URL is not defined');
+  if (!process.env.NEXT_PUBLIC_SOLANA_CLUSTER_URL) {
+    throw new Error("Solana cluster URL is not defined");
   }
-  return new Connection(process.env.NEXT_PUBLIC_SOLANA_CLUSTER_URL, 'confirmed');
+  return new Connection(
+    process.env.NEXT_PUBLIC_SOLANA_CLUSTER_URL,
+    "confirmed"
+  );
 };
 
 export const getProgramDerivedAddress = (
@@ -69,15 +69,15 @@ export const fetchTokenBalance = async (
 
 export function formatNumber(num: number): string {
   const absNum = Math.abs(num);
-  
+
   if (absNum >= 1_000_000_000) {
-    return (num / 1_000_000_000).toFixed(1) + 'B';
+    return (num / 1_000_000_000).toFixed(1) + "B";
   } else if (absNum >= 1_000_000) {
-    return (num / 1_000_000).toFixed(1) + 'M';
+    return (num / 1_000_000).toFixed(1) + "M";
   } else if (absNum >= 1_000) {
-    return (num / 1_000).toFixed(1) + 'K';
+    return (num / 1_000).toFixed(1) + "K";
   } else {
-    return num ? num.toFixed(2) : '0';
+    return num ? num.toFixed(2) : "0";
   }
 }
 
@@ -92,14 +92,14 @@ export function formatWalletAddress(address: string): string {
 }
 
 export function formatTimeAgo(date: Date): string {
-  const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000)
-  
-  if (seconds < 60) return 'just now'
-  const minutes = Math.floor(seconds / 60)
-  if (minutes < 60) return `${minutes}m ago`
-  const hours = Math.floor(minutes / 60)
-  if (hours < 24) return `${hours}h ago`
-  return `${Math.floor(hours / 24)}d ago`
+  const seconds = Math.floor((new Date().getTime() - date.getTime()) / 1000);
+
+  if (seconds < 60) return "just now";
+  const minutes = Math.floor(seconds / 60);
+  if (minutes < 60) return `${minutes}m ago`;
+  const hours = Math.floor(minutes / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
 }
 
 export const formatPublicKey = (publicKey: string) => {
@@ -108,7 +108,7 @@ export const formatPublicKey = (publicKey: string) => {
 
 export const validateSolanaAddress = (address: string): boolean => {
   try {
-    new PublicKey(address); // This will throw an error if the address is invalid
+    new PublicKey(address);
     return true;
   } catch (e) {
     return false;
@@ -126,18 +126,21 @@ export const showErrorToast = (
 ) => {
   toast.error(message, {
     description: options?.description,
-    duration: options?.duration ?? 5000, // Default to 5 seconds
-    style: { backgroundColor: "#FF8A8A", color: "#FFFFFF" }, // Custom styles for error
+    duration: options?.duration ?? 5000,
+    style: { backgroundColor: "#FF8A8A", color: "#FFFFFF" },
   });
 };
 
-export const getProgramDerivedAddressForPair = (seed1: PublicKey, seed2: PublicKey) => {
+export const getProgramDerivedAddressForPair = (
+  seed1: PublicKey,
+  seed2: PublicKey
+) => {
   const pda = anchor.web3.PublicKey.findProgramAddressSync(
     [seed1.toBuffer(), seed2.toBuffer()],
     PROGRAM_ID
   );
   return pda[0];
-}
+};
 
 export const findAssociatedTokenAddress = ({
   walletAddress,
@@ -156,23 +159,24 @@ export const findAssociatedTokenAddress = ({
   )[0];
 };
 
-export async function getAssetFromMint(assetId:string) {
+export async function getAssetFromMint(assetId: string) {
   const requestBody = {
-      "jsonrpc": "2.0",
-      "id": "test",
-      "method": "getAsset",
-      "params": { "id": assetId }
+    jsonrpc: "2.0",
+    id: "test",
+    method: "getAsset",
+    params: { id: assetId },
   };
 
-  const url = process.env.NEXT_PUBLIC_SOLANA_CLUSTER_URL || "https://mainnet.helius-rpc.com/?api-key=d2d5073c-e14c-49f9-b6b7-92e094f7d489"
+  const url =
+    process.env.NEXT_PUBLIC_SOLANA_CLUSTER_URL ||
+    "https://mainnet.helius-rpc.com/?api-key=d2d5073c-e14c-49f9-b6b7-92e094f7d489";
   const response = await fetch(url, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(requestBody)
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(requestBody),
   });
 
   const data = await response.json();
   console.log(data);
   return data;
 }
-
