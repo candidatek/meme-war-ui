@@ -1,12 +1,12 @@
 "use client";
 
-import { useRouter } from 'next/navigation';
-import React from 'react';
-import useCountdown from '@/app/hooks/useCountdown';
-import { formatPublicKey } from '@/lib/utils';
-import { useParams } from 'next/navigation';
-import { useGetUserProfile } from '@/app/api/getUserProfile';
-import { motion } from 'framer-motion';
+import { useRouter } from "next/navigation";
+import React from "react";
+import useCountdown from "@/app/hooks/useCountdown";
+import { formatPublicKey } from "@/lib/utils";
+import { useParams } from "next/navigation";
+import { useGetUserProfile } from "@/app/api/getUserProfile";
+import { motion } from "framer-motion";
 
 export interface War {
   meme_war_state: string;
@@ -37,7 +37,6 @@ const MemeWarCard: React.FC<MemeWarCardProps> = ({ war, onClick }) => {
       className="border border-border rounded-lg overflow-hidden bg-background hover:border-primary/50 transition-colors cursor-pointer mb-4"
     >
       <div className="grid grid-cols-1 md:grid-cols-5 gap-4 p-4">
-        {/* Coin A */}
         <div className="col-span-2 flex items-center space-x-3">
           <div className="relative w-12 h-12 rounded-full bg-muted overflow-hidden flex-shrink-0">
             <img
@@ -49,18 +48,18 @@ const MemeWarCard: React.FC<MemeWarCardProps> = ({ war, onClick }) => {
           <div>
             <p className="font-medium">{war.mint_a_name}</p>
             <p className="text-sm text-muted-foreground">{war.mint_a_symbol}</p>
-            <p className="text-xs text-muted-foreground/70 font-mono">{formatPublicKey(war.mint_a)}</p>
+            <p className="text-xs text-muted-foreground/70 font-mono">
+              {formatPublicKey(war.mint_a)}
+            </p>
           </div>
         </div>
 
-        {/* VS Badge */}
         <div className="flex items-center justify-center">
           <div className="w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold bg-muted/70">
             VS
           </div>
         </div>
 
-        {/* Coin B */}
         <div className="col-span-2 flex items-center space-x-3">
           <div className="relative w-12 h-12 rounded-full bg-muted overflow-hidden flex-shrink-0">
             <img
@@ -72,7 +71,9 @@ const MemeWarCard: React.FC<MemeWarCardProps> = ({ war, onClick }) => {
           <div>
             <p className="font-medium">{war.mint_b_name}</p>
             <p className="text-sm text-muted-foreground">{war.mint_b_symbol}</p>
-            <p className="text-xs text-muted-foreground/70 font-mono">{formatPublicKey(war.mint_b)}</p>
+            <p className="text-xs text-muted-foreground/70 font-mono">
+              {formatPublicKey(war.mint_b)}
+            </p>
           </div>
         </div>
       </div>
@@ -81,8 +82,14 @@ const MemeWarCard: React.FC<MemeWarCardProps> = ({ war, onClick }) => {
         <div className="text-xs font-mono text-muted-foreground">
           {formatPublicKey(war.meme_war_state)}
         </div>
-        <div className={`text-sm px-2 py-1 rounded-full ${war.war_ended ? 'bg-red-500/10 text-red-500' : 'bg-green-500/10 text-green-500'}`}>
-          {!war.war_ended ? 'Active' : `Ended ${endedTimeAgo}`}
+        <div
+          className={`text-sm px-2 py-1 rounded-full ${
+            war.war_ended
+              ? "bg-red-500/10 text-red-500"
+              : "bg-green-500/10 text-green-500"
+          }`}
+        >
+          {!war.war_ended ? "Active" : `Ended ${endedTimeAgo}`}
         </div>
       </div>
     </motion.div>
@@ -93,7 +100,12 @@ const UserWars: React.FC = () => {
   const router = useRouter();
   const params = useParams();
   const { userId } = params;
-  const { data: userProfileDetails = [], isLoading, refetch, isFetching } = useGetUserProfile(typeof userId === 'string' ? userId : null);
+  const {
+    data: userProfileDetails = [],
+    isLoading,
+    refetch,
+    isFetching,
+  } = useGetUserProfile(typeof userId === "string" ? userId : null);
 
   if (isLoading || isFetching) {
     return (
@@ -112,7 +124,8 @@ const UserWars: React.FC = () => {
         </div>
         <h3 className="text-lg font-medium">No Wars Found</h3>
         <p className="text-muted-foreground mt-2 max-w-md">
-          You haven't participated in any meme coin wars yet. Start a war or pledge to an existing one to see them here.
+          You haven't participated in any meme coin wars yet. Start a war or
+          pledge to an existing one to see them here.
         </p>
       </div>
     );
@@ -122,9 +135,9 @@ const UserWars: React.FC = () => {
     <div>
       <div className="space-y-4">
         {userProfileDetails.map((war: War) => (
-          <MemeWarCard 
-            key={war.meme_war_state} 
-            war={war} 
+          <MemeWarCard
+            key={war.meme_war_state}
+            war={war}
             onClick={() => router.push(`/meme-wars/${war.meme_war_state}`)}
           />
         ))}

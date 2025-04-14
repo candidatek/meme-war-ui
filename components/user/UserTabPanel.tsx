@@ -1,9 +1,11 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import UserTrades from "./UserTrades";
 import UserWars from "./UserWars";
+import UserEarnings from "./UserEarnings";
 import { motion, AnimatePresence } from "framer-motion";
+import { Coins, Trophy, ArrowDownUp } from "lucide-react";
 
 type ViewConfig = {
   id: string;
@@ -18,11 +20,19 @@ const UserTabPanel: React.FC = () => {
       id: "Wars",
       label: "Wars",
       Component: UserWars,
+      icon: <Trophy className="h-4 w-4 mr-2" />,
     },
     {
       id: "MyTrades",
       label: "Trades",
       Component: UserTrades,
+      icon: <ArrowDownUp className="h-4 w-4 mr-2" />,
+    },
+    {
+      id: "Earnings",
+      label: "Earnings",
+      Component: UserEarnings,
+      icon: <Coins className="h-4 w-4 mr-2" />,
     },
   ];
 
@@ -30,7 +40,6 @@ const UserTabPanel: React.FC = () => {
 
   return (
     <div className="flex flex-col">
-      {/* Tab Navigation */}
       <div className="border-b border-border">
         <div className="flex">
           {viewConfigs.map((view) => (
@@ -38,7 +47,7 @@ const UserTabPanel: React.FC = () => {
               key={view.id}
               onClick={() => setSelectedView(view.id)}
               className={`
-                                px-6 py-3 font-medium text-sm transition-colors relative
+                                px-6 py-3 font-medium text-sm transition-colors relative flex items-center
                                 ${
                                   selectedView === view.id
                                     ? "text-primary"
@@ -46,6 +55,7 @@ const UserTabPanel: React.FC = () => {
                                 }
                             `}
             >
+              {view.icon}
               {view.label}
               {selectedView === view.id && (
                 <motion.div
@@ -59,7 +69,6 @@ const UserTabPanel: React.FC = () => {
         </div>
       </div>
 
-      {/* Tab Content */}
       <AnimatePresence mode="wait">
         <motion.div
           key={selectedView}
