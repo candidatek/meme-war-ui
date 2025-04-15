@@ -64,7 +64,19 @@ const coinEmojis: Record<string, string> = {
 
 export function MemeCoinWars() {
   const [sortBy, setSortBy] = useState<string>('volume');
-  const { data: warArray, isError, isLoading } = useGetWarDetails(sortBy, 'all', 10, 0);
+  const [filterBy, setFilterBy] = useState<string>('all');
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const itemsPerPage = 2;
+  const [totalItems, setTotalItems] = useState<number>(0);
+  const [totalPages, setTotalPages] = useState<number>(1);
+
+  const { data: warArray, isError, isLoading } = useGetWarDetails(
+    sortBy, 
+    filterBy, 
+    itemsPerPage, 
+    (currentPage - 1) * itemsPerPage
+  );
+  
   const [wars, setWars] = useState<War[]>([]);
   const [shakingWarId, setShakingWarId] = useState<number | null>(null);
   const [animationsEnabled, setAnimationsEnabled] = useState(true);
@@ -87,10 +99,22 @@ export function MemeCoinWars() {
     }
   }, []);
 
+
+  useEffect(() => {
+    if (warArray) {
+      const estimatedTotal = warArray.length < itemsPerPage 
+        ? (currentPage - 1) * itemsPerPage + warArray.length
+        : Math.max(currentPage * itemsPerPage, totalItems);
+      
+      setTotalItems(estimatedTotal);
+      setTotalPages(Math.max(1, Math.ceil(estimatedTotal / itemsPerPage)));
+    }
+  }, [warArray, currentPage, itemsPerPage, totalItems]);
+
   // Transform API data to component format
   useEffect(() => {
     if (warArray && warArray.length > 0) {
-      const transformedWars = warArray.slice(0, 10).map((warData: War) => {
+      const transformedWars = warArray.map((warData: War) => {
         // We'll create a separate component for each war to use the hook properly
         return {
           coin1: {
@@ -219,6 +243,61 @@ export function MemeCoinWars() {
     );
   });
 
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const goToNextPage = () => {
+    goToPage(currentPage + 1);
+  };
+
+  const goToPrevPage = () => {
+    goToPage(currentPage - 1);
+  };
+
+  const getVisiblePageNumbers = () => {
+    const pageNumbers = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pageNumbers.push(i);
+      }
+    } else {
+      pageNumbers.push(1);
+      
+      let start = Math.max(2, currentPage - 1);
+      let end = Math.min(totalPages - 1, currentPage + 1);
+      
+      if (end - start + 1 < maxVisiblePages - 2) {
+        if (currentPage < totalPages / 2) {
+          end = Math.min(totalPages - 1, start + maxVisiblePages - 3);
+        } else {
+          start = Math.max(2, end - (maxVisiblePages - 3));
+        }
+      }
+      
+      if (start > 2) {
+        pageNumbers.push('...');
+      }
+      
+      for (let i = start; i <= end; i++) {
+        pageNumbers.push(i);
+      }
+      
+      if (end < totalPages - 1) {
+        pageNumbers.push('...');
+      }
+      
+      pageNumbers.push(totalPages);
+    }
+    
+    return pageNumbers;
+  };
+
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 h-full flex flex-col items-center justify-center">
@@ -264,6 +343,7 @@ export function MemeCoinWars() {
                       key={option.value}
                       onClick={() => {
                         setSortBy(option.value);
+                        setCurrentPage(1); // Reset to first page when sorting changes
                         setIsDropdownOpen(false);
                       }}
                       className={`w-full text-left px-4 py-2 text-sm hover:bg-primary/10 ${
