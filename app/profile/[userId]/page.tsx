@@ -1,5 +1,6 @@
 "use client";
 import { useGetUserProfile } from "@/app/api/getUserProfile";
+import { useUpdateUserProfile } from "@/app/api/updateUserProfile";
 import { useParams } from "next/navigation";
 import React, { useState } from "react";
 import { useGetUserTrades } from "@/app/api/getUserTrades";
@@ -11,18 +12,25 @@ import type { PublicKey } from "@solana/web3.js";
 import { formatWalletAddress } from "@/lib/utils";
 import EditProfileDialog from "@/components/user/EditProfileDialog";
 import { toast } from "sonner";
+import { useAuth } from "@/app/hooks/useAuth";
 
 const UserProfile = () => {
   const { userId } = useParams();
   const { publicKey } = useWalletInfo();
   const { refetch: refetchTrades } = useGetUserTrades(20, 0);
-  const {
-    data: userProfile,
-    refetch,
-    isFetching,
-  } = useGetUserProfile(typeof userId === "string" ? userId : null);
+  const { data, refetch, isFetching } = useGetUserProfile(
+    typeof userId === "string" ? userId : null
+  );
+
+  const { handleSignIn } = useAuth();
+
+  const userProfile = data?.profile;
+  const userWars = data?.wars || [];
+
   const [isCopied, setIsCopied] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+
+  const updateProfile = useUpdateUserProfile();
 
   const handleRefresh = () => {
     refetch();
@@ -32,10 +40,10 @@ const UserProfile = () => {
   const copyToClipboard = (text: string) => {
     navigator.clipboard.writeText(text);
     setIsCopied(true);
-    setTimeout(() => setIsCopied(false), 2000); // Reset after 2 seconds
+    setTimeout(() => setIsCopied(false), 2000);
   };
 
-  const getInitials = (name?: string) => {
+  const getInitials = (name?: string | null) => {
     if (!name) return "TW";
     const words = name.split(/\s+/);
     if (words.length === 1) {
@@ -44,13 +52,52 @@ const UserProfile = () => {
     return (words[0][0] + words[1][0]).toUpperCase();
   };
 
-  const handleProfileUpdate = (data: {
+  const handleProfileUpdate = async (data: {
     username: string;
     twitterHandle: string;
   }) => {
-    toast.success("Profile updated successfully!");
+    if (!userId || typeof userId !== "string") {
+      toast.error("Cannot update profile: No wallet address");
+      return;
+    }
 
-    refetch();
+    const token = localStorage.getItem("jwt_token");
+    if (!token) {
+      toast.info("Please sign in to update your profile");
+      try {
+        await handleSignIn();
+        const newToken = localStorage.getItem("jwt_token");
+        if (!newToken) {
+          toast.error("Authentication required to update profile");
+          return;
+        }
+      } catch (error) {
+        toast.error("Authentication failed. Please try again.");
+        return;
+      }
+    }
+
+    updateProfile.mutate(
+      {
+        wallet_address: userId,
+        username: data.username,
+        social_handle: data.twitterHandle,
+      },
+      {
+        onSuccess: () => {
+          toast.success("Profile updated successfully!");
+          refetch();
+        },
+        onError: (error) => {
+          if (error.message?.includes("401")) {
+            toast.error("Authentication expired. Please sign in again.");
+            localStorage.removeItem("jwt_token");
+          } else {
+            toast.error("Failed to update profile. Please try again.");
+          }
+        },
+      }
+    );
   };
 
   const userStats = {
@@ -155,8 +202,9 @@ const UserProfile = () => {
             <button
               onClick={() => setIsEditDialogOpen(true)}
               className="w-full py-2 px-4 bg-secondary/20 hover:bg-secondary/30 text-sm font-medium rounded-md transition-colors"
+              disabled={updateProfile.isPending}
             >
-              Edit Profile
+              {updateProfile.isPending ? "Saving..." : "Edit Profile"}
             </button>
           </div>
         </motion.div>
@@ -168,7 +216,7 @@ const UserProfile = () => {
           className="bg-background border rounded-lg shadow-sm overflow-hidden lg:col-span-2"
         >
           {publicKey == (userId as unknown as PublicKey) ? (
-            <UserTabPanel />
+            <UserTabPanel userWars={userWars} />
           ) : (
             <div className="p-8 text-center">
               <span className="text-muted-foreground">

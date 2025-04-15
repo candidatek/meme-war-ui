@@ -2,16 +2,24 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Swords, Wallet, Menu } from "lucide-react";
+import { Swords, Wallet, Menu, User } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { motion, AnimatePresence } from "framer-motion";
+import { useRouter } from "next/navigation";
 
 export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const { connected } = useWallet();
+  const { connected, publicKey } = useWallet();
+  const router = useRouter();
+
+  const handleProfileClick = () => {
+    if (connected && publicKey) {
+      router.push(`/profile/${publicKey.toString()}`);
+    }
+  };
 
   return (
     <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -57,6 +65,21 @@ export function Header() {
 
           {/* Right Section - Wallet */}
           <div className="flex items-center gap-1 sm:gap-4 flex-1 justify-end">
+            {/* Profile Button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleProfileClick}
+              disabled={!connected}
+              className="flex items-center gap-1 h-8 sm:h-10 text-xs sm:text-sm"
+              title={
+                connected ? "View Profile" : "Connect wallet to view profile"
+              }
+            >
+              <User className="h-4 w-4" />
+              <span className="hidden sm:inline">Profile</span>
+            </Button>
+
             {/* Show the wallet button but smaller on mobile */}
             <WalletMultiButton className="phantom-button !px-2 xs:!px-3 sm:!px-4 !text-xs sm:!text-sm !h-8 sm:!h-10 md:!h-10" />
 
@@ -88,6 +111,14 @@ export function Header() {
                 >
                   Active Wars
                 </Link>
+                {/* Profile Link in Mobile Menu */}
+                <button
+                  onClick={handleProfileClick}
+                  disabled={!connected}
+                  className="w-full text-left px-4 py-2 text-xs sm:text-sm text-muted-foreground hover:text-primary disabled:opacity-50 disabled:hover:text-muted-foreground"
+                >
+                  My Profile
+                </button>
                 {/* Show Start War button in mobile menu */}
                 <Link href="/start-war" className="block px-4">
                   <button className="holo-gradient w-full h-9 sm:h-11 rounded-full text-xs sm:text-sm text-primary-foreground font-semibold flex items-center justify-center gap-2">

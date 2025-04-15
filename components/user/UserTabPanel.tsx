@@ -6,15 +6,20 @@ import UserWars from "./UserWars";
 import UserEarnings from "./UserEarnings";
 import { motion, AnimatePresence } from "framer-motion";
 import { Coins, Trophy, ArrowDownUp } from "lucide-react";
+import { War } from "./UserWars";
 
 type ViewConfig = {
   id: string;
   label: string;
-  Component: React.ComponentType;
+  Component: React.ComponentType<any>;
   icon?: React.ReactNode;
 };
 
-const UserTabPanel: React.FC = () => {
+interface UserTabPanelProps {
+  userWars?: War[];
+}
+
+const UserTabPanel: React.FC<UserTabPanelProps> = ({ userWars = [] }) => {
   const viewConfigs: ViewConfig[] = [
     {
       id: "Wars",
@@ -82,6 +87,9 @@ const UserTabPanel: React.FC = () => {
             const config = viewConfigs.find((view) => view.id === selectedView);
             if (config) {
               const Component = config.Component;
+              if (config.id === "Wars") {
+                return <Component userWars={userWars} />;
+              }
               return <Component />;
             }
             return null;
