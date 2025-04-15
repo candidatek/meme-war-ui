@@ -952,56 +952,7 @@ export default function StartWarPage() {
                     className="min-h-32"
                   />
                 </div>
-
-                <div className="space-y-4">
-                  <h4 className="text-sm font-medium">
-                    Social Links (Optional)
-                  </h4>
-                  <div className="grid gap-2">
-                    <div className="grid grid-cols-1 sm:grid-cols-6 items-center gap-2">
-                      <Label htmlFor="war-twitter" className="sm:col-span-1">
-                        Twitter
-                      </Label>
-                      <Input
-                        id="war-twitter"
-                        placeholder="https://twitter.com/yourcoin"
-                        className="sm:col-span-5"
-                        value={warData.twitter}
-                        onChange={(e) =>
-                          setWarData({ ...warData, twitter: e.target.value })
-                        }
-                      />
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-6 items-center gap-2">
-                      <Label htmlFor="war-telegram" className="sm:col-span-1">
-                        Telegram
-                      </Label>
-                      <Input
-                        id="war-telegram"
-                        placeholder="https://t.me/yourcoin"
-                        className="sm:col-span-5"
-                        value={warData.telegram}
-                        onChange={(e) =>
-                          setWarData({ ...warData, telegram: e.target.value })
-                        }
-                      />
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-6 items-center gap-2">
-                      <Label htmlFor="war-website" className="sm:col-span-1">
-                        Website
-                      </Label>
-                      <Input
-                        id="war-website"
-                        placeholder="https://yourcoin.com"
-                        className="sm:col-span-5"
-                        value={warData.website}
-                        onChange={(e) =>
-                          setWarData({ ...warData, website: e.target.value })
-                        }
-                      />
-                    </div>
-                  </div>
-                </div>
+ 
               </CardContent>
             </Card>
 
