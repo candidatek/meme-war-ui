@@ -68,7 +68,19 @@ const coinEmojis: Record<string, string> = {
 
 export function MemeCoinWars() {
   const [sortBy, setSortBy] = useState<string>('volume');
-  const { data: warArray, isError, isLoading } = useGetWarDetails(sortBy, 'all', 10, 0);
+  const [filterBy, setFilterBy] = useState<string>('all');
+  const [currentPage, setCurrentPage] = useState<number>(1);
+  const itemsPerPage = 2;
+  const [totalItems, setTotalItems] = useState<number>(0);
+  const [totalPages, setTotalPages] = useState<number>(1);
+
+  const { data: warArray, isError, isLoading } = useGetWarDetails(
+    sortBy, 
+    filterBy, 
+    itemsPerPage, 
+    (currentPage - 1) * itemsPerPage
+  );
+  
   const [wars, setWars] = useState<War[]>([]);
   const [shakingWarId, setShakingWarId] = useState<number | null>(null);
   const [animationsEnabled, setAnimationsEnabled] = useState(true);
@@ -80,7 +92,6 @@ export function MemeCoinWars() {
     { value: 'last_traded', label: 'last trade' },
     { value: 'last_reply', label: 'last reply' },
     { value: 'currently_live', label: 'currently live' },
-   
   ];
 
   // Initialize animationsEnabled from localStorage
@@ -91,10 +102,22 @@ export function MemeCoinWars() {
     }
   }, []);
 
+
+  useEffect(() => {
+    if (warArray) {
+      const estimatedTotal = warArray.length < itemsPerPage 
+        ? (currentPage - 1) * itemsPerPage + warArray.length
+        : Math.max(currentPage * itemsPerPage, totalItems);
+      
+      setTotalItems(estimatedTotal);
+      setTotalPages(Math.max(1, Math.ceil(estimatedTotal / itemsPerPage)));
+    }
+  }, [warArray, currentPage, itemsPerPage, totalItems]);
+
   // Transform API data to component format
   useEffect(() => {
     if (warArray && warArray.length > 0) {
-      const transformedWars = warArray.slice(0, 10).map((warData: War) => {
+      const transformedWars = warArray.map((warData: War) => {
         // We'll create a separate component for each war to use the hook properly
         return {
           coin1: {
@@ -199,6 +222,61 @@ export function MemeCoinWars() {
     }
   };
 
+  const goToPage = (page: number) => {
+    if (page >= 1 && page <= totalPages) {
+      setCurrentPage(page);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+  };
+
+  const goToNextPage = () => {
+    goToPage(currentPage + 1);
+  };
+
+  const goToPrevPage = () => {
+    goToPage(currentPage - 1);
+  };
+
+  const getVisiblePageNumbers = () => {
+    const pageNumbers = [];
+    const maxVisiblePages = 5;
+    
+    if (totalPages <= maxVisiblePages) {
+      for (let i = 1; i <= totalPages; i++) {
+        pageNumbers.push(i);
+      }
+    } else {
+      pageNumbers.push(1);
+      
+      let start = Math.max(2, currentPage - 1);
+      let end = Math.min(totalPages - 1, currentPage + 1);
+      
+      if (end - start + 1 < maxVisiblePages - 2) {
+        if (currentPage < totalPages / 2) {
+          end = Math.min(totalPages - 1, start + maxVisiblePages - 3);
+        } else {
+          start = Math.max(2, end - (maxVisiblePages - 3));
+        }
+      }
+      
+      if (start > 2) {
+        pageNumbers.push('...');
+      }
+      
+      for (let i = start; i <= end; i++) {
+        pageNumbers.push(i);
+      }
+      
+      if (end < totalPages - 1) {
+        pageNumbers.push('...');
+      }
+      
+      pageNumbers.push(totalPages);
+    }
+    
+    return pageNumbers;
+  };
+
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 h-full flex flex-col items-center justify-center">
@@ -243,6 +321,7 @@ export function MemeCoinWars() {
                       key={option.value}
                       onClick={() => {
                         setSortBy(option.value);
+                        setCurrentPage(1); // Reset to first page when sorting changes
                         setIsDropdownOpen(false);
                       }}
                       className={`w-full text-left px-4 py-2 text-sm hover:bg-primary/10 ${
@@ -376,13 +455,14 @@ export function MemeCoinWars() {
           </div>
         </motion.button>
       </div>
+      
       <div className="flex-1 overflow-y-auto">
         <div className="space-y-3 sm:space-y-4">
           {animationsEnabled ? (
             <AnimatePresence mode="popLayout">
               {wars.map((war, index) => (
                 <WarItem
-                  key={`war-${war.coin1.ticker}-${war.coin2.ticker}-${index}`}
+                  key={`war-${war.coin1.ticker}-${war.coin2.ticker}-${index}-${currentPage}`}
                   war={war}
                   index={index}
                   isShaking={shakingWarId === index}
@@ -394,7 +474,7 @@ export function MemeCoinWars() {
           ) : (
             // No animations version
             wars.map((war, index) => (
-              <div key={`war-${war.coin1.ticker}-${war.coin2.ticker}-${index}`}>
+              <div key={`war-${war.coin1.ticker}-${war.coin2.ticker}-${index}-${currentPage}`}>
                 <WarItem
                   war={war}
                   index={index}
@@ -406,6 +486,81 @@ export function MemeCoinWars() {
             ))
           )}
         </div>
+        
+        {/* Pagination controls */}
+        {totalPages > 1 && (
+          <div className="flex justify-center items-center mt-6 mb-4">
+            <nav className="flex items-center space-x-1">
+              {/* Previous Page Button */}
+              <button
+                onClick={goToPrevPage}
+                disabled={currentPage === 1}
+                className={`p-2 rounded-md flex items-center justify-center ${
+                  currentPage === 1
+                    ? "text-muted-foreground cursor-not-allowed"
+                    : "hover:bg-primary/10 text-foreground"
+                }`}
+                aria-label="Go to previous page"
+              >
+                <svg 
+                  className="w-5 h-5" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+              
+              {/* Page Numbers */}
+              {getVisiblePageNumbers().map((pageNum, i) => (
+                typeof pageNum === 'number' ? (
+                  <button
+                    key={`page-${pageNum}`}
+                    onClick={() => goToPage(pageNum)}
+                    className={`min-w-[40px] h-10 flex items-center justify-center rounded-md text-sm font-medium transition-colors ${
+                      pageNum === currentPage
+                        ? "bg-primary text-primary-foreground"
+                        : "hover:bg-primary/10"
+                    }`}
+                    aria-label={`Go to page ${pageNum}`}
+                    aria-current={pageNum === currentPage ? "page" : undefined}
+                  >
+                    {pageNum}
+                  </button>
+                ) : (
+                  <span 
+                    key={`ellipsis-${i}`} 
+                    className="mx-1 text-muted-foreground"
+                  >
+                    {pageNum}
+                  </span>
+                )
+              ))}
+              
+              {/* Next Page Button */}
+              <button
+                onClick={goToNextPage}
+                disabled={currentPage === totalPages}
+                className={`p-2 rounded-md flex items-center justify-center ${
+                  currentPage === totalPages
+                    ? "text-muted-foreground cursor-not-allowed"
+                    : "hover:bg-primary/10 text-foreground"
+                }`}
+                aria-label="Go to next page"
+              >
+                <svg 
+                  className="w-5 h-5" 
+                  fill="none" 
+                  stroke="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+            </nav>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -723,7 +878,7 @@ function CoinCard({ coin, isTopWar, align, onClick }: CoinCardProps) {
             </span>
             <span className="stat-value text-primary truncate">
              <span className="text-white"> {formatNumber(coin.amountPledged)}</span> 
-              {coin.amountPledgedInSol && ' $' + (coin.amountPledgedInSol)}
+             {coin.amountPledgedInSol && ' $' + (coin.amountPledgedInSol)}
             </span>
           </div>
           <div className="flex items-end">
