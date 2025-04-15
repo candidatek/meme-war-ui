@@ -33,6 +33,7 @@ import { useCreateMemeWarDetails } from "../api/createMemeWarDetails";
 import useCreatePumpToken from "../hooks/useCreatePumpToken";
 import useProgramDetails from "../hooks/useProgramDetails";
 import { getPDAForMemeSigner, sortPublicKeys } from "../utils";
+import { useMintInfo } from "../hooks/useMintInfo";
 
 interface WarData {
   description: string;
@@ -156,9 +157,8 @@ const LaunchCoinForm: React.FC<LaunchCoinFormProps> = ({
         <div className="flex flex-col gap-2">
           <div
             id={`coin${coinIndex}-image-display`}
-            className={`border border-dashed rounded-md p-4 text-center cursor-pointer hover:bg-gray-50 ${
-              !data.image ? "border-amber-300" : "border-gray-300"
-            }`}
+            className={`border border-dashed rounded-md p-4 text-center cursor-pointer hover:bg-gray-50 ${!data.image ? "border-amber-300" : "border-gray-300"
+              }`}
             onClick={() =>
               document.getElementById(`coin${coinIndex}-image`)?.click()
             }
@@ -317,6 +317,23 @@ export default function StartWarPage() {
 
   const { mutate: createMemeWarDetails } = useCreateMemeWarDetails();
   const { memeProgram } = useProgramDetails();
+  const { data: mintAInfo } = useMintInfo(coin1Data.mintAddress);
+  const { data: mintBInfo } = useMintInfo(coin2Data.mintAddress);
+
+  useEffect(() => {
+    if (
+      coin1Data.mintAddress && 
+      coin2Data.mintAddress 
+    ) {
+      if (mintAInfo === null || mintAInfo === undefined || mintBInfo === null || mintBInfo === undefined) {
+        toast.error("Only migrated tokens to pump swap are allowed to create a war!", {
+          duration: 4000,
+          position: "bottom-left",
+          id: "mint-validation-error" 
+        });
+      }
+    }
+  }, [mintAInfo, mintBInfo, coin1Data.mintAddress, coin2Data.mintAddress]);
 
   const handleCreateMemeWarDetails = async () => {
     try {
@@ -440,17 +457,29 @@ export default function StartWarPage() {
       handleCreateMemeWarDetails();
     }
     if (!publicKey) {
-      toast.error("Please connect your wallet to start a war");
+      toast.error("Please connect your wallet to start a war", {
+        duration: 4000,
+        position: "bottom-left",
+        id: "wallet-error"
+      });
       return;
     }
 
     if (!coin1Data.mintAddress || !coin2Data.mintAddress) {
-      toast.error("Please enter both token mint addresses");
+      toast.error("Please enter both token mint addresses", {
+        duration: 4000,
+        position: "bottom-left",
+        id: "mint-address-error"
+      });
       return;
     }
 
     if (coin1Data.mintAddress === coin2Data.mintAddress) {
-      toast.error("The two tokens must be different");
+      toast.error("The two tokens must be different", {
+        duration: 4000,
+        position: "bottom-left",
+        id: "same-token-error"
+      });
       return;
     }
 
@@ -467,7 +496,11 @@ export default function StartWarPage() {
       ) {
         const createdMemeStatePublicKey = new PublicKey(createdMemeStateString);
 
-        toast.success("Meme war started successfully!");
+        toast.success("Meme war started successfully!", {
+          duration: 3000,
+          position: "bottom-left",
+          id: "war-success"
+        });
         setNewMemeWarState(createdMemeStatePublicKey);
         setDisableCreateWarBtn(true);
         setTimeout(() => {
@@ -479,15 +512,24 @@ export default function StartWarPage() {
           "Failed to get valid public key string from createMemeRegistry"
         );
         toast.error(
-          "Failed to start meme war: Invalid registry state received."
+          "Failed to start meme war: Invalid registry state received.",
+          {
+            duration: 4000,
+            position: "bottom-left",
+            id: "registry-error"
+          }
         );
       }
     } catch (error) {
       console.error("Error creating meme war:", error);
       toast.error(
-        `Failed to start meme war: ${
-          error instanceof Error ? error.message : "Unknown error"
-        }`
+        `Failed to start meme war: ${error instanceof Error ? error.message : "Unknown error"
+        }`,
+        {
+          duration: 4000,
+          position: "bottom-left",
+          id: "creation-error"
+        }
       );
     }
   };
@@ -614,7 +656,11 @@ export default function StartWarPage() {
     console.log("Coin 2 data:", launchCoin2);
 
     if (!publicKey) {
-      toast.error("Please connect your wallet to launch coins");
+      toast.error("Please connect your wallet to launch coins", {
+        duration: 4000,
+        position: "bottom-left",
+        id: "launch-wallet-error"
+      });
       return;
     }
 
@@ -638,7 +684,11 @@ export default function StartWarPage() {
 
     for (const { field, message } of requiredFields) {
       if (!field) {
-        toast.error(message);
+        toast.error(message, {
+          duration: 4000,
+          position: "bottom-left",
+          id: `field-error-${message}`
+        });
         return;
       }
     }
@@ -728,9 +778,12 @@ export default function StartWarPage() {
     } catch (error) {
       console.error("Error launching coins:", error);
       toast.error(
-        `Failed to launch coins: ${
-          error instanceof Error ? error.message : String(error)
-        }`
+        `Failed to launch coins: ${error instanceof Error ? error.message : String(error)
+        }`,
+        {
+          duration: 4000,
+          position: "bottom-left"
+        }
       );
       setIsCreatingTokens(false);
     }
@@ -974,15 +1027,16 @@ export default function StartWarPage() {
                 className="w-full sm:w-auto sm:px-8"
                 disabled={Boolean(
                   !publicKey ||
-                    isCreateWarLoading ||
-                    Boolean(disableCreateWarBtn)
+                  isCreateWarLoading ||
+                  Boolean(disableCreateWarBtn) ||
+                  !mintAInfo || !mintBInfo
                 )}
               >
                 {isCreateWarLoading
                   ? "Starting War..."
                   : disableCreateWarBtn
-                  ? "War Started!"
-                  : "Start War"}
+                    ? "War Started!"
+                    : "Start War"}
               </Button>
             </div>
           </form>

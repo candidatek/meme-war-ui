@@ -169,7 +169,10 @@ export function useCreateMemeWarRegistry(mint_a: string, mint_b: string) {
           .instruction();
         tx.add(validateIx);
 
-        toast.message("Creating Meme war", { duration: 20000 });
+        toast.message("Creating Meme war", { 
+          duration: 20000,
+          id: "meme-war-creation"
+        });
 
         // Send transaction to wallet for approval
         const signature = await sendTransaction(tx, connection);

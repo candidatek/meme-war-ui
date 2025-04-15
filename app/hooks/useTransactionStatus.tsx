@@ -70,7 +70,11 @@ export const useTransactionStatus = () => {
     
     toast(
       <div>Confirming Transaction</div>,
-      { dismissible: false, duration: Infinity }
+      { 
+        dismissible: false, 
+        duration: 2000,
+        id: "transaction-confirmation"
+      }
     );
 
     setTxDetails(transactionDetails);
