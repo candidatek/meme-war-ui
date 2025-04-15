@@ -201,8 +201,9 @@ export default function WarPage() {
     [tokenBalanceData]
   );
 
-  // User state data
-  const { data: userStateInfo } = useGetUserStateInfo(userState, memeWarState);
+  // Get user state data
+  const { data: userStateInfo, refetch: refetchUserState } =
+    useGetUserStateInfo(userState, memeWarState);
 
   // Recent trades data
   const { data: tradesData } = useRecentTrades(memeWarState);
@@ -281,9 +282,23 @@ export default function WarPage() {
     const handleGameUpdate = (message: TradeData) => {
       console.log("Received trade update from WebSocket:", message);
 
+      // Handle new message format that might include different structure
+      // Make sure message has required fields before processing
+      if (!message || typeof message !== "object") return;
+
+      // Extract the necessary data from the message
+      const processedMessage: TradeData = {
+        event_type: message.event_type || "deposit",
+        mint: message.mint || mintA || mintB, // Default to mintA if mint is not provided
+        amount: message.amount?.toString() || "0",
+        wallet_address: message.wallet_address || "unknown",
+        event_time: message.event_time || Date.now(),
+        tx_signature: message.tx_signature || `tx-${Date.now()}`,
+      };
+
       // Determine which side the trade belongs to
-      const isMatchingMintA = message?.mint === mintA;
-      const isMatchingMintB = message?.mint === mintB;
+      const isMatchingMintA = processedMessage.mint === mintA;
+      const isMatchingMintB = processedMessage.mint === mintB;
       const index = isMatchingMintA ? 0 : isMatchingMintB ? 1 : -1;
 
       if (index !== -1) {
@@ -295,7 +310,8 @@ export default function WarPage() {
         // Set animation state
         setAnimateTrade({
           index,
-          tradeId: message.tx_signature || `${message.event_time}`,
+          tradeId:
+            processedMessage.tx_signature || `${processedMessage.event_time}`,
         });
 
         // Set timeout to clear the animation
@@ -310,12 +326,12 @@ export default function WarPage() {
           const updatedData = { ...prevData };
 
           if (isMatchingMintA) {
-            const newTrades = [message, ...updatedData?.mintA];
+            const newTrades = [processedMessage, ...updatedData.mintA];
             updatedData.mintA = newTrades.sort(
               (a, b) => b.event_time - a.event_time
             );
           } else if (isMatchingMintB) {
-            const newTrades = [message, ...updatedData?.mintB];
+            const newTrades = [processedMessage, ...updatedData.mintB];
             updatedData.mintB = newTrades.sort(
               (a, b) => b.event_time - a.event_time
             );
@@ -323,6 +339,14 @@ export default function WarPage() {
 
           return updatedData;
         });
+
+        // Also refresh the user state and war state to show updated deposits
+        setTimeout(() => {
+          refetchUserState();
+          queryClient.invalidateQueries({
+            queryKey: ["memeWarState", memeWarState],
+          });
+        }, 2000); // Give time for blockchain state to update
       }
     };
 
@@ -340,7 +364,7 @@ export default function WarPage() {
       socket.off("gameUpdate", handleGameUpdate);
       socket.disconnect();
     };
-  }, [memeWarState, mintA, mintB]);
+  }, [memeWarState, mintA, mintB, refetchUserState, queryClient]);
 
   // Chat WebSocket implementation
   useEffect(() => {
@@ -411,6 +435,19 @@ export default function WarPage() {
         refreshTokenBalance,
         mintDecimal ?? 9
       );
+
+      // Refresh user state and query data after successful deposit
+      refetchUserState();
+      queryClient.invalidateQueries({
+        queryKey: ["memeWarState", memeWarState],
+      });
+
+      // Reset input fields after successful deposit
+      if (mintIdentifier === 0) {
+        setLeftInput("1");
+      } else {
+        setRightInput("1");
+      }
     } catch (e) {
       showErrorToast("Failed to Deposit Tokens");
       setBtnLoading(-1);
@@ -422,6 +459,12 @@ export default function WarPage() {
     try {
       setBtnLoading(index);
       await withdrawTokens(index, setBtnLoading, refreshTokenBalance);
+
+      // Refresh user state and query data after successful withdrawal
+      refetchUserState();
+      queryClient.invalidateQueries({
+        queryKey: ["memeWarState", memeWarState],
+      });
     } catch (e) {
       showErrorToast("Failed to Withdraw Tokens");
       setBtnLoading(-1);
@@ -607,11 +650,7 @@ export default function WarPage() {
             index={0}
             publicKey={publicKey}
             isWarEnded={memeWarStateInfo?.war_ended}
-            disablePledgeBtn={
-              btnLoading === 0 ||
-              !!memeWarStateInfo?.war_ended ||
-              !userStateInfo?.mint_a_deposit
-            }
+            disablePledgeBtn={btnLoading === 0 || !!memeWarStateInfo?.war_ended}
             disableUnpledgeBtn={
               btnLoading === 0 ||
               !!memeWarStateInfo?.war_ended ||
@@ -778,11 +817,7 @@ export default function WarPage() {
             index={1}
             publicKey={publicKey}
             isWarEnded={memeWarStateInfo?.war_ended}
-            disablePledgeBtn={
-              btnLoading === 1 ||
-              !!memeWarStateInfo?.war_ended ||
-              !userStateInfo?.mint_b_deposit
-            }
+            disablePledgeBtn={btnLoading === 1 || !!memeWarStateInfo?.war_ended}
             disableUnpledgeBtn={
               btnLoading === 1 ||
               !!memeWarStateInfo?.war_ended ||
