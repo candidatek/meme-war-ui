@@ -1,10 +1,20 @@
 "use client";
 
-import { formatNumber, formatTimeAgo } from "@/lib/utils";
-import { useState, useEffect } from "react";
-import { motion, AnimatePresence } from "framer-motion";
-import { useRouter } from "next/navigation";
-import { useGetHomePageDetails } from "@/app/api/getHomePageDetails";
+import {
+  useEffect,
+  useState,
+} from 'react';
+
+import {
+  AnimatePresence,
+  motion,
+} from 'framer-motion';
+import { useRouter } from 'next/navigation';
+
+import { useGetWarDetails } from '@/app/api/getHomePageDetails';
+// A minimal wrapper component to use the hook properly
+import { useMemeWarCalculations } from '@/app/hooks/useMemeWarCalculations';
+import { formatNumber } from '@/lib/utils';
 
 interface Pledge {
   id: string;
@@ -57,11 +67,21 @@ const coinEmojis: Record<string, string> = {
 };
 
 export function MemeCoinWars() {
-  const { data: warArray, isError, isLoading } = useGetHomePageDetails();
+  const [sortBy, setSortBy] = useState<string>('volume');
+  const { data: warArray, isError, isLoading } = useGetWarDetails(sortBy, 'all', 10, 0);
   const [wars, setWars] = useState<War[]>([]);
   const [shakingWarId, setShakingWarId] = useState<number | null>(null);
   const [animationsEnabled, setAnimationsEnabled] = useState(true);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const router = useRouter();
+
+  const sortOptions = [
+    { value: 'volume', label: 'volume' },
+    { value: 'last_traded', label: 'last trade' },
+    { value: 'last_reply', label: 'last reply' },
+    { value: 'currently_live', label: 'currently live' },
+   
+  ];
 
   // Initialize animationsEnabled from localStorage
   useEffect(() => {
@@ -198,7 +218,45 @@ export function MemeCoinWars() {
   return (
     <div className="container mx-auto px-2 sm:px-4 h-full flex flex-col">
       <div className="flex flex-wrap items-center justify-between mb-4 sm:mb-6 gap-2">
-        <h2 className="text-lg sm:text-xl font-medium">MARKET</h2>
+        <div className="flex items-center gap-4">
+          <h2 className="text-lg sm:text-xl font-medium">MARKET</h2>
+          <div className="relative">
+            <button
+              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+              className="flex items-center gap-2 px-4 py-2 rounded-md bg-muted/50 hover:bg-muted text-sm font-medium"
+            >
+              sort: {sortOptions.find(opt => opt.value === sortBy)?.label}
+              <svg
+                className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+              </svg>
+            </button>
+            {isDropdownOpen && (
+              <div className="absolute z-10 mt-2 w-48 rounded-md shadow-lg bg-card border-2 border-primary/20">
+                <div className="py-1">
+                  {sortOptions.map((option) => (
+                    <button
+                      key={option.value}
+                      onClick={() => {
+                        setSortBy(option.value);
+                        setIsDropdownOpen(false);
+                      }}
+                      className={`w-full text-left px-4 py-2 text-sm hover:bg-primary/10 ${
+                        sortBy === option.value ? 'bg-primary/20' : ''
+                      }`}
+                    >
+                      {option.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
         <motion.button
           onClick={toggleAnimations}
           className="relative flex items-center gap-1 px-2 sm:px-3 py-1 rounded text-xs font-medium bg-muted hover:bg-muted/80 transition-colors overflow-hidden group"
@@ -352,9 +410,6 @@ export function MemeCoinWars() {
     </div>
   );
 }
-
-// A minimal wrapper component to use the hook properly
-import { useMemeWarCalculations } from "@/app/hooks/useMemeWarCalculations";
 
 interface WarItemProps {
   war: War & { warData?: War };
