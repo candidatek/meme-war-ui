@@ -1,20 +1,15 @@
 "use client";
 
-import {
-  useEffect,
-  useState,
-} from 'react';
+import { useEffect, useState } from "react";
 
-import {
-  AnimatePresence,
-  motion,
-} from 'framer-motion';
-import { useRouter } from 'next/navigation';
+import { AnimatePresence, motion } from "framer-motion";
+import { useRouter } from "next/navigation";
 
-import { useGetWarDetails } from '@/app/api/getHomePageDetails';
+import { useGetWarDetails } from "@/app/api/getHomePageDetails";
 // A minimal wrapper component to use the hook properly
-import { useMemeWarCalculations } from '@/app/hooks/useMemeWarCalculations';
-import { formatNumber } from '@/lib/utils';
+import { useMemeWarCalculations } from "@/app/hooks/useMemeWarCalculations";
+import { SearchInput } from "@/components/common/SearchInput";
+import { formatNumber } from "@/lib/utils";
 
 interface Pledge {
   id: string;
@@ -34,6 +29,7 @@ interface CoinData {
   recentPledges?: Pledge[];
   imageUrl?: string;
   amountPledgedInSol?: number;
+  mintAddress?: string;
 }
 
 interface War {
@@ -67,20 +63,24 @@ const coinEmojis: Record<string, string> = {
 };
 
 export function MemeCoinWars() {
-  const [sortBy, setSortBy] = useState<string>('volume');
-  const { data: warArray, isError, isLoading } = useGetWarDetails(sortBy, 'all', 10, 0);
+  const [sortBy, setSortBy] = useState<string>("volume");
+  const {
+    data: warArray,
+    isError,
+    isLoading,
+  } = useGetWarDetails(sortBy, "all", 10, 0);
   const [wars, setWars] = useState<War[]>([]);
   const [shakingWarId, setShakingWarId] = useState<number | null>(null);
   const [animationsEnabled, setAnimationsEnabled] = useState(true);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState<string>("");
   const router = useRouter();
 
   const sortOptions = [
-    { value: 'volume', label: 'volume' },
-    { value: 'last_traded', label: 'last trade' },
-    { value: 'last_reply', label: 'last reply' },
-    { value: 'currently_live', label: 'currently live' },
-   
+    { value: "volume", label: "volume" },
+    { value: "last_traded", label: "last trade" },
+    { value: "last_reply", label: "last reply" },
+    { value: "currently_live", label: "currently live" },
   ];
 
   // Initialize animationsEnabled from localStorage
@@ -105,6 +105,7 @@ export function MemeCoinWars() {
             amountPledged: 0, // Will be calculated in WarItem
             emoji: coinEmojis[warData.mint_a_symbol] || "🪙",
             imageUrl: warData.mint_a_image,
+            mintAddress: warData.mint_a,
           },
           coin2: {
             ticker: warData.mint_b_symbol || "Unknown",
@@ -114,6 +115,7 @@ export function MemeCoinWars() {
             amountPledged: 0, // Will be calculated in WarItem
             emoji: coinEmojis[warData.mint_b_symbol] || "🪙",
             imageUrl: warData.mint_b_image,
+            mintAddress: warData.mint_b,
           },
           warId: warData.meme_war_state,
           warData: warData, // Pass the raw data for calculations
@@ -199,6 +201,28 @@ export function MemeCoinWars() {
     }
   };
 
+  // Search handler
+  const handleSearch = (value: string) => {
+    setSearchTerm(value.toLowerCase());
+    // NOTE: Filtering logic will be applied below before rendering
+  };
+
+  // Filter wars based on search term
+  const filteredWars = wars.filter((war) => {
+    if (!searchTerm) return true; // Show all if search is empty
+    const term = searchTerm.toLowerCase();
+    const coin1 = war.coin1;
+    const coin2 = war.coin2;
+    return (
+      coin1.ticker.toLowerCase().includes(term) ||
+      coin1.name.toLowerCase().includes(term) ||
+      (coin1.mintAddress && coin1.mintAddress.toLowerCase().includes(term)) || // Search mint address
+      coin2.ticker.toLowerCase().includes(term) ||
+      coin2.name.toLowerCase().includes(term) ||
+      (coin2.mintAddress && coin2.mintAddress.toLowerCase().includes(term)) // Search mint address
+    );
+  });
+
   if (isLoading) {
     return (
       <div className="container mx-auto px-4 h-full flex flex-col items-center justify-center">
@@ -217,7 +241,7 @@ export function MemeCoinWars() {
 
   return (
     <div className="container mx-auto px-2 sm:px-4 h-full flex flex-col">
-      <div className="flex flex-wrap items-center justify-between mb-4 sm:mb-6 gap-2">
+      <div className="flex flex-col sm:flex-row items-center justify-between mb-4 sm:mb-6 gap-4">
         <div className="flex items-center gap-4">
           <h2 className="text-lg sm:text-xl font-medium">MARKET</h2>
           <div className="relative">
@@ -225,14 +249,21 @@ export function MemeCoinWars() {
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
               className="flex items-center gap-2 px-4 py-2 rounded-md bg-muted/50 hover:bg-muted text-sm font-medium"
             >
-              sort: {sortOptions.find(opt => opt.value === sortBy)?.label}
+              sort: {sortOptions.find((opt) => opt.value === sortBy)?.label}
               <svg
-                className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`}
+                className={`w-4 h-4 transition-transform ${
+                  isDropdownOpen ? "rotate-180" : ""
+                }`}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
               >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M19 9l-7 7-7-7"
+                />
               </svg>
             </button>
             {isDropdownOpen && (
@@ -246,7 +277,7 @@ export function MemeCoinWars() {
                         setIsDropdownOpen(false);
                       }}
                       className={`w-full text-left px-4 py-2 text-sm hover:bg-primary/10 ${
-                        sortBy === option.value ? 'bg-primary/20' : ''
+                        sortBy === option.value ? "bg-primary/20" : ""
                       }`}
                     >
                       {option.label}
@@ -257,155 +288,170 @@ export function MemeCoinWars() {
             )}
           </div>
         </div>
-        <motion.button
-          onClick={toggleAnimations}
-          className="relative flex items-center gap-1 px-2 sm:px-3 py-1 rounded text-xs font-medium bg-muted hover:bg-muted/80 transition-colors overflow-hidden group"
-          aria-label={
-            animationsEnabled ? "Disable animations" : "Enable animations"
-          }
-          title={animationsEnabled ? "Disable animations" : "Enable animations"}
-          whileTap={{ scale: 0.95 }}
-          whileHover={{ boxShadow: "0 0 8px rgba(var(--primary-rgb), 0.4)" }}
-          transition={{
-            type: "spring",
-            stiffness: 400,
-            damping: 17,
-          }}
-        >
-          <motion.div
-            className="absolute inset-0 bg-primary/40 scale-x-0 origin-left"
-            animate={{ scaleX: animationsEnabled ? 1 : 0 }}
-            transition={{ duration: 0.3, ease: "easeInOut" }}
+
+        {/* Search Input */}
+        <div className="w-full sm:w-64">
+          <SearchInput
+            placeholder="Search by Symbol or Mint Address..."
+            onSearchChange={handleSearch}
           />
-          <motion.div
-            className="relative z-10 w-4 h-4 flex items-center justify-center"
-            animate={{ rotate: animationsEnabled ? 0 : 180 }}
-            transition={{ duration: 0.3, type: "spring" }}
-          >
-            {animationsEnabled ? (
-              <svg
-                className="w-4 h-4"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <path d="M8 11V8.5a4.5 4.5 0 019 0v7M8 12v3.5a4.5 4.5 0 009 0V8" />
-              </svg>
-            ) : (
-              <svg
-                className="w-4 h-4"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-              >
-                <line x1="5" y1="12" x2="19" y2="12" />
-                <polyline points="5 12 9 16" />
-                <polyline points="5 12 9 8" />
-                <line x1="19" y1="6" x2="15" y2="6" />
-                <line x1="19" y1="18" x2="15" y2="18" />
-              </svg>
-            )}
-          </motion.div>
-          <motion.span
-            className="relative z-10 hidden sm:inline"
-            initial={false}
-            animate={{
-              opacity: [1, 0.8, 1],
-              y: animationsEnabled ? [2, 0] : 0,
-            }}
+        </div>
+
+        <div className="flex items-center gap-2">
+          <motion.button
+            onClick={toggleAnimations}
+            className="relative flex items-center gap-1 px-2 sm:px-3 py-1 rounded text-xs font-medium bg-muted hover:bg-muted/80 transition-colors overflow-hidden group"
+            aria-label={
+              animationsEnabled ? "Disable animations" : "Enable animations"
+            }
+            title={
+              animationsEnabled ? "Disable animations" : "Enable animations"
+            }
+            whileTap={{ scale: 0.95 }}
+            whileHover={{ boxShadow: "0 0 8px rgba(var(--primary-rgb), 0.4)" }}
             transition={{
-              opacity: { duration: 0.3 },
-              y: { duration: 0.2 },
+              type: "spring",
+              stiffness: 400,
+              damping: 17,
             }}
           >
-            {animationsEnabled ? "Animations On" : "Animations Off"}
-          </motion.span>
-          {/* Animated decorative elements */}
-          <div className="absolute inset-0 overflow-hidden pointer-events-none">
-            {/* Multiple particles that animate outward when enabled */}
-            {Array.from({ length: 5 }).map((_, i) => (
+            <motion.div
+              className="absolute inset-0 bg-primary/40 scale-x-0 origin-left"
+              animate={{ scaleX: animationsEnabled ? 1 : 0 }}
+              transition={{ duration: 0.3, ease: "easeInOut" }}
+            />
+            <motion.div
+              className="relative z-10 w-4 h-4 flex items-center justify-center"
+              animate={{ rotate: animationsEnabled ? 0 : 180 }}
+              transition={{ duration: 0.3, type: "spring" }}
+            >
+              {animationsEnabled ? (
+                <svg
+                  className="w-4 h-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <path d="M8 11V8.5a4.5 4.5 0 019 0v7M8 12v3.5a4.5 4.5 0 009 0V8" />
+                </svg>
+              ) : (
+                <svg
+                  className="w-4 h-4"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                >
+                  <line x1="5" y1="12" x2="19" y2="12" />
+                  <polyline points="5 12 9 16" />
+                  <polyline points="5 12 9 8" />
+                  <line x1="19" y1="6" x2="15" y2="6" />
+                  <line x1="19" y1="18" x2="15" y2="18" />
+                </svg>
+              )}
+            </motion.div>
+            <motion.span
+              className="relative z-10 hidden sm:inline"
+              initial={false}
+              animate={{
+                opacity: [1, 0.8, 1],
+                y: animationsEnabled ? [2, 0] : 0,
+              }}
+              transition={{
+                opacity: { duration: 0.3 },
+                y: { duration: 0.2 },
+              }}
+            >
+              {animationsEnabled ? "Animations On" : "Animations Off"}
+            </motion.span>
+            {/* Animated decorative elements */}
+            <div className="absolute inset-0 overflow-hidden pointer-events-none">
+              {/* Multiple particles that animate outward when enabled */}
+              {Array.from({ length: 5 }).map((_, i) => (
+                <motion.div
+                  key={`particle-${i}`}
+                  className="absolute rounded-full bg-primary/80"
+                  style={{
+                    width: `${3 + (i % 2)}px`,
+                    height: `${3 + (i % 2)}px`,
+                    left: `${50 + i * 5 - 10}%`,
+                    top: `${50 + Math.sin(i) * 20}%`,
+                  }}
+                  initial={{ scale: 0, opacity: 0 }}
+                  animate={
+                    animationsEnabled
+                      ? {
+                          scale: [0, 1, 0],
+                          opacity: [0, 0.8, 0],
+                          x: [(i - 2) * 10, (i - 2) * 30],
+                          y: [0, i % 2 === 0 ? -20 : 20],
+                        }
+                      : { scale: 0, opacity: 0 }
+                  }
+                  transition={{
+                    duration: 0.7,
+                    delay: i * 0.04,
+                    ease: "easeOut",
+                  }}
+                />
+              ))}
+
+              {/* Ripple effect */}
               <motion.div
-                key={`particle-${i}`}
-                className="absolute rounded-full bg-primary/80"
-                style={{
-                  width: `${3 + (i % 2)}px`,
-                  height: `${3 + (i % 2)}px`,
-                  left: `${50 + i * 5 - 10}%`,
-                  top: `${50 + Math.sin(i) * 20}%`,
-                }}
-                initial={{ scale: 0, opacity: 0 }}
+                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary/30"
+                initial={{ width: 0, height: 0, opacity: 0 }}
                 animate={
                   animationsEnabled
                     ? {
-                        scale: [0, 1, 0],
-                        opacity: [0, 0.8, 0],
-                        x: [(i - 2) * 10, (i - 2) * 30],
-                        y: [0, i % 2 === 0 ? -20 : 20],
+                        width: ["0%", "150%"],
+                        height: ["0%", "150%"],
+                        opacity: [0, 0.5, 0],
                       }
-                    : { scale: 0, opacity: 0 }
+                    : { width: 0, height: 0, opacity: 0 }
                 }
                 transition={{
-                  duration: 0.7,
-                  delay: i * 0.04,
+                  duration: 0.6,
                   ease: "easeOut",
+                  times: [0, 0.5, 1],
                 }}
               />
-            ))}
-
-            {/* Ripple effect */}
-            <motion.div
-              className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary/30"
-              initial={{ width: 0, height: 0, opacity: 0 }}
-              animate={
-                animationsEnabled
-                  ? {
-                      width: ["0%", "150%"],
-                      height: ["0%", "150%"],
-                      opacity: [0, 0.5, 0],
-                    }
-                  : { width: 0, height: 0, opacity: 0 }
-              }
-              transition={{
-                duration: 0.6,
-                ease: "easeOut",
-                times: [0, 0.5, 1],
-              }}
-            />
-          </div>
-        </motion.button>
-      </div>
-      <div className="flex-1 overflow-y-auto">
-        <div className="space-y-3 sm:space-y-4">
-          {animationsEnabled ? (
-            <AnimatePresence mode="popLayout">
-              {wars.map((war, index) => (
-                <WarItem
-                  key={`war-${war.coin1.ticker}-${war.coin2.ticker}-${index}`}
-                  war={war}
-                  index={index}
-                  isShaking={shakingWarId === index}
-                  onPledgeClick={() => router.push(`/war/${war.warId}`)}
-                  animationsEnabled={animationsEnabled}
-                />
-              ))}
-            </AnimatePresence>
-          ) : (
-            // No animations version
-            wars.map((war, index) => (
-              <div key={`war-${war.coin1.ticker}-${war.coin2.ticker}-${index}`}>
-                <WarItem
-                  war={war}
-                  index={index}
-                  isShaking={false}
-                  onPledgeClick={() => router.push(`/war/${war.warId}`)}
-                  animationsEnabled={false}
-                />
-              </div>
-            ))
-          )}
+            </div>
+          </motion.button>
         </div>
+      </div>
+      <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+        <AnimatePresence>
+          {filteredWars.map((war, index) => (
+            <motion.div
+              key={war.warId}
+              layout
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -20 }}
+              transition={{
+                type: "spring",
+                stiffness: 500,
+                damping: 30,
+                layout: { duration: 0.3 },
+              }}
+              className={`${shakingWarId === index ? "animate-shake" : ""}`}
+            >
+              <WarItem
+                war={war}
+                index={index}
+                isShaking={shakingWarId === index}
+                onPledgeClick={() => router.push(`/war/${war.warId}`)}
+                animationsEnabled={animationsEnabled}
+              />
+            </motion.div>
+          ))}
+        </AnimatePresence>
+        {filteredWars.length === 0 && !isLoading && (
+          <div className="text-center text-muted-foreground py-8">
+            No wars found matching "{searchTerm}".
+          </div>
+        )}
       </div>
     </div>
   );
@@ -427,9 +473,12 @@ function WarItem({
   animationsEnabled,
 }: WarItemProps) {
   // Now we can safely use the hook at the top level of this component
-  const { mintADepositedRaw, mintADepositedInDollar, mintBDepositedInDollar, mintBDepositedRaw } = useMemeWarCalculations(
-    war.warData
-  );
+  const {
+    mintADepositedRaw,
+    mintADepositedInDollar,
+    mintBDepositedInDollar,
+    mintBDepositedRaw,
+  } = useMemeWarCalculations(war.warData);
 
   // Update the amountPledged values with the calculated ones
   const updatedCoin1 = {
@@ -722,8 +771,11 @@ function CoinCard({ coin, isTopWar, align, onClick }: CoinCardProps) {
               Tokens Pledged
             </span>
             <span className="stat-value text-primary truncate">
-             <span className="text-white"> {formatNumber(coin.amountPledged)}</span> 
-              {coin.amountPledgedInSol && ' $' + (coin.amountPledgedInSol)}
+              <span className="text-white">
+                {" "}
+                {formatNumber(coin.amountPledged)}
+              </span>
+              {coin.amountPledgedInSol && " $" + coin.amountPledgedInSol}
             </span>
           </div>
           <div className="flex items-end">
