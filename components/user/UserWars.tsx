@@ -5,7 +5,6 @@ import React from "react";
 import useCountdown from "@/app/hooks/useCountdown";
 import { formatPublicKey } from "@/lib/utils";
 import { useParams } from "next/navigation";
-import { useGetUserProfile } from "@/app/api/getUserProfile";
 import { motion } from "framer-motion";
 
 export interface War {
@@ -96,18 +95,15 @@ const MemeWarCard: React.FC<MemeWarCardProps> = ({ war, onClick }) => {
   );
 };
 
-const UserWars: React.FC = () => {
-  const router = useRouter();
-  const params = useParams();
-  const { userId } = params;
-  const {
-    data: userProfileDetails = [],
-    isLoading,
-    refetch,
-    isFetching,
-  } = useGetUserProfile(typeof userId === "string" ? userId : null);
+interface UserWarsProps {
+  userWars?: War[];
+}
 
-  if (isLoading || isFetching) {
+const UserWars: React.FC<UserWarsProps> = ({ userWars = [] }) => {
+  const router = useRouter();
+  const isLoading = false;
+
+  if (isLoading) {
     return (
       <div className="flex items-center justify-center py-12">
         <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full"></div>
@@ -116,7 +112,7 @@ const UserWars: React.FC = () => {
     );
   }
 
-  if (userProfileDetails.length === 0) {
+  if (userWars.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
         <div className="w-16 h-16 mb-4 rounded-full bg-muted flex items-center justify-center">
@@ -134,7 +130,7 @@ const UserWars: React.FC = () => {
   return (
     <div>
       <div className="space-y-4">
-        {userProfileDetails.map((war: War) => (
+        {userWars.map((war: War) => (
           <MemeWarCard
             key={war.meme_war_state}
             war={war}
