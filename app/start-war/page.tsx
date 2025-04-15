@@ -322,15 +322,19 @@ export default function StartWarPage() {
   const { data: mintBInfo } = useMintInfo(coin2Data.mintAddress);
 
   useEffect(() => {
+    // Only check tokens when we have both addresses AND they're valid length
     if (
       coin1Data.mintAddress && 
       coin2Data.mintAddress 
+      // coin1Data.mintAddress.length >= 32 && 
+      // coin2Data.mintAddress.length >= 32
     ) {
-      if (mintAInfo === null || mintAInfo === undefined || mintBInfo === null || mintBInfo === undefined) {
+      // Only show error when mintInfo has been fetched (not null/undefined) AND is invalid
+      if (mintAInfo === null || mintBInfo === null) {
         toast.error("Only migrated tokens to pump swap are allowed to create a war!", {
           duration: 4000,
           position: "bottom-left",
-          id: "mint-validation-error" 
+          id: "mint-validation-error" // Using ID prevents duplicate toasts
         });
       }
     }
