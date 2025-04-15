@@ -5,7 +5,10 @@ import { useEffect, useState } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { useRouter } from "next/navigation";
 
-import { useGetWarDetails } from "@/app/api/getHomePageDetails";
+import {
+  useGetWarDetails,
+  useSearchMemeWars,
+} from "@/app/api/getHomePageDetails";
 // A minimal wrapper component to use the hook properly
 import { useMemeWarCalculations } from "@/app/hooks/useMemeWarCalculations";
 import { SearchInput } from "@/components/common/SearchInput";
@@ -78,6 +81,13 @@ export function MemeCoinWars() {
   const [searchTerm, setSearchTerm] = useState<string>("");
   const router = useRouter();
 
+  // Use server-side search API when search term is present
+  const {
+    data: searchResults,
+    isError: isSearchError,
+    isLoading: isSearchLoading,
+  } = useSearchMemeWars(searchTerm);
+
   const sortOptions = [
     { value: "volume", label: "volume" },
     { value: "last_traded", label: "last trade" },
@@ -93,40 +103,48 @@ export function MemeCoinWars() {
     }
   }, []);
 
-  // Transform API data to component format
+  // Update to transform both search results and regular results
   useEffect(() => {
-    if (warArray && warArray.length > 0) {
-      const transformedWars = warArray.slice(0, 10).map((warData: War) => {
-        // We'll create a separate component for each war to use the hook properly
-        return {
-          coin1: {
-            ticker: warData.mint_a_symbol || "Unknown",
-            name: warData.mint_a_name || warData.mint_a || "Unknown",
-            marketCap: Math.random() * 10000000000,
-            pledgers: Math.floor(Math.random() * 50000) + 1000,
-            amountPledged: 0, // Will be calculated in WarItem
-            emoji: coinEmojis[warData.mint_a_symbol] || "🪙",
-            imageUrl: warData.mint_a_image,
-            mintAddress: warData.mint_a,
-          },
-          coin2: {
-            ticker: warData.mint_b_symbol || "Unknown",
-            name: warData.mint_b_name || warData.mint_b || "Unknown",
-            marketCap: Math.random() * 5000000000,
-            pledgers: Math.floor(Math.random() * 40000) + 1000,
-            amountPledged: 0, // Will be calculated in WarItem
-            emoji: coinEmojis[warData.mint_b_symbol] || "🪙",
-            imageUrl: warData.mint_b_image,
-            mintAddress: warData.mint_b,
-          },
-          warId: warData.meme_war_state,
-          warData: warData, // Pass the raw data for calculations
-        };
-      });
+    // If we have a search term, use search results, otherwise use regular war data
+    const dataToTransform =
+      searchTerm && searchResults ? searchResults : warArray;
+
+    if (dataToTransform && dataToTransform.length > 0) {
+      const transformedWars = dataToTransform
+        .slice(0, 10)
+        .map((warData: War) => {
+          return {
+            coin1: {
+              ticker: warData.mint_a_symbol || "Unknown",
+              name: warData.mint_a_name || warData.mint_a || "Unknown",
+              marketCap: Math.random() * 10000000000,
+              pledgers: Math.floor(Math.random() * 50000) + 1000,
+              amountPledged: 0, // Will be calculated in WarItem
+              emoji: coinEmojis[warData.mint_a_symbol] || "🪙",
+              imageUrl: warData.mint_a_image,
+              mintAddress: warData.mint_a,
+            },
+            coin2: {
+              ticker: warData.mint_b_symbol || "Unknown",
+              name: warData.mint_b_name || warData.mint_b || "Unknown",
+              marketCap: Math.random() * 5000000000,
+              pledgers: Math.floor(Math.random() * 40000) + 1000,
+              amountPledged: 0, // Will be calculated in WarItem
+              emoji: coinEmojis[warData.mint_b_symbol] || "🪙",
+              imageUrl: warData.mint_b_image,
+              mintAddress: warData.mint_b,
+            },
+            warId: warData.meme_war_state,
+            warData: warData, // Pass the raw data for calculations
+          };
+        });
 
       setWars(transformedWars);
+    } else if (dataToTransform && dataToTransform.length === 0) {
+      // Clear wars if we got empty results
+      setWars([]);
     }
-  }, [warArray]);
+  }, [warArray, searchResults, searchTerm]);
 
   // Simulate real-time pledge updates (in a production app, this would use WebSockets)
   useEffect(() => {
@@ -203,37 +221,31 @@ export function MemeCoinWars() {
     }
   };
 
-  // Search handler
+  // Update search handler to use backend search API
   const handleSearch = (value: string) => {
-    setSearchTerm(value.toLowerCase());
-    // NOTE: Filtering logic will be applied below before rendering
+    // Trim value to handle empty spaces and ensure better search results
+    const trimmedValue = value.trim();
+    setSearchTerm(trimmedValue);
   };
 
-  // Filter wars based on search term
-  const filteredWars = wars.filter((war) => {
-    if (!searchTerm) return true; // Show all if search is empty
-    const term = searchTerm.toLowerCase();
-    const coin1 = war.coin1;
-    const coin2 = war.coin2;
-    return (
-      coin1.ticker.toLowerCase().includes(term) ||
-      coin1.name.toLowerCase().includes(term) ||
-      (coin1.mintAddress && coin1.mintAddress.toLowerCase().includes(term)) || // Search mint address
-      coin2.ticker.toLowerCase().includes(term) ||
-      coin2.name.toLowerCase().includes(term) ||
-      (coin2.mintAddress && coin2.mintAddress.toLowerCase().includes(term)) // Search mint address
-    );
-  });
-
-  if (isLoading) {
+  // Display loading state during search
+  if (isLoading || (searchTerm && isSearchLoading)) {
     return (
       <div className="container mx-auto px-4 h-full flex flex-col items-center justify-center">
-        <div className="text-xl">Loading wars data...</div>
+        <div className="text-xl">
+          {searchTerm
+            ? `Searching for "${searchTerm}"...`
+            : "Loading wars data..."}
+        </div>
       </div>
     );
   }
 
-  if (isError || !wars.length) {
+  if (
+    (isError && !searchTerm) ||
+    (isSearchError && searchTerm) ||
+    !wars.length
+  ) {
     return (
       <div className="container mx-auto px-4 h-full flex flex-col items-center justify-center">
         <div className="text-xl">Could not load meme wars</div>
@@ -253,8 +265,9 @@ export function MemeCoinWars() {
             >
               sort: {sortOptions.find((opt) => opt.value === sortBy)?.label}
               <svg
-                className={`w-4 h-4 transition-transform ${isDropdownOpen ? "rotate-180" : ""
-                  }`}
+                className={`w-4 h-4 transition-transform ${
+                  isDropdownOpen ? "rotate-180" : ""
+                }`}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -277,8 +290,9 @@ export function MemeCoinWars() {
                         setSortBy(option.value);
                         setIsDropdownOpen(false);
                       }}
-                      className={`w-full text-left px-4 py-2 text-sm hover:bg-primary/10 ${sortBy === option.value ? "bg-primary/20" : ""
-                        }`}
+                      className={`w-full text-left px-4 py-2 text-sm hover:bg-primary/10 ${
+                        sortBy === option.value ? "bg-primary/20" : ""
+                      }`}
                     >
                       {option.label}
                     </button>
@@ -294,6 +308,7 @@ export function MemeCoinWars() {
           <SearchInput
             placeholder="Search by Symbol or Mint Address..."
             onSearchChange={handleSearch}
+            isLoading={searchTerm !== "" && isSearchLoading}
           />
         </div>
 
@@ -382,11 +397,11 @@ export function MemeCoinWars() {
                   animate={
                     animationsEnabled
                       ? {
-                        scale: [0, 1, 0],
-                        opacity: [0, 0.8, 0],
-                        x: [(i - 2) * 10, (i - 2) * 30],
-                        y: [0, i % 2 === 0 ? -20 : 20],
-                      }
+                          scale: [0, 1, 0],
+                          opacity: [0, 0.8, 0],
+                          x: [(i - 2) * 10, (i - 2) * 30],
+                          y: [0, i % 2 === 0 ? -20 : 20],
+                        }
                       : { scale: 0, opacity: 0 }
                   }
                   transition={{
@@ -404,10 +419,10 @@ export function MemeCoinWars() {
                 animate={
                   animationsEnabled
                     ? {
-                      width: ["0%", "150%"],
-                      height: ["0%", "150%"],
-                      opacity: [0, 0.5, 0],
-                    }
+                        width: ["0%", "150%"],
+                        height: ["0%", "150%"],
+                        opacity: [0, 0.5, 0],
+                      }
                     : { width: 0, height: 0, opacity: 0 }
                 }
                 transition={{
@@ -422,32 +437,25 @@ export function MemeCoinWars() {
       </div>
       <div className="flex-1 overflow-y-auto space-y-2 pr-1">
         <AnimatePresence>
-          {filteredWars.map((war, index) => (
+          {wars.map((war, index) => (
             <motion.div
               key={war.warId}
-              layout
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -20 }}
-              transition={{
-                type: "spring",
-                stiffness: 500,
-                damping: 30,
-                layout: { duration: 0.3 },
-              }}
-              className={`${shakingWarId === index ? "animate-shake" : ""}`}
+              transition={{ duration: 0.2 }}
             >
               <WarItem
                 war={war}
                 index={index}
-                isShaking={shakingWarId === index}
+                isShaking={index === shakingWarId}
                 onPledgeClick={() => router.push(`/war/${war.warId}`)}
                 animationsEnabled={animationsEnabled}
               />
             </motion.div>
           ))}
         </AnimatePresence>
-        {filteredWars.length === 0 && !isLoading && (
+        {searchTerm && wars.length === 0 && !isSearchLoading && (
           <div className="text-center text-muted-foreground py-8">
             No wars found matching "{searchTerm}".
           </div>
@@ -480,7 +488,6 @@ function WarItem({
     mintBDepositedRaw,
   } = useMemeWarCalculations(war.warData);
 
-
   // Update the amountPledged values with the calculated ones
   const updatedCoin1 = {
     ...war.coin1,
@@ -488,7 +495,7 @@ function WarItem({
     amountPledgedInSol: mintADepositedInDollar,
   };
 
-  const { timeLeft } = useCountdown(war?.warData?.end_time)
+  const { timeLeft } = useCountdown(war?.warData?.end_time);
   const updatedCoin2 = {
     ...war.coin2,
     amountPledged: mintBDepositedRaw,
@@ -543,22 +550,17 @@ function WarItem({
 
         {/* Center VS */}
         <div className="col-span-1 flex items-center justify-center">
-           
-            <div className="flex flex-col items-center ">
+          <div className="flex flex-col items-center ">
+            <div className="mt-3 retro-text text-lg sm:text-xs">Tx count</div>
+            <div className="retro-text truncate">
+              {war?.warData?.tx_count?.toString()}
+            </div>
+            <div className="vs-badge text-xs my-5 sm:text-sm">VS</div>
 
-
-              <div className="mt-3 retro-text text-lg sm:text-xs">
-              Tx count
-              </div>
-              <div className="retro-text truncate">
-                {war?.warData?.tx_count?.toString()}
-              </div>
-              <div className="vs-badge text-xs my-5 sm:text-sm">VS</div>
-
-              <div className="mt-1 retro-text text-[10px] sm:text-xs">
+            <div className="mt-1 retro-text text-[10px] sm:text-xs">
               Time left
-              </div>
-              <motion.div
+            </div>
+            <motion.div
               className="retro-text text-[30px] animated sm:text-sm"
               animate={{
                 scale: isShaking ? 1.2 : 1,
@@ -575,9 +577,7 @@ function WarItem({
             >
               {timeLeft}
             </motion.div>
-  
-            </div>
-          
+          </div>
         </div>
 
         {/* Right Side */}
@@ -668,11 +668,12 @@ interface CoinCardProps {
 function CoinCard({ coin, isTopWar, align, onClick }: CoinCardProps) {
   const percentChange = Math.random() * 200 - 100;
   const isPositive = percentChange > 0;
-  console.log(coin)
+  console.log(coin);
   return (
     <div
-      className={`coin-card p-2 sm:p-3 md:p-4 ${isTopWar ? "top-war" : ""
-        } cursor-pointer`}
+      className={`coin-card p-2 sm:p-3 md:p-4 ${
+        isTopWar ? "top-war" : ""
+      } cursor-pointer`}
       onClick={onClick}
     >
       <div className="flex flex-col gap-2 sm:gap-3">
@@ -707,8 +708,9 @@ function CoinCard({ coin, isTopWar, align, onClick }: CoinCardProps) {
                   {coin.ticker}
                 </span>
                 <span
-                  className={`text-xs ${isPositive ? "positive" : "negative"
-                    } hidden xs:inline`}
+                  className={`text-xs ${
+                    isPositive ? "positive" : "negative"
+                  } hidden xs:inline`}
                 >
                   {isPositive ? "+" : ""}
                   {percentChange.toFixed(2)}%
