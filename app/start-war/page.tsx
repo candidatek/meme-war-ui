@@ -33,6 +33,7 @@ import { useCreateMemeWarDetails } from "../api/createMemeWarDetails";
 import useCreatePumpToken from "../hooks/useCreatePumpToken";
 import useProgramDetails from "../hooks/useProgramDetails";
 import { getPDAForMemeSigner, sortPublicKeys } from "../utils";
+import { showErrorToast } from "@/components/toast-utils";
 
 interface WarData {
   description: string;
@@ -440,17 +441,17 @@ export default function StartWarPage() {
       handleCreateMemeWarDetails();
     }
     if (!publicKey) {
-      toast.error("Please connect your wallet to start a war");
+      showErrorToast("Please connect your wallet to start a war");
       return;
     }
 
     if (!coin1Data.mintAddress || !coin2Data.mintAddress) {
-      toast.error("Please enter both token mint addresses");
+      showErrorToast("Please enter both token mint addresses");
       return;
     }
 
     if (coin1Data.mintAddress === coin2Data.mintAddress) {
-      toast.error("The two tokens must be different");
+      showErrorToast("The two tokens must be different");
       return;
     }
 
@@ -478,13 +479,13 @@ export default function StartWarPage() {
         console.error(
           "Failed to get valid public key string from createMemeRegistry"
         );
-        toast.error(
+        showErrorToast(
           "Failed to start meme war: Invalid registry state received."
         );
       }
     } catch (error) {
       console.error("Error creating meme war:", error);
-      toast.error(
+      showErrorToast(
         `Failed to start meme war: ${
           error instanceof Error ? error.message : "Unknown error"
         }`

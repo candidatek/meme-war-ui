@@ -2,6 +2,7 @@ import { useState, useEffect, Dispatch, SetStateAction } from 'react';
 import { toast } from 'sonner';
 import { useConnection } from '@solana/wallet-adapter-react';
 import { type TransactionSignature } from '@solana/web3.js';
+import { showErrorToast } from '@/components/toast-utils';
 
  
 
@@ -48,11 +49,11 @@ export const useTransactionStatus = () => {
           } 
         } else {
           setIsLoading(false);
-          toast.error('Transaction error: ' + res.value.err.toString());
+          showErrorToast('Transaction error: ' + res.value.err.toString());
         }
       } catch (err) {
         setIsLoading(txDetails.stopLoadingWithInteger ? -1 : false);
-        toast.error('Failed to confirm transaction: ' + err);
+        showErrorToast('Failed to confirm transaction: ' + err);
       } finally {
         setIsLoading(txDetails.stopLoadingWithInteger ? -1 : false);
           setTxDetails(null);

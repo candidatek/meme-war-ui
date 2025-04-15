@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 import { useGetUserProfile } from "@/app/api/getUserProfile";
 import { useUpdateUserProfile } from "@/app/api/updateUserProfile";
@@ -13,6 +14,7 @@ import { formatWalletAddress } from "@/lib/utils";
 import EditProfileDialog from "@/components/user/EditProfileDialog";
 import { toast } from "sonner";
 import { useAuth } from "@/app/hooks/useAuth";
+import { showErrorToast } from "@/components/toast-utils";
 
 const UserProfile = () => {
   const { userId } = useParams();
@@ -57,7 +59,7 @@ const UserProfile = () => {
     twitterHandle: string;
   }) => {
     if (!userId || typeof userId !== "string") {
-      toast.error("Cannot update profile: No wallet address");
+      showErrorToast("Cannot update profile: No wallet address");
       return;
     }
 
@@ -68,11 +70,11 @@ const UserProfile = () => {
         await handleSignIn();
         const newToken = localStorage.getItem("jwt_token");
         if (!newToken) {
-          toast.error("Authentication required to update profile");
+          showErrorToast("Authentication required to update profile");
           return;
         }
       } catch (error) {
-        toast.error("Authentication failed. Please try again.");
+        showErrorToast("Authentication failed. Please try again.");
         return;
       }
     }
@@ -90,10 +92,10 @@ const UserProfile = () => {
         },
         onError: (error) => {
           if (error.message?.includes("401")) {
-            toast.error("Authentication expired. Please sign in again.");
+            showErrorToast("Authentication expired. Please sign in again.");
             localStorage.removeItem("jwt_token");
           } else {
-            toast.error("Failed to update profile. Please try again.");
+            showErrorToast("Failed to update profile. Please try again.");
           }
         },
       }
