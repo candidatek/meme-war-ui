@@ -35,6 +35,7 @@ import useProgramDetails from "../hooks/useProgramDetails";
 import { getPDAForMemeSigner, sortPublicKeys } from "../utils";
 import { showErrorToast } from "@/components/toast-utils";
 import { useMintInfo } from "../hooks/useMintInfo";
+import { useGetMemeWarRegistry } from "../hooks/useGetMemeWarRegistry";
 
 interface WarData {
   description: string;
@@ -277,6 +278,12 @@ export default function StartWarPage() {
   const [coin1Data, setCoin1Data] = useState<CoinData>(createDefaultCoinData());
   const [coin2Data, setCoin2Data] = useState<CoinData>(createDefaultCoinData());
   const { publicKey } = useWallet();
+
+  const { data: existingMemeWarRegistry, isLoading: isMemeWarRegistryLoading } = useGetMemeWarRegistry(
+    coin1Data.mintAddress, 
+    coin2Data.mintAddress
+  );
+  
   const {
     isCreateWarLoading,
     error: createWarError,
@@ -473,6 +480,11 @@ export default function StartWarPage() {
 
     if (coin1Data.mintAddress === coin2Data.mintAddress) {
       showErrorToast("The two tokens must be different");
+      return;
+    }
+
+    if (existingMemeWarRegistry && !existingMemeWarRegistry.war_ended) {
+      showErrorToast("A meme war already exists for these tokens!");
       return;
     }
 
@@ -779,8 +791,8 @@ export default function StartWarPage() {
     <TooltipProvider>
       <div className="container mx-auto px-4 py-6 sm:py-8">
         <div className="max-w-4xl mx-auto">
-          <Card className="mb-6 sm:mb-8">
-            <CardHeader
+          {/* <Card className="mb-6 sm:mb-8"> */}
+            {/* <CardHeader
               className="cursor-pointer"
               onClick={() => setShowLaunchCoins(!showLaunchCoins)}
             >
@@ -802,9 +814,9 @@ export default function StartWarPage() {
                   {showLaunchCoins ? "Hide" : "Show"}
                 </Button>
               </div>
-            </CardHeader>
+            </CardHeader> */}
 
-            {showLaunchCoins && (
+            {/* {showLaunchCoins && (
               <CardContent>
                 <form onSubmit={handleLaunchCoins} className="space-y-8">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
@@ -842,8 +854,8 @@ export default function StartWarPage() {
                   </div>
                 </form>
               </CardContent>
-            )}
-          </Card>
+            )} */}
+          {/* </Card> */}
 
           <h1 className="text-2xl sm:text-3xl font-bold mb-2">
             Start a Meme Coin War
@@ -964,7 +976,8 @@ export default function StartWarPage() {
                   !publicKey ||
                   isCreateWarLoading ||
                   Boolean(disableCreateWarBtn) ||
-                  !mintAInfo || !mintBInfo
+                  !mintAInfo || !mintBInfo ||
+                  (existingMemeWarRegistry && !existingMemeWarRegistry.war_ended)
                 )}
               >
                 {isCreateWarLoading
