@@ -71,12 +71,12 @@ export function MemeCoinWars() {
   const [totalPages, setTotalPages] = useState<number>(1);
 
   const { data: warArray, isError, isLoading } = useGetWarDetails(
-    sortBy, 
-    filterBy, 
-    itemsPerPage, 
+    'volume',
+    'all',
+    itemsPerPage,
     (currentPage - 1) * itemsPerPage
   );
-  
+
   const [wars, setWars] = useState<War[]>([]);
   const [shakingWarId, setShakingWarId] = useState<number | null>(null);
   const [animationsEnabled, setAnimationsEnabled] = useState(true);
@@ -102,10 +102,10 @@ export function MemeCoinWars() {
 
   useEffect(() => {
     if (warArray) {
-      const estimatedTotal = warArray.length < itemsPerPage 
+      const estimatedTotal = warArray.length < itemsPerPage
         ? (currentPage - 1) * itemsPerPage + warArray.length
         : Math.max(currentPage * itemsPerPage, totalItems);
-      
+
       setTotalItems(estimatedTotal);
       setTotalPages(Math.max(1, Math.ceil(estimatedTotal / itemsPerPage)));
     }
@@ -243,6 +243,19 @@ export function MemeCoinWars() {
     );
   });
 
+  const totalFilteredPages = Math.max(1, Math.ceil(filteredWars.length / itemsPerPage));
+
+  useEffect(() => {
+    if (currentPage > totalFilteredPages) {
+      setCurrentPage(1);
+    }
+  }, [searchTerm, totalFilteredPages, currentPage]);
+
+  const paginatedWars = filteredWars.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
   const goToPage = (page: number) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
@@ -261,17 +274,17 @@ export function MemeCoinWars() {
   const getVisiblePageNumbers = () => {
     const pageNumbers = [];
     const maxVisiblePages = 5;
-    
+
     if (totalPages <= maxVisiblePages) {
       for (let i = 1; i <= totalPages; i++) {
         pageNumbers.push(i);
       }
     } else {
       pageNumbers.push(1);
-      
+
       let start = Math.max(2, currentPage - 1);
       let end = Math.min(totalPages - 1, currentPage + 1);
-      
+
       if (end - start + 1 < maxVisiblePages - 2) {
         if (currentPage < totalPages / 2) {
           end = Math.min(totalPages - 1, start + maxVisiblePages - 3);
@@ -279,22 +292,22 @@ export function MemeCoinWars() {
           start = Math.max(2, end - (maxVisiblePages - 3));
         }
       }
-      
+
       if (start > 2) {
         pageNumbers.push('...');
       }
-      
+
       for (let i = start; i <= end; i++) {
         pageNumbers.push(i);
       }
-      
+
       if (end < totalPages - 1) {
         pageNumbers.push('...');
       }
-      
+
       pageNumbers.push(totalPages);
     }
-    
+
     return pageNumbers;
   };
 
@@ -318,46 +331,9 @@ export function MemeCoinWars() {
     <div className="container mx-auto px-2 sm:px-4 h-full flex flex-col">
       <div className="flex flex-col sm:flex-row items-center justify-between mb-4 sm:mb-6 gap-4">
         <div className="flex items-center gap-4">
-        <div className="flex items-center gap-4">
+          <div className="flex items-center gap-4">
             <h2 className="text-lg sm:text-xl font-medium">MARKET</h2>
-          <div className="relative">
-            <button
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="flex items-center gap-2 px-4 py-2 rounded-md bg-muted/50 hover:bg-muted text-sm font-medium"
-            >
-              sort: {sortOptions.find(opt => opt.value === sortBy)?.label}
-              <svg
-                className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
-            {isDropdownOpen && (
-              <div className="absolute z-10 mt-2 w-48 rounded-md shadow-lg bg-card border-2 border-primary/20">
-                <div className="py-1">
-                  {sortOptions.map((option) => (
-                    <button
-                      key={option.value}
-                      onClick={() => {
-                        setSortBy(option.value);
-                        setCurrentPage(1); // Reset to first page when sorting changes
-                        setIsDropdownOpen(false);
-                      }}
-                      className={`w-full text-left px-4 py-2 text-sm hover:bg-primary/10 ${
-                        sortBy === option.value ? 'bg-primary/20' : ''
-                      }`}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
           </div>
-        </div>
           <div className="relative">
             <button
               onClick={() => setIsDropdownOpen(!isDropdownOpen)}
@@ -365,9 +341,8 @@ export function MemeCoinWars() {
             >
               sort: {sortOptions.find((opt) => opt.value === sortBy)?.label}
               <svg
-                className={`w-4 h-4 transition-transform ${
-                  isDropdownOpen ? "rotate-180" : ""
-                }`}
+                className={`w-4 h-4 transition-transform ${isDropdownOpen ? "rotate-180" : ""
+                  }`}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -388,11 +363,11 @@ export function MemeCoinWars() {
                       key={option.value}
                       onClick={() => {
                         setSortBy(option.value);
+                        setCurrentPage(1);
                         setIsDropdownOpen(false);
                       }}
-                      className={`w-full text-left px-4 py-2 text-sm hover:bg-primary/10 ${
-                        sortBy === option.value ? "bg-primary/20" : ""
-                      }`}
+                      className={`w-full text-left px-4 py-2 text-sm hover:bg-primary/10 ${sortBy === option.value ? "bg-primary/20" : ""
+                        }`}
                     >
                       {option.label}
                     </button>
@@ -496,11 +471,11 @@ export function MemeCoinWars() {
                   animate={
                     animationsEnabled
                       ? {
-                          scale: [0, 1, 0],
-                          opacity: [0, 0.8, 0],
-                          x: [(i - 2) * 10, (i - 2) * 30],
-                          y: [0, i % 2 === 0 ? -20 : 20],
-                        }
+                        scale: [0, 1, 0],
+                        opacity: [0, 0.8, 0],
+                        x: [(i - 2) * 10, (i - 2) * 30],
+                        y: [0, i % 2 === 0 ? -20 : 20],
+                      }
                       : { scale: 0, opacity: 0 }
                   }
                   transition={{
@@ -518,10 +493,10 @@ export function MemeCoinWars() {
                 animate={
                   animationsEnabled
                     ? {
-                        width: ["0%", "150%"],
-                        height: ["0%", "150%"],
-                        opacity: [0, 0.5, 0],
-                      }
+                      width: ["0%", "150%"],
+                      height: ["0%", "150%"],
+                      opacity: [0, 0.5, 0],
+                    }
                     : { width: 0, height: 0, opacity: 0 }
                 }
                 transition={{
@@ -536,7 +511,7 @@ export function MemeCoinWars() {
       </div>
       <div className="flex-1 overflow-y-auto space-y-2 pr-1">
         <AnimatePresence>
-          {filteredWars.map((war, index) => (
+          {paginatedWars.map((war, index) => (
             <motion.div
               key={war.warId}
               layout
@@ -567,7 +542,82 @@ export function MemeCoinWars() {
           </div>
         )}
       </div>
+      {/* Pagination controls */}
+      {totalFilteredPages > 1 && (
+           <div className="flex justify-center items-center mt-6 mb-4">
+             <nav className="flex items-center space-x-1">
+               {/* Previous Page Button */}
+               <button
+                 onClick={goToPrevPage}
+                 disabled={currentPage === 1}
+                 className={`p-2 rounded-md flex items-center justify-center ${
+                   currentPage === 1
+                     ? "text-muted-foreground cursor-not-allowed"
+                     : "hover:bg-primary/10 text-foreground"
+                 }`}
+                 aria-label="Go to previous page"
+               >
+                 <svg 
+                   className="w-5 h-5" 
+                   fill="none" 
+                   stroke="currentColor" 
+                   viewBox="0 0 24 24"
+                 >
+                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                 </svg>
+               </button>
+               
+               {/* Page Numbers */}
+               {getVisiblePageNumbers().map((pageNum, i) => (
+                 typeof pageNum === 'number' ? (
+                   <button
+                     key={`page-${pageNum}`}
+                     onClick={() => goToPage(pageNum)}
+                     className={`min-w-[40px] h-10 flex items-center justify-center rounded-md text-sm font-medium transition-colors ${
+                       pageNum === currentPage
+                         ? "bg-primary text-primary-foreground"
+                         : "hover:bg-primary/10"
+                     }`}
+                     aria-label={`Go to page ${pageNum}`}
+                     aria-current={pageNum === currentPage ? "page" : undefined}
+                   >
+                     {pageNum}
+                   </button>
+                 ) : (
+                   <span 
+                     key={`ellipsis-${i}`} 
+                     className="mx-1 text-muted-foreground"
+                   >
+                     {pageNum}
+                   </span>
+                 )
+               ))}
+               
+               {/* Next Page Button */}
+               <button
+                 onClick={goToNextPage}
+                 disabled={currentPage === totalPages}
+                 className={`p-2 rounded-md flex items-center justify-center ${
+                   currentPage === totalPages
+                     ? "text-muted-foreground cursor-not-allowed"
+                     : "hover:bg-primary/10 text-foreground"
+                 }`}
+                 aria-label="Go to next page"
+               >
+                 <svg 
+                   className="w-5 h-5" 
+                   fill="none" 
+                   stroke="currentColor" 
+                   viewBox="0 0 24 24"
+                 >
+                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                 </svg>
+               </button>
+             </nav>
+           </div>
+         )}
     </div>
+    
   );
 }
 
@@ -769,9 +819,8 @@ function CoinCard({ coin, isTopWar, align, onClick }: CoinCardProps) {
 
   return (
     <div
-      className={`coin-card p-2 sm:p-3 md:p-4 ${
-        isTopWar ? "top-war" : ""
-      } cursor-pointer`}
+      className={`coin-card p-2 sm:p-3 md:p-4 ${isTopWar ? "top-war" : ""
+        } cursor-pointer`}
       onClick={onClick}
     >
       <div className="flex flex-col gap-2 sm:gap-3">
@@ -806,9 +855,8 @@ function CoinCard({ coin, isTopWar, align, onClick }: CoinCardProps) {
                   {coin.ticker}
                 </span>
                 <span
-                  className={`text-xs ${
-                    isPositive ? "positive" : "negative"
-                  } hidden xs:inline`}
+                  className={`text-xs ${isPositive ? "positive" : "negative"
+                    } hidden xs:inline`}
                 >
                   {isPositive ? "+" : ""}
                   {percentChange.toFixed(2)}%

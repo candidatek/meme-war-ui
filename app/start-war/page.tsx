@@ -331,11 +331,12 @@ export default function StartWarPage() {
     ) {
       // Only show error when mintInfo has been fetched (not null/undefined) AND is invalid
       if (mintAInfo === null || mintBInfo === null) {
-        toast.error("Only migrated tokens to pump swap are allowed to create a war!", {
-          duration: 4000,
-          position: "bottom-left",
-          id: "mint-validation-error" // Using ID prevents duplicate toasts
-        });
+        // toast.error("Only migrated tokens to pump swap are allowed to create a war!", {
+        //   duration: 4000,
+        //   position: "bottom-left",
+        //   id: "mint-validation-error" // Using ID prevents duplicate toasts
+        // });
+        showErrorToast( "Only migrated tokens to pump swap are allowed to create a war!")
       }
     }
   }, [mintAInfo, mintBInfo, coin1Data.mintAddress, coin2Data.mintAddress]);
