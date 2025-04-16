@@ -1,98 +1,49 @@
 import { useMemo } from "react";
-import { } from "../api/getSolPrice"
+import { UserState } from "@/app/Interfaces";
 
+export function useUserCalculations(userState: UserState | null | undefined) {
+  return useMemo(() => {
+    if (!userState)
+      return {
+        userMintADeposit: 0,
+        userMintBDeposit: 0,
+        userMintAPenalty: 0,
+        userMintBPenalty: 0,
+        userMintAWithdrawn: 0,
+        userMintBWithdrawn: 0,
+        userMintARiskFreeDeposit: 0,
+        userMintBRiskFreeDeposit: 0,
+        userMintATotalDeposited: 0,
+        userMintBTotalDeposited: 0,
+      };
 
-export const useUserCalculations = (userState: any) => {
+    const userMintADeposit = Number(userState.mint_a_deposit || 0) / 10 ** 9;
+    const userMintBDeposit = Number(userState.mint_b_deposit || 0) / 10 ** 9;
+    const userMintAPenalty = Number(userState.mint_a_penalty || 0) / 10 ** 9;
+    const userMintBPenalty = Number(userState.mint_b_penalty || 0) / 10 ** 9;
+    const userMintAWithdrawn =
+      Number(userState.mint_a_withdrawn || 0) / 10 ** 9;
+    const userMintBWithdrawn =
+      Number(userState.mint_b_withdrawn || 0) / 10 ** 9;
+    const userMintARiskFreeDeposit =
+      Number(userState.mint_a_risk_free_deposit || 0) / 10 ** 9;
+    const userMintBRiskFreeDeposit =
+      Number(userState.mint_b_risk_free_deposit || 0) / 10 ** 9;
 
-    const userMintADeposit = useMemo(() => {
-        if (userState) {
-            return Number(userState.mint_a_deposit);
-        }
-        return 0;
-
-    }, [userState]);
-
-    const userMintBDeposit = useMemo(() => {
-        if (userState) {
-            return Number(userState.mint_b_deposit);
-        }
-        return 0;
-
-    }, [userState]);
-
-    const userMintARiskFreeDeposit = useMemo(() => {
-        if (userState) {
-            return Number(userState.mint_a_risk_free_deposit);
-        }
-        return 0;
-    }, [userState])
-
-    const userMintBRiskFreeDeposit = useMemo(() => {
-        if (userState) {
-            return Number(userState.mint_b_risk_free_deposit);
-        }
-        return 0;
-    }, [userState])
-
-    const userMintAPenalty = useMemo(() => {
-        if (userState) {
-            return Number(userState.mint_a_penalty);
-        }
-        return 0;
-    }, [userState]);
-    const userMintBPenalty = useMemo(() => {
-        if (userState) {
-            return Number(userState.mint_b_penalty);
-        }
-        return 0;
-    }, [userState]);
-    const userMintAWithdrawn = useMemo(() => {
-        if (userState) {
-            return Number(userState.mint_a_withdrawn);
-        }
-        return 0;
-    }, [userState]);
-    const userMintBWithdrawn = useMemo(() => {
-        if (userState) {
-            return Number(userState.mint_b_withdrawn);
-        }
-        return 0;
-    }, [userState]);
-
-    const userMintATotalDeposited = useMemo(() => {
-        if (userState) {
-            return (
-                (Number(userState.mint_a_deposit) +
-                Number(userState.mint_a_risk_free_deposit) -
-                Number(userState.mint_a_penalty) -
-                Number(userState.mint_a_withdrawn)) / 10 ** 6
-            );
-        }
-        return 0;
-    }, [userState]);
-    const userMintBTotalDeposited = useMemo(() => {
-        if (userState) {
-            return ((
-                Number(userState.mint_b_deposit) +
-                Number(userState.mint_b_risk_free_deposit) -
-                Number(userState.mint_b_penalty) -
-                Number(userState.mint_b_withdrawn)) / 10 ** 6
-            );
-        }
-        return 0;
-    }, [userState]);
-
+    const userMintATotalDeposited = userMintADeposit + userMintARiskFreeDeposit;
+    const userMintBTotalDeposited = userMintBDeposit + userMintBRiskFreeDeposit;
 
     return {
-        userMintADeposit,
-        userMintBDeposit,
-        userMintARiskFreeDeposit,
-        userMintBRiskFreeDeposit,
-        userMintAPenalty,
-        userMintBPenalty,
-        userMintAWithdrawn,
-        userMintBWithdrawn,
-        userMintATotalDeposited,
-        userMintBTotalDeposited,
-    }
+      userMintADeposit,
+      userMintBDeposit,
+      userMintAPenalty,
+      userMintBPenalty,
+      userMintAWithdrawn,
+      userMintBWithdrawn,
+      userMintARiskFreeDeposit,
+      userMintBRiskFreeDeposit,
+      userMintATotalDeposited,
+      userMintBTotalDeposited,
+    };
+  }, [userState]);
 }

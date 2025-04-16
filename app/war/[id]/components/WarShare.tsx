@@ -1,0 +1,153 @@
+import { motion } from "framer-motion";
+import { formatNumber } from "@/lib/utils";
+import { WarData } from "@/app/Interfaces";
+
+interface WarShareProps {
+  warData: WarData;
+  mintAPercentage: number;
+  mintBPercentage: number;
+  memeWarStateInfo: any;
+  endedTimeAgo: string;
+  timeLeft: string;
+}
+
+export function WarShare({
+  warData,
+  mintAPercentage,
+  mintBPercentage,
+  memeWarStateInfo,
+  endedTimeAgo,
+  timeLeft,
+}: WarShareProps) {
+  return (
+    <div className="col-span-1 flex flex-col items-center justify-start my-8 md:my-0">
+      <div className="w-full md:sticky md:top-4">
+        <div className="text-4xl md:text-6xl font-bold mb-4 md:mb-8 text-center">
+          VS
+        </div>
+
+        {/* Coin Ratio */}
+        <div className="mb-4 md:mb-6 text-center">
+          <div className="text-sm text-muted-foreground mb-1">Price Ratio</div>
+          <div className="font-mono text-base md:text-lg">
+            1 : {(warData.coin2.price / warData.coin1.price || 0).toFixed(8)}
+          </div>
+          <div className="text-xs text-muted-foreground mt-1">
+            {warData.coin1.ticker} : {warData.coin2.ticker}
+          </div>
+        </div>
+
+        {/* War Share Bar */}
+        <div className="space-y-3 md:space-y-4">
+          <div className="text-center text-sm text-muted-foreground">
+            War Share
+          </div>
+
+          {/* Progress Labels */}
+          <div className="flex justify-between text-xs mb-1">
+            <span className="text-primary font-medium">
+              {mintAPercentage.toFixed(1)}%
+            </span>
+            <span className="text-[#FF4444] font-medium">
+              {mintBPercentage.toFixed(1)}%
+            </span>
+          </div>
+
+          {/* Progress Bar */}
+          <div className="h-2 sm:h-3 bg-muted rounded-full overflow-hidden relative">
+            <motion.div
+              className="absolute left-0 top-0 bottom-0 bg-primary"
+              style={{
+                width: `${mintAPercentage}%`,
+                borderRadius: "9999px 0 0 9999px",
+              }}
+              animate={{
+                width: `${mintAPercentage}%`,
+              }}
+              transition={{ duration: 0.5 }}
+            />
+            <motion.div
+              className="absolute right-0 top-0 bottom-0 bg-[#FF4444]"
+              style={{
+                width: `${mintBPercentage}%`,
+                borderRadius: "0 9999px 9999px 0",
+              }}
+              animate={{
+                width: `${mintBPercentage}%`,
+              }}
+              transition={{ duration: 0.5 }}
+            />
+          </div>
+
+          {/* Token Amounts */}
+          <div className="flex justify-between text-xs">
+            <div className="text-left">
+              <div className="text-primary font-medium">
+                {formatNumber(warData.coin1.amountPledged)}{" "}
+                <span className="hidden sm:inline">{warData.coin1.ticker}</span>
+              </div>
+              <div className="text-muted-foreground mt-0.5">
+                $
+                {formatNumber(
+                  warData.coin1.amountPledged * warData.coin1.price
+                )}
+              </div>
+            </div>
+            <div className="text-right">
+              <div className="text-[#FF4444] font-medium">
+                {formatNumber(warData.coin2.amountPledged)}{" "}
+                <span className="hidden sm:inline">{warData.coin2.ticker}</span>
+              </div>
+              <div className="text-muted-foreground mt-0.5">
+                $
+                {formatNumber(
+                  warData.coin2.amountPledged * warData.coin2.price
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* Time Left */}
+          <div className="mt-6 sm:mt-8 text-center">
+            <div className="text-sm text-muted-foreground mb-1">
+              {memeWarStateInfo?.war_ended ? "War Ended" : "Time Left"}
+            </div>
+            <motion.div
+              className="text-base sm:text-xl font-mono"
+              animate={{ opacity: [1, 0.5, 1] }}
+              transition={{ duration: 2, repeat: Infinity }}
+            >
+              {memeWarStateInfo?.war_ended ? endedTimeAgo : timeLeft}
+            </motion.div>
+          </div>
+
+          {/* Winner Declaration */}
+          {memeWarStateInfo?.winner_declared && (
+            <div className="mt-3 sm:mt-4 text-center">
+              <div className="text-sm text-muted-foreground mb-1">Winner</div>
+              <div className="text-base sm:text-xl font-mono">
+                {memeWarStateInfo.winner_declared === warData.coin1.ticker
+                  ? warData.coin1.ticker
+                  : warData.coin2.ticker}
+              </div>
+            </div>
+          )}
+
+          {/* Total Pledged */}
+          <div className="mt-3 sm:mt-4 text-center">
+            <div className="text-sm text-muted-foreground mb-1">
+              Total Pledged
+            </div>
+            <div className="text-base sm:text-xl font-mono">
+              $
+              {formatNumber(
+                warData.totalPledged *
+                  ((warData.coin1.price + warData.coin2.price) / 2)
+              )}
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
