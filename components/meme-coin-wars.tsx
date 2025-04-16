@@ -14,6 +14,7 @@ import { useMemeWarCalculations } from "@/app/hooks/useMemeWarCalculations";
 import { SearchInput } from "@/components/common/SearchInput";
 import { formatNumber } from "@/lib/utils";
 import useCountdown from "@/app/hooks/useCountdown";
+import VsComponent from "./VsComponent";
 
 interface Pledge {
   id: string;
@@ -265,9 +266,8 @@ export function MemeCoinWars() {
             >
               sort: {sortOptions.find((opt) => opt.value === sortBy)?.label}
               <svg
-                className={`w-4 h-4 transition-transform ${
-                  isDropdownOpen ? "rotate-180" : ""
-                }`}
+                className={`w-4 h-4 transition-transform ${isDropdownOpen ? "rotate-180" : ""
+                  }`}
                 fill="none"
                 stroke="currentColor"
                 viewBox="0 0 24 24"
@@ -290,9 +290,8 @@ export function MemeCoinWars() {
                         setSortBy(option.value);
                         setIsDropdownOpen(false);
                       }}
-                      className={`w-full text-left px-4 py-2 text-sm hover:bg-primary/10 ${
-                        sortBy === option.value ? "bg-primary/20" : ""
-                      }`}
+                      className={`w-full text-left px-4 py-2 text-sm hover:bg-primary/10 ${sortBy === option.value ? "bg-primary/20" : ""
+                        }`}
                     >
                       {option.label}
                     </button>
@@ -397,11 +396,11 @@ export function MemeCoinWars() {
                   animate={
                     animationsEnabled
                       ? {
-                          scale: [0, 1, 0],
-                          opacity: [0, 0.8, 0],
-                          x: [(i - 2) * 10, (i - 2) * 30],
-                          y: [0, i % 2 === 0 ? -20 : 20],
-                        }
+                        scale: [0, 1, 0],
+                        opacity: [0, 0.8, 0],
+                        x: [(i - 2) * 10, (i - 2) * 30],
+                        y: [0, i % 2 === 0 ? -20 : 20],
+                      }
                       : { scale: 0, opacity: 0 }
                   }
                   transition={{
@@ -419,10 +418,10 @@ export function MemeCoinWars() {
                 animate={
                   animationsEnabled
                     ? {
-                        width: ["0%", "150%"],
-                        height: ["0%", "150%"],
-                        opacity: [0, 0.5, 0],
-                      }
+                      width: ["0%", "150%"],
+                      height: ["0%", "150%"],
+                      opacity: [0, 0.5, 0],
+                    }
                     : { width: 0, height: 0, opacity: 0 }
                 }
                 transition={{
@@ -551,13 +550,11 @@ function WarItem({
         {/* Center VS */}
         <div className="col-span-1 flex items-center justify-center">
           <div className="flex flex-col items-center ">
-            <div className="mt-3 retro-text text-lg sm:text-xs">Tx count</div>
-            <div className="retro-text truncate">
-              {war?.warData?.tx_count?.toString()}
-            </div>
-            <div className="vs-badge text-xs my-5 sm:text-sm">VS</div>
 
-            <div className="mt-1 retro-text text-[10px] sm:text-xs">
+
+            <VsComponent />
+
+            <div className="mt-[-10px] retro-text text-[10px] sm:text-xs">
               Time left
             </div>
             <motion.div
@@ -671,9 +668,8 @@ function CoinCard({ coin, isTopWar, align, onClick }: CoinCardProps) {
   console.log(coin);
   return (
     <div
-      className={`coin-card p-2 sm:p-3 md:p-4 ${
-        isTopWar ? "top-war" : ""
-      } cursor-pointer`}
+      className={`coin-card p-2 sm:p-3 md:p-4 ${isTopWar ? "top-war" : ""
+        } cursor-pointer`}
       onClick={onClick}
     >
       <div className="flex flex-col gap-2 sm:gap-3">
@@ -708,9 +704,8 @@ function CoinCard({ coin, isTopWar, align, onClick }: CoinCardProps) {
                   {coin.ticker}
                 </span>
                 <span
-                  className={`text-xs ${
-                    isPositive ? "positive" : "negative"
-                  } hidden xs:inline`}
+                  className={`text-xs ${isPositive ? "positive" : "negative"
+                    } hidden xs:inline`}
                 >
                   {isPositive ? "+" : ""}
                   {percentChange.toFixed(2)}%
