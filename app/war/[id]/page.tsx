@@ -1,6 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 "use client";
 
-import Link from "next/link";
 import { useEffect, useState, useCallback, useMemo } from "react";
 
 import { AnimatePresence, motion } from "framer-motion";
@@ -33,133 +33,15 @@ import {
   validateSolanaAddress,
 } from "@/lib/utils";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { PublicKey } from "@solana/web3.js";
 import { useQueryClient } from "@tanstack/react-query";
 import { TransactionBadge } from "@/components/ui/transactionBadge";
+import { ChatMessage, TokenCardProps, TradeData, WarData } from "@/app/Interfaces";
+import { useUserCalculations } from "@/app/hooks/useUserCalculations";
+import { useMemeWarCalculations } from "@/app/hooks/useMemeWarCalculations";
 
 const REFRESH_DELAY = 5000;
 
 // Interface for token data
-interface TokenData {
-  ticker: string;
-  name: string;
-  marketCap: number;
-  price: number;
-  priceChange24h: number;
-  volume24h: number;
-  holders: number;
-  totalSupply: number;
-  amountPledged: number;
-  pledgers: number;
-  emoji: string;
-  description: string;
-  socialLinks: {
-    twitter: string;
-    telegram: string;
-    website: string;
-  };
-  image?: string;
-  address: string;
-}
-
-// Interface for war data
-interface WarData {
-  coin1: TokenData;
-  coin2: TokenData;
-  totalPledged: number;
-  timeLeft: string;
-  recentPledges: any[]; // Could be further typed if we know the structure
-}
-
-// Interface for trade data
-interface TradeData {
-  event_type: string;
-  mint: string;
-  amount: string;
-  amount_in_sol?: string;
-  wallet_address: string;
-  event_time: number;
-  tx_signature?: string;
-}
-
-// Interface for chat message
-interface ChatMessage {
-  id?: string;
-  sender: string;
-  message: string;
-  sender_time: string;
-  meme_war_state?: string;
-}
-
-// Interface for user state
-interface UserState {
-  mint_a_deposit: string;
-  mint_b_deposit: string;
-  mint_a_risk_free_deposit: string;
-  mint_b_risk_free_deposit: string;
-  mint_a_withdrawn: string;
-  mint_b_withdrawn: string;
-  mint_a_penalty: string;
-  mint_b_penalty: string;
-}
-
-// Interface for meme war state info
-interface MemeWarStateInfo {
-  mint_a: string;
-  mint_b: string;
-  mint_a_decimals: number;
-  mint_b_decimals: number;
-  mint_a_total_deposited: string;
-  mint_b_total_deposited: string;
-  mint_a_symbol: string;
-  mint_b_symbol: string;
-  mint_a_name: string;
-  mint_b_name: string;
-  mint_a_price: number;
-  mint_b_price: number;
-  mint_a_price_change: number;
-  mint_b_price_change: number;
-  mint_a_volume: number;
-  mint_b_volume: number;
-  mint_a_holders: number;
-  mint_b_holders: number;
-  mint_a_supply: string;
-  mint_b_supply: string;
-  mint_a_depositors: number;
-  mint_b_depositors: number;
-  mint_a_description: string;
-  mint_b_description: string;
-  mint_a_image?: string;
-  mint_b_image?: string;
-  end_time: number;
-  war_ended: boolean;
-  winner_declared?: string;
-}
-
-// Interface for the token card props
-interface TokenCardProps {
-  token: TokenData;
-  totalPledged: number;
-  handleDeposit: () => void;
-  handleWithdraw: () => void;
-  pledgeAmount: string;
-  setPledgeAmount: (amount: string) => void;
-  tokenBalance: number;
-  btnLoading: boolean;
-  userState: UserState | null | undefined;
-  formatDeposit: (amount: string | undefined, index: number) => number;
-  index: 0 | 1;
-  publicKey: PublicKey | null;
-  isWarEnded: boolean | undefined;
-  disablePledgeBtn?: boolean;
-  disableUnpledgeBtn: boolean;
-}
-
-// Interface for the stat component props
-interface StatProps {
-  label: string;
-  value: string;
-}
 
 export default function WarPage() {
   // Get params and context
@@ -613,17 +495,7 @@ export default function WarPage() {
   }, [memeWarStateInfo, timeLeft]);
 
   // Format user deposit amounts
-  const formatDeposit = useCallback(
-    (amount: string | undefined, index: number): number => {
-      if (!amount) return 0;
-      const decimal =
-        index === 0
-          ? memeWarStateInfo?.mint_a_decimals
-          : memeWarStateInfo?.mint_b_decimals;
-      return Number(amount) / 10 ** (decimal || 9);
-    },
-    [memeWarStateInfo]
-  );
+
 
   // Return loading state if data isn't ready
   if (!warData) {
@@ -638,6 +510,7 @@ export default function WarPage() {
         {/* Left Token */}
         <div className="col-span-1 md:col-span-3">
           <TokenCard
+            memeWarStateInfo={memeWarStateInfo}
             token={warData.coin1}
             totalPledged={warData.totalPledged}
             handleDeposit={() => handleDeposit(0, leftInput)}
@@ -647,7 +520,6 @@ export default function WarPage() {
             tokenBalance={tokenBalanceMintA}
             btnLoading={btnLoading === 0}
             userState={userStateInfo}
-            formatDeposit={formatDeposit}
             index={0}
             publicKey={publicKey}
             isWarEnded={memeWarStateInfo?.war_ended}
@@ -805,6 +677,7 @@ export default function WarPage() {
         {/* Right Token */}
         <div className="col-span-1 md:col-span-3">
           <TokenCard
+            memeWarStateInfo={memeWarStateInfo}
             token={warData.coin2}
             totalPledged={warData.totalPledged}
             handleDeposit={() => handleDeposit(1, rightInput)}
@@ -814,7 +687,6 @@ export default function WarPage() {
             tokenBalance={tokenBalanceMintB}
             btnLoading={btnLoading === 1}
             userState={userStateInfo}
-            formatDeposit={formatDeposit}
             index={1}
             publicKey={publicKey}
             isWarEnded={memeWarStateInfo?.war_ended}
@@ -843,7 +715,7 @@ export default function WarPage() {
             {/* Live Feed Component */}
             {/* Live Feed Component with reusable TransactionBadge component */}
             <div className="p-4">
-              <div className="space-y-2 max-h-[300px] md:max-h-[400px] overflow-y-auto">
+              <div className="space-y-2 max-h-[300px] md:max-h-[400px] overflow-y-auto overflow-x-hidden">
                 <AnimatePresence mode="popLayout">
                   {displayTradesData &&
                     [
@@ -878,7 +750,6 @@ export default function WarPage() {
                           : 0;
 
                         // Determine if deposit or withdraw for animation styles
-                        const isDeposit = trade.event_type.toLowerCase().includes('deposit');
 
                         return (
                           <motion.div
@@ -1088,6 +959,7 @@ export default function WarPage() {
 
 // Token Card Component
 function TokenCard({
+  memeWarStateInfo,
   token,
   totalPledged,
   handleDeposit,
@@ -1097,7 +969,6 @@ function TokenCard({
   tokenBalance,
   btnLoading,
   userState,
-  formatDeposit,
   index,
   publicKey,
   isWarEnded,
@@ -1134,8 +1005,7 @@ function TokenCard({
     const hashtags = template.hashtags.join(",");
     return `https://twitter.com/intent/tweet?text=${text}&hashtags=${hashtags}`;
   };
-
-  const percentage = (token.amountPledged / totalPledged) * 100;
+  const { mintADepositedRaw, mintBDepositedRaw } = useMemeWarCalculations(memeWarStateInfo)
 
   // Calculate expected payout
   const calculateExpectedPayout = (amount: number): number => {
@@ -1146,6 +1016,41 @@ function TokenCard({
     const expectedReward = amount + otherSideAmount * shareOfPledge;
     return expectedReward || 0;
   };
+  const { userMintADeposit,
+    userMintBDeposit,
+    userMintAPenalty,
+    userMintBPenalty,
+    userMintAWithdrawn,
+    userMintBWithdrawn,
+    userMintARiskFreeDeposit, userMintBRiskFreeDeposit,
+    userMintATotalDeposited,
+    userMintBTotalDeposited,
+  } = useUserCalculations(userState)
+
+  const formatSharePercentage = (amount: number, total: number): string => {
+    if (!total || !amount) return "0.00";
+    return ((amount / total) * 100).toFixed(2);
+  };
+
+  const warShare = useMemo(() => {
+    try {
+      if(!memeWarStateInfo || !userState) return 0;
+      if(!userMintATotalDeposited && !userMintATotalDeposited) return 0;
+  
+      if(index === 0 ) {
+        return formatSharePercentage(userMintATotalDeposited, mintADepositedRaw)
+      }else {
+        return formatSharePercentage(userMintBTotalDeposited, mintBDepositedRaw)
+      }
+    }
+    catch(e) {
+      return 0;
+    }
+   }, [memeWarStateInfo, userState, index, userMintATotalDeposited, mintADepositedRaw, userMintBTotalDeposited, mintBDepositedRaw])
+   console.log(warShare,'ix' , userMintATotalDeposited, mintADepositedRaw, 'index', index)
+  // const {mintADepositedRaw, mintBDepositedRaw} = useMemeWarCalculations(memeWarStateInfo)
+
+
 
   // Calculate ROI percentage
   const calculateROI = (amount: number): number => {
@@ -1155,10 +1060,6 @@ function TokenCard({
   };
 
   // Format the share percentage safely
-  const formatSharePercentage = (amount: number, total: number): string => {
-    if (!total || !amount) return "0.00";
-    return ((amount / total) * 100).toFixed(2);
-  };
 
   // Handler for max button
   const handleMax = (): void => {
@@ -1176,7 +1077,7 @@ function TokenCard({
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4 sm:mb-6">
         {/* Left Side: Icon, Name, Socials */}
         <div className="flex items-center gap-3 sm:gap-4">
-          <div className="w-10 h-10 sm:w-12 sm:h-12 rounded-full bg-muted flex items-center justify-center text-xl sm:text-2xl overflow-hidden shrink-0">
+          <div className="w-24 h-24 sm:w-12 sm:h-12 rounded-full bg-muted flex items-center justify-center text-xl sm:text-2xl overflow-hidden shrink-0">
             {token.image ? (
               <img
                 src={token.image}
@@ -1339,19 +1240,19 @@ function TokenCard({
         <div className="flex justify-between text-xs sm:text-sm">
           <span className="text-muted-foreground">Amount Pledged</span>
           <span className="font-medium">
-            {formatNumber(token.amountPledged || 0)} {token.ticker}
+            {formatNumber(index === 0 ? mintADepositedRaw : mintBDepositedRaw)} {token.ticker}
           </span>
         </div>
-        <div className="flex justify-between text-xs sm:text-sm">
+        {/* <div className="flex justify-between text-xs sm:text-sm">
           <span className="text-muted-foreground">Total Pledgers</span>
           <span className="font-medium">
             {formatNumber(token.pledgers || 0)}
           </span>
-        </div>
+        </div> */}
         <div className="flex justify-between text-xs sm:text-sm">
           <span className="text-muted-foreground">War Share</span>
           <span className="font-medium">
-            {formatSharePercentage(token.amountPledged, totalPledged)}%
+            {warShare}%
           </span>
         </div>
 
@@ -1436,11 +1337,10 @@ function TokenCard({
             <div className="flex justify-between">
               <span className="text-muted-foreground">Deposited:</span>
               <span>
-                {formatDeposit(
+                {formatNumber(
                   index === 0
-                    ? userState.mint_a_deposit
-                    : userState.mint_b_deposit,
-                  index
+                    ? userMintADeposit
+                    : userMintBDeposit
                 )}{" "}
                 {token.ticker}
               </span>
@@ -1448,11 +1348,10 @@ function TokenCard({
             <div className="flex justify-between">
               <span className="text-muted-foreground">Risk Free:</span>
               <span>
-                {formatDeposit(
+                {formatNumber(
                   index === 0
-                    ? userState.mint_a_risk_free_deposit
-                    : userState.mint_b_risk_free_deposit,
-                  index
+                    ? userMintARiskFreeDeposit
+                    : userMintBRiskFreeDeposit
                 )}{" "}
                 {token.ticker}
               </span>
@@ -1460,11 +1359,10 @@ function TokenCard({
             <div className="flex justify-between">
               <span className="text-muted-foreground">Withdrawn:</span>
               <span>
-                {formatDeposit(
+                {formatNumber(
                   index === 0
-                    ? userState.mint_a_withdrawn
-                    : userState.mint_b_withdrawn,
-                  index
+                    ? userMintAWithdrawn
+                    : userMintBWithdrawn
                 )}{" "}
                 {token.ticker}
               </span>
@@ -1472,11 +1370,10 @@ function TokenCard({
             <div className="flex justify-between">
               <span className="text-muted-foreground">Penalty:</span>
               <span>
-                {formatDeposit(
+                {formatNumber(
                   index === 0
-                    ? userState.mint_a_penalty
-                    : userState.mint_b_penalty,
-                  index
+                    ? userMintAPenalty
+                    : userMintBPenalty
                 )}{" "}
                 {token.ticker}
               </span>

@@ -37,7 +37,7 @@ export const useMemeWarCalculations = (memeWarState: any): MemeWarCalculations =
       return (((Number(memeWarState.mint_b_deposit) + Number(memeWarState?.mint_b_risk_free_deposit)) -
           Number(memeWarState.mint_b_withdrawn) -
           Number(memeWarState?.mint_b_penalty)) /
-        10 ** memeWarState.mint_b_decimals
+        10 ** 6
       );
     }
     return 0;
@@ -98,19 +98,19 @@ export const useMemeWarCalculations = (memeWarState: any): MemeWarCalculations =
         Number(memeWarState?.mint_b_sol_ratio))  / 10 ** 6)  * Number(solPrice?.price)
       );
     }
-    return '0';
-  }, [memeWarState]);
+    return 0;
+  }, [memeWarState, solPrice?.price]);
 
   const mintADepositedInDollar = useMemo(() => {
     if (memeWarState) {
 
-      return formatNumber(
+      return (
         (((Number(memeWarState.mint_a_deposit) + Number(memeWarState?.mint_a_risk_free_deposit))  /
         Number(memeWarState?.mint_a_sol_ratio)) / 10 ** 6)  * Number(solPrice?.price)
       );
     }
-    return '0';
-  }, [memeWarState]);
+    return 0;
+  }, [memeWarState, solPrice?.price]);
 
 
   const mintARiskFreeDeposited = useMemo(() => {
