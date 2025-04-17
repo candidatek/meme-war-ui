@@ -41,16 +41,6 @@ export function Header() {
                 Meme Coin Wars
               </span>
             </Link>
-
-            {/* Desktop Navigation */}
-            <nav className="hidden md:flex items-center gap-6">
-              <Link
-                href="/wars"
-                className="text-sm font-medium text-muted-foreground hover:text-primary transition-colors"
-              >
-                Active Wars
-              </Link>
-            </nav>
           </div>
 
           {/* Center Section - Start War Button - Only show on larger screens */}
@@ -105,12 +95,6 @@ export function Header() {
               className="md:hidden overflow-hidden border-t border-border/50"
             >
               <div className="py-3 sm:py-4 space-y-3 sm:space-y-4">
-                <Link
-                  href="/wars"
-                  className="block px-4 py-2 text-xs sm:text-sm text-muted-foreground hover:text-primary"
-                >
-                  Active Wars
-                </Link>
                 {/* Profile Link in Mobile Menu */}
                 <button
                   onClick={handleProfileClick}
