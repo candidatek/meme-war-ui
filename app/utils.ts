@@ -164,3 +164,6 @@ export const formatPublicKey = (publicKey: string): string => {
   if (!publicKey) return '';
   return `${publicKey.slice(0, 4)}...${publicKey.slice(-4)}`;
 };
+
+
+export const  Billion = 1_000_000_000;

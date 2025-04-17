@@ -1,6 +1,7 @@
 import { formatNumber } from '@/lib/utils';
 import { useMemo } from 'react';
 import { useSolPrice } from '../api/getSolPrice';
+import { IMemeWarState } from '../api/getMemeWarStateInfo';
 
 interface MemeWarCalculations {
   rfPlusMintADeposited: string;
@@ -16,17 +17,21 @@ interface MemeWarCalculations {
   mintADepositedRaw: number;
   mintBDepositedRaw: number;
   mintADepositedInDollar: number;
-  mintBDepositedInDollar: number
+  mintBDepositedInDollar: number;
+  mintAPrice: number;
+  mintBPrice: number;
+  mintAExpectedPayout: number;
+  mintBExpectedPayout: number;
 }
 
-export const useMemeWarCalculations = (memeWarState: any): MemeWarCalculations => { // This useMemeWarCalculations is being used w 3 types: IDashboardWar, War, IMemeWarState. 
-  const {data: solPrice} = useSolPrice()
+export const useMemeWarCalculations = (memeWarState: IMemeWarState | undefined): MemeWarCalculations => { // This useMemeWarCalculations is being used w 3 types: IDashboardWar, War, IMemeWarState. 
+  const { data: { price = 130 } = {} } = useSolPrice()
   const mintADepositedRaw = useMemo(() => {                                         // Would need to make all the types same in order to use it for this. If they are all the same, I will refactor to use one for all.
-    if(memeWarState) {
+    if (memeWarState) {
       return ((Number(memeWarState.mint_a_deposit) + Number(memeWarState?.mint_a_risk_free_deposit)) -
-      Number(memeWarState.mint_a_withdrawn) -
-      Number(memeWarState?.mint_a_penalty)) /
-    10 ** 6;
+        Number(memeWarState.mint_a_withdrawn) -
+        Number(memeWarState?.mint_a_penalty)) /
+        10 ** 6;
     }
     return 0;
 
@@ -35,8 +40,8 @@ export const useMemeWarCalculations = (memeWarState: any): MemeWarCalculations =
   const mintBDepositedRaw = useMemo(() => {
     if (memeWarState) {
       return (((Number(memeWarState.mint_b_deposit) + Number(memeWarState?.mint_b_risk_free_deposit)) -
-          Number(memeWarState.mint_b_withdrawn) -
-          Number(memeWarState?.mint_b_penalty)) /
+        Number(memeWarState.mint_b_withdrawn) -
+        Number(memeWarState?.mint_b_penalty)) /
         10 ** 6
       );
     }
@@ -72,8 +77,12 @@ export const useMemeWarCalculations = (memeWarState: any): MemeWarCalculations =
     if (memeWarState) {
 
       return formatNumber(
-        ((Number(memeWarState.mint_b_deposit) + Number(memeWarState?.mint_b_risk_free_deposit))  /
-        Number(memeWarState?.mint_b_sol_ratio))  / 10 ** 6 
+        ((Number(memeWarState.mint_b_deposit)
+          + Number(memeWarState?.mint_b_risk_free_deposit)
+          - Number(memeWarState?.mint_b_withdrawn) +
+          Number(memeWarState?.mint_b_penalty))
+          /
+          Number(memeWarState?.mint_b_sol_ratio)) / 10 ** 6
       );
     }
     return '0';
@@ -83,34 +92,39 @@ export const useMemeWarCalculations = (memeWarState: any): MemeWarCalculations =
     if (memeWarState) {
 
       return formatNumber(
-        (((Number(memeWarState.mint_a_deposit) + Number(memeWarState?.mint_a_risk_free_deposit))  /
-        Number(memeWarState?.mint_a_sol_ratio)) / 10 ** 6)   
+        (((Number(memeWarState.mint_a_deposit) +
+          Number(memeWarState?.mint_a_risk_free_deposit) -
+          Number(memeWarState?.mint_a_withdrawn) +
+          Number(memeWarState?.mint_a_penalty)
+        ) /
+          Number(memeWarState?.mint_a_sol_ratio)) / 10 ** 6)
       );
     }
     return '0';
   }, [memeWarState]);
+
   const mintBDepositedInDollar = useMemo(() => {
 
     if (memeWarState) {
 
       return (
-        (((Number(memeWarState.mint_b_deposit) + Number(memeWarState?.mint_b_risk_free_deposit))  /
-        Number(memeWarState?.mint_b_sol_ratio))  / 10 ** 6)  * Number(solPrice?.price)
+        (((Number(memeWarState.mint_b_deposit) + Number(memeWarState?.mint_b_risk_free_deposit)) /
+          Number(memeWarState?.mint_b_sol_ratio)) / 10 ** 6) * Number(price)
       );
     }
     return 0;
-  }, [memeWarState, solPrice?.price]);
+  }, [memeWarState, price]);
 
   const mintADepositedInDollar = useMemo(() => {
     if (memeWarState) {
 
       return (
-        (((Number(memeWarState.mint_a_deposit) + Number(memeWarState?.mint_a_risk_free_deposit))  /
-        Number(memeWarState?.mint_a_sol_ratio)) / 10 ** 6)  * Number(solPrice?.price)
+        (((Number(memeWarState.mint_a_deposit) + Number(memeWarState?.mint_a_risk_free_deposit)) /
+          Number(memeWarState?.mint_a_sol_ratio)) / 10 ** 6) * Number(price)
       );
     }
     return 0;
-  }, [memeWarState, solPrice?.price]);
+  }, [memeWarState, price]);
 
 
   const mintARiskFreeDeposited = useMemo(() => {
@@ -152,24 +166,59 @@ export const useMemeWarCalculations = (memeWarState: any): MemeWarCalculations =
       return (
         mintADepositedRaw /
         (mintADepositedRaw + mintBDepositedRaw)
-      ) * 100 - mintARFPercentage;
+      ) * 100;
     }
     return 0;
-  }, [memeWarState, mintADepositedRaw, mintARFPercentage, mintBDepositedRaw]);
+  }, [memeWarState, mintADepositedRaw, mintBDepositedRaw]);
 
   const mintBPercentage = useMemo(() => {
     if (memeWarState) {
       return (
         mintBDepositedRaw /
         (mintADepositedRaw + mintBDepositedRaw)
-      ) * 100 - mintBRFPercentage;
+      ) * 100;
     }
     return 0;
-  }, [memeWarState, mintADepositedRaw, mintBDepositedRaw, mintBRFPercentage]);
+  }, [memeWarState, mintADepositedRaw, mintBDepositedRaw]);
 
 
+  const mintAPrice = useMemo(() => {
+    if (memeWarState) {
+      return price / Number(memeWarState.mint_a_sol_ratio);
+    }
+    return 0;
+  }, [memeWarState, price]);
 
+  const mintBPrice = useMemo(() => {
+    if (memeWarState) {
+      return price / Number(memeWarState.mint_b_sol_ratio);
+    }
+    return 0;
+  }, [memeWarState, price]);
 
+  const mintAExpectedPayout = useMemo(() => {
+    if (!memeWarState || !Number(mintADepositedInSol)) {
+      return 0;
+    }
+    
+    const aAmount = Number(mintADepositedInSol);
+    const bAmount = Number(mintBDepositedInSol);
+    
+    const payout = bAmount / aAmount * 100;
+    return Math.min(payout, 100);
+  }, [memeWarState, mintADepositedInSol, mintBDepositedInSol]);
+  
+  const mintBExpectedPayout = useMemo(() => {
+    if (!memeWarState || !Number(mintBDepositedInSol)) {
+      return 0;
+    }
+    
+    const aAmount = Number(mintADepositedInSol);
+    const bAmount = Number(mintBDepositedInSol);
+    
+    const payout = aAmount / bAmount * 100;
+    return Math.min(payout, 100);
+  }, [memeWarState, mintADepositedInSol, mintBDepositedInSol]);
 
   return {
     rfPlusMintADeposited,
@@ -185,7 +234,11 @@ export const useMemeWarCalculations = (memeWarState: any): MemeWarCalculations =
     mintADepositedRaw,
     mintBDepositedRaw,
     mintADepositedInDollar,
-    mintBDepositedInDollar
+    mintBDepositedInDollar,
+    mintAPrice,
+    mintBPrice,
+    mintAExpectedPayout,
+    mintBExpectedPayout,
   };
 };
 
