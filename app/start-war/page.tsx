@@ -2,34 +2,23 @@
 
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-
 import { Info } from "lucide-react";
 import { toast } from "sonner";
+import { useWallet } from "@solana/wallet-adapter-react";
+import { PublicKey } from "@solana/web3.js";
 
-import { useCreateMemeWarRegistry } from "@/app/hooks/useCreateMemeWar"; // Import the hook
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
+  CardDescription,
 } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import { Textarea } from "@/components/ui/textarea";
+import { TooltipProvider } from "@/components/ui/tooltip";
 import { getAssetFromMint, getProgramDerivedAddressForPair } from "@/lib/utils";
-import { useWallet } from "@solana/wallet-adapter-react"; // Import wallet hook
-import { PublicKey } from "@solana/web3.js";
-
 import { useCreateMemeWarDetails } from "../api/createMemeWarDetails";
+import { useCreateMemeWarRegistry } from "@/app/hooks/useCreateMemeWar";
 import useCreatePumpToken from "../hooks/useCreatePumpToken";
 import useProgramDetails from "../hooks/useProgramDetails";
 import { getPDAForMemeSigner, sortPublicKeys } from "../utils";
@@ -37,230 +26,17 @@ import { showErrorToast } from "@/components/toast-utils";
 import { useMintInfo } from "../hooks/useMintInfo";
 import { useGetMemeWarRegistry } from "../hooks/useGetMemeWarRegistry";
 
-interface WarData {
-  description: string;
-  twitter: string;
-  telegram: string;
-  website: string;
-}
-
-interface CoinData {
-  mintAddress: string;
-  ticker: string;
-  name: string;
-  emoji: string;
-  image: string;
-  isLoading: boolean;
-  error: string | null;
-}
-
-interface TokenResponse {
-  jsonrpc: string;
-  result: {
-    content: {
-      links?: {
-        image?: string;
-      };
-      metadata?: {
-        name?: string;
-        symbol?: string;
-      };
-    };
-  };
-  id: string;
-}
-
-interface LaunchCoinData {
-  name: string;
-  symbol: string;
-  description: string;
-  twitter: string;
-  telegram: string;
-  website: string;
-  showName: boolean;
-  image: File | null;
-}
-
-interface LaunchCoinFormProps {
-  data: LaunchCoinData;
-  setData: React.Dispatch<React.SetStateAction<LaunchCoinData>>;
-  title: string;
-  coinIndex: number;
-  filePreview: string | null;
-  handleImageChange: (
-    e: React.ChangeEvent<HTMLInputElement>,
-    coinIndex: number
-  ) => void;
-}
-
-const createDefaultCoinData = (overrides: Partial<CoinData> = {}): CoinData => {
-  return {
-    mintAddress: "",
-    ticker: "",
-    name: "",
-    emoji: "💰",
-    image: "",
-    isLoading: false,
-    error: null,
-    ...overrides,
-  };
-};
-
-const LaunchCoinForm: React.FC<LaunchCoinFormProps> = ({
-  data,
-  setData,
-  title,
-  coinIndex,
-  filePreview,
-  handleImageChange,
-}) => (
-  <Card>
-    <CardHeader>
-      <CardTitle>{title}</CardTitle>
-    </CardHeader>
-    <CardContent className="space-y-4">
-      <div className="space-y-2">
-        <Label htmlFor={`${title}-name`}>Coin Name</Label>
-        <Input
-          id={`${title}-name`}
-          placeholder="e.g. Awesome Meme Coin"
-          value={data.name}
-          onChange={(e) => setData({ ...data, name: e.target.value })}
-          required
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor={`${title}-symbol`}>Ticker</Label>
-        <Input
-          id={`${title}-symbol`}
-          placeholder="e.g. AMC"
-          value={data.symbol}
-          onChange={(e) => setData({ ...data, symbol: e.target.value })}
-          maxLength={10}
-          required
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor={`${title}-desc`}>Description</Label>
-        <Textarea
-          id={`${title}-desc`}
-          placeholder="Describe your meme coin..."
-          value={data.description}
-          onChange={(e) => setData({ ...data, description: e.target.value })}
-          className="min-h-20"
-          required
-        />
-      </div>
-
-      <div className="space-y-2">
-        <Label htmlFor={`coin${coinIndex}-image-display`}>Coin Image</Label>
-        <div className="flex flex-col gap-2">
-          <div
-            id={`coin${coinIndex}-image-display`}
-            className={`border border-dashed rounded-md p-4 text-center cursor-pointer hover:bg-gray-50 ${!data.image ? "border-amber-300" : "border-gray-300"
-              }`}
-            onClick={() =>
-              document.getElementById(`coin${coinIndex}-image`)?.click()
-            }
-          >
-            {filePreview ? (
-              <div className="flex flex-col items-center">
-                <img
-                  src={filePreview}
-                  alt="Preview"
-                  className="w-24 h-24 sm:w-32 sm:h-32 object-cover rounded-md"
-                />
-                <p className="mt-2 text-sm text-muted-foreground">
-                  Click to change image
-                </p>
-              </div>
-            ) : (
-              <div className="py-4">
-                <p className="text-gray-500">Click to select an image</p>
-                {!data.image && (
-                  <p className="text-xs text-amber-500 mt-1">
-                    * Image is required
-                  </p>
-                )}
-              </div>
-            )}
-          </div>
-
-          <input
-            id={`coin${coinIndex}-image`}
-            name={`coin${coinIndex}-image`}
-            type="file"
-            accept="image/*"
-            onChange={(e) => handleImageChange(e, coinIndex)}
-            className="hidden"
-          />
-
-          {data.image && (
-            <div className="text-sm text-muted-foreground">
-              <p>Selected: {data.image.name}</p>
-              <p>Size: {(data.image.size / 1024).toFixed(2)} KB</p>
-            </div>
-          )}
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        <h4 className="text-sm font-medium">Social Links</h4>
-        <div className="grid gap-2">
-          <div className="grid grid-cols-1 sm:grid-cols-6 items-center gap-2">
-            <Label htmlFor={`${title}-twitter`} className="sm:col-span-1">
-              Twitter
-            </Label>
-            <Input
-              id={`${title}-twitter`}
-              placeholder="Twitter URL"
-              className="sm:col-span-5"
-              value={data.twitter}
-              onChange={(e) => setData({ ...data, twitter: e.target.value })}
-            />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-6 items-center gap-2">
-            <Label htmlFor={`${title}-telegram`} className="sm:col-span-1">
-              Telegram
-            </Label>
-            <Input
-              id={`${title}-telegram`}
-              placeholder="Telegram URL"
-              className="sm:col-span-5"
-              value={data.telegram}
-              onChange={(e) => setData({ ...data, telegram: e.target.value })}
-            />
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-6 items-center gap-2">
-            <Label htmlFor={`${title}-website`} className="sm:col-span-1">
-              Website
-            </Label>
-            <Input
-              id={`${title}-website`}
-              placeholder="Website URL"
-              className="sm:col-span-5"
-              value={data.website}
-              onChange={(e) => setData({ ...data, website: e.target.value })}
-            />
-          </div>
-        </div>
-      </div>
-
-      <div className="flex items-center space-x-2">
-        <input
-          type="checkbox"
-          id={`${title}-showName`}
-          checked={data.showName}
-          onChange={(e) => setData({ ...data, showName: e.target.checked })}
-          className="rounded border-gray-300"
-        />
-        <Label htmlFor={`${title}-showName`}>Show Name</Label>
-      </div>
-    </CardContent>
-  </Card>
-);
+// Import components from the local components directory
+import { CoinForm } from "./components/CoinForm";
+import { LaunchCoinForm } from "./components/LaunchCoinForm";
+import { WarDetailsForm } from "./components/WarDetailsForm";
+import {
+  CoinData,
+  LaunchCoinData,
+  WarData,
+  TokenResponse,
+  createDefaultCoinData,
+} from "../types";
 
 export default function StartWarPage() {
   const router = useRouter();
@@ -279,11 +55,9 @@ export default function StartWarPage() {
   const [coin2Data, setCoin2Data] = useState<CoinData>(createDefaultCoinData());
   const { publicKey } = useWallet();
 
-  const { data: existingMemeWarRegistry, isLoading: isMemeWarRegistryLoading } = useGetMemeWarRegistry(
-    coin1Data.mintAddress, 
-    coin2Data.mintAddress
-  );
-  
+  const { data: existingMemeWarRegistry, isLoading: isMemeWarRegistryLoading } =
+    useGetMemeWarRegistry(coin1Data.mintAddress, coin2Data.mintAddress);
+
   const {
     isCreateWarLoading,
     error: createWarError,
@@ -331,18 +105,21 @@ export default function StartWarPage() {
   useEffect(() => {
     // Only check tokens when we have both addresses AND they're valid length
     if (
-      coin1Data.mintAddress && 
-      coin2Data.mintAddress 
-      // coin1Data.mintAddress.length >= 32 && 
+      coin1Data.mintAddress &&
+      coin2Data.mintAddress
+      // coin1Data.mintAddress.length >= 32 &&
       // coin2Data.mintAddress.length >= 32
     ) {
       // Only show error when mintInfo has been fetched (not null/undefined) AND is invalid
       if (mintAInfo === null || mintBInfo === null) {
-        toast.error("Only migrated tokens to pump swap are allowed to create a war!", {
-          duration: 4000,
-          position: "bottom-left",
-          id: "mint-validation-error" // Using ID prevents duplicate toasts
-        });
+        toast.error(
+          "Only migrated tokens to pump swap are allowed to create a war!",
+          {
+            duration: 4000,
+            position: "bottom-left",
+            id: "mint-validation-error", // Using ID prevents duplicate toasts
+          }
+        );
       }
     }
   }, [mintAInfo, mintBInfo, coin1Data.mintAddress, coin2Data.mintAddress]);
@@ -504,7 +281,7 @@ export default function StartWarPage() {
         toast.success("Meme war started successfully!", {
           duration: 3000,
           position: "bottom-left",
-          id: "war-success"
+          id: "war-success",
         });
         setNewMemeWarState(createdMemeStatePublicKey);
         setDisableCreateWarBtn(true);
@@ -530,91 +307,6 @@ export default function StartWarPage() {
     }
   };
 
-  interface CoinFormProps {
-    data: CoinData;
-    setData: React.Dispatch<React.SetStateAction<CoinData>>;
-    title: string;
-  }
-
-  const CoinForm: React.FC<CoinFormProps> = ({ data, setData, title }) => (
-    <Card>
-      <CardHeader>
-        <CardTitle>{title}</CardTitle>
-        <CardDescription>Enter the details for this coin</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-4">
-        <div className="space-y-2">
-          <Label htmlFor={`${title}-mint`}>Token Mint Address</Label>
-          <Input
-            id={`${title}-mint`}
-            placeholder="Enter token mint address"
-            value={data.mintAddress}
-            onChange={(e) => {
-              const inputValue = e.target.value.trim();
-              setData({
-                ...(inputValue ? data : createDefaultCoinData()),
-                mintAddress: inputValue ? inputValue : "",
-              });
-            }}
-          />
-          {data.isLoading && (
-            <div className="mb-6">
-              <div className="flex items-center justify-center">
-                <span className="relative flex h-10 w-10">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-green-400 opacity-75 mt-4"></span>
-                  <span className="relative inline-flex rounded-full h-10 w-10 bg-green-500 mt-4"></span>
-                </span>
-              </div>
-            </div>
-          )}
-          {data.error && <p className="text-sm text-red-500">{data.error}</p>}
-        </div>
-
-        {data.image && (
-          <div className="flex justify-center mb-4">
-            <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full overflow-hidden">
-              <img
-                src={data.image}
-                alt={`${data.name} logo`}
-                className="object-cover w-full h-full"
-                width={96}
-                height={96}
-              />
-            </div>
-          </div>
-        )}
-        <div className="flex flex-col sm:flex-row w-full border gap-2 sm:gap-4 p-2">
-          {data.ticker && (
-            <div className="flex flex-col sm:flex-row sm:justify-between w-full gap-2 sm:gap-4">
-              <div className="space-y-1 w-full">
-                <Label htmlFor={`${title}-ticker`}>Ticker Symbol</Label>
-                <Input
-                  id={`${title}-ticker`}
-                  placeholder="e.g. DOGE"
-                  value={data.ticker}
-                  maxLength={10}
-                  className="w-full"
-                  readOnly // Make ticker read-only if fetched
-                />
-              </div>
-              <div className="space-y-1 w-full">
-                <Label htmlFor={`${title}-name`}>Coin Name</Label>
-                <Input
-                  id={`${title}-name`}
-                  placeholder="e.g. Dogecoin"
-                  value={data.name}
-                  onChange={(e) => setData({ ...data, name: e.target.value })}
-                  className="w-full"
-                  readOnly // Make name read-only if fetched
-                />
-              </div>
-            </div>
-          )}
-        </div>
-      </CardContent>
-    </Card>
-  );
-
   const handleImageChange = (
     e: React.ChangeEvent<HTMLInputElement>,
     coinIndex: number
@@ -626,10 +318,16 @@ export default function StartWarPage() {
         if (event.target?.result) {
           if (coinIndex === 1) {
             setFilePreview1(event.target.result as string);
-            setLaunchCoin1((prev) => ({ ...prev, image: file }));
+            setLaunchCoin1((prev: LaunchCoinData) => ({
+              ...prev,
+              image: file,
+            }));
           } else {
             setFilePreview2(event.target.result as string);
-            setLaunchCoin2((prev) => ({ ...prev, image: file }));
+            setLaunchCoin2((prev: LaunchCoinData) => ({
+              ...prev,
+              image: file,
+            }));
           }
         }
       };
@@ -637,10 +335,10 @@ export default function StartWarPage() {
     } else {
       if (coinIndex === 1) {
         setFilePreview1(null);
-        setLaunchCoin1((prev) => ({ ...prev, image: null }));
+        setLaunchCoin1((prev: LaunchCoinData) => ({ ...prev, image: null }));
       } else {
         setFilePreview2(null);
-        setLaunchCoin2((prev) => ({ ...prev, image: null }));
+        setLaunchCoin2((prev: LaunchCoinData) => ({ ...prev, image: null }));
       }
     }
   };
@@ -655,7 +353,7 @@ export default function StartWarPage() {
       toast.error("Please connect your wallet to launch coins", {
         duration: 4000,
         position: "bottom-left",
-        id: "launch-wallet-error"
+        id: "launch-wallet-error",
       });
       return;
     }
@@ -683,7 +381,7 @@ export default function StartWarPage() {
         toast.error(message, {
           duration: 4000,
           position: "bottom-left",
-          id: `field-error-${message}`
+          id: `field-error-${message}`,
         });
         return;
       }
@@ -774,25 +472,24 @@ export default function StartWarPage() {
     } catch (error) {
       console.error("Error launching coins:", error);
       toast.error(
-        `Failed to launch coins: ${error instanceof Error ? error.message : String(error)
+        `Failed to launch coins: ${
+          error instanceof Error ? error.message : String(error)
         }`,
         {
           duration: 4000,
-          position: "bottom-left"
+          position: "bottom-left",
         }
       );
       setIsCreatingTokens(false);
     }
   };
 
-  const durationOptions = [1, 2, 4, 8, 16, 24, 48];
-
   return (
     <TooltipProvider>
       <div className="container mx-auto px-4 py-6 sm:py-8">
         <div className="max-w-4xl mx-auto">
-          {/* <Card className="mb-6 sm:mb-8"> */}
-            {/* <CardHeader
+          {/* <Card className="mb-6 sm:mb-8">
+            <CardHeader
               className="cursor-pointer"
               onClick={() => setShowLaunchCoins(!showLaunchCoins)}
             >
@@ -814,9 +511,9 @@ export default function StartWarPage() {
                   {showLaunchCoins ? "Hide" : "Show"}
                 </Button>
               </div>
-            </CardHeader> */}
+            </CardHeader>
 
-            {/* {showLaunchCoins && (
+            {showLaunchCoins && (
               <CardContent>
                 <form onSubmit={handleLaunchCoins} className="space-y-8">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
@@ -854,8 +551,8 @@ export default function StartWarPage() {
                   </div>
                 </form>
               </CardContent>
-            )} */}
-          {/* </Card> */}
+            )}
+          </Card> */}
 
           <h1 className="text-2xl sm:text-3xl font-bold mb-2">
             Start a Meme Coin War
@@ -892,80 +589,14 @@ export default function StartWarPage() {
               />
             </div>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>War Details</CardTitle>
-                <CardDescription>
-                  Configure the parameters for this meme coin war
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div className="space-y-2">
-                  <Label>Select War Duration</Label>
-                  <div className="flex flex-wrap gap-2">
-                    {durationOptions.map((duration) => (
-                      <Button
-                        key={duration}
-                        type="button"
-                        variant={
-                          selectedDuration === duration ? "default" : "outline"
-                        }
-                        onClick={() => setSelectedDuration(duration)}
-                      >
-                        {duration} hour{duration === 1 ? "" : "s"}
-                      </Button>
-                    ))}
-                  </div>
-                </div>
-
-                <div className="space-y-2">
-                  <div className="flex items-center gap-2">
-                    <Label htmlFor="risk-free-sol">
-                      Risk Free SOL: {riskFreeSol} SOL
-                    </Label>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          className="h-4 w-4 p-0"
-                        >
-                          <Info className="h-4 w-4 text-muted-foreground hover:text-primary" />
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Explanation for Risk Free SOL (placeholder)</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </div>
-                  <Slider
-                    id="risk-free-sol"
-                    min={0}
-                    max={20}
-                    step={1}
-                    value={[riskFreeSol]}
-                    onValueChange={(value: number[]) =>
-                      setRiskFreeSol(value[0])
-                    }
-                    className="h-3"
-                  />
-                </div>
-
-                <div className="space-y-2">
-                  <Label htmlFor="war-description">Description</Label>
-                  <Textarea
-                    id="war-description"
-                    placeholder="Describe this epic meme coin battle..."
-                    value={warData.description}
-                    onChange={(e) =>
-                      setWarData({ ...warData, description: e.target.value })
-                    }
-                    className="min-h-32"
-                  />
-                </div>
- 
-              </CardContent>
-            </Card>
+            <WarDetailsForm
+              warData={warData}
+              setWarData={setWarData}
+              selectedDuration={selectedDuration}
+              setSelectedDuration={setSelectedDuration}
+              riskFreeSol={riskFreeSol}
+              setRiskFreeSol={setRiskFreeSol}
+            />
 
             <div className="flex justify-center">
               <Button
@@ -974,17 +605,19 @@ export default function StartWarPage() {
                 className="w-full sm:w-auto sm:px-8"
                 disabled={Boolean(
                   !publicKey ||
-                  isCreateWarLoading ||
-                  Boolean(disableCreateWarBtn) ||
-                  !mintAInfo || !mintBInfo ||
-                  (existingMemeWarRegistry && !existingMemeWarRegistry.war_ended)
+                    isCreateWarLoading ||
+                    Boolean(disableCreateWarBtn) ||
+                    !mintAInfo ||
+                    !mintBInfo ||
+                    (existingMemeWarRegistry &&
+                      !existingMemeWarRegistry.war_ended)
                 )}
               >
                 {isCreateWarLoading
                   ? "Starting War..."
                   : disableCreateWarBtn
-                    ? "War Started!"
-                    : "Start War"}
+                  ? "War Started!"
+                  : "Start War"}
               </Button>
             </div>
           </form>
