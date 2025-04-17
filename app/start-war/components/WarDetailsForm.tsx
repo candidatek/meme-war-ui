@@ -17,7 +17,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { WarDetailsFormProps } from "../types";
+import { WarDetailsFormProps } from "../../types";
 
 const durationOptions = [1, 2, 4, 8, 16, 24, 48];
 

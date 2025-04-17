@@ -26,10 +26,10 @@ import { showErrorToast } from "@/components/toast-utils";
 import { useMintInfo } from "../hooks/useMintInfo";
 import { useGetMemeWarRegistry } from "../hooks/useGetMemeWarRegistry";
 
-// Import components
-import { CoinForm } from "../components/CoinForm";
-import { LaunchCoinForm } from "../components/LaunchCoinForm";
-import { WarDetailsForm } from "../components/WarDetailsForm";
+// Import components from the local components directory
+import { CoinForm } from "./components/CoinForm";
+import { LaunchCoinForm } from "./components/LaunchCoinForm";
+import { WarDetailsForm } from "./components/WarDetailsForm";
 import {
   CoinData,
   LaunchCoinData,

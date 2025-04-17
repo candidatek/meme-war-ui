@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { CoinFormProps, createDefaultCoinData } from "../types";
+import { CoinFormProps, createDefaultCoinData } from "../../types";
 
 export const CoinForm: React.FC<CoinFormProps> = ({ data, setData, title }) => (
   <Card>
