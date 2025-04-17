@@ -60,15 +60,31 @@ export default function WarPage() {
   // Get meme war state data
   const { data: memeWarStateInfo } = useMemeWarStateInfo(memeWarState);
 
-  // Initialize deposit/withdraw hooks
-  const { depositTokens } = useDepositTokens(mintA, mintB);
-  const { withdrawTokens } = useWithdrawTokens(mintA, mintB);
+  // Make sure mint addresses are set before initializing hooks
+  useEffect(() => {
+    if (memeWarStateInfo) {
+      setMintA(memeWarStateInfo.mint_a);
+      setMintB(memeWarStateInfo.mint_b);
+    }
+  }, [memeWarStateInfo, setMintA, setMintB]);
 
-  // Get token balances
-  const { data: tokenBalanceData, refreshTokenBalance } = useTokenBalance(
-    mintA,
-    mintB
+  // Initialize deposit/withdraw hooks - only after mint addresses are set
+  const { depositTokens } = useDepositTokens(
+    mintA || '', 
+    mintB || ''
   );
+  
+  const { withdrawTokens } = useWithdrawTokens(
+    mintA || '', 
+    mintB || ''
+  );
+
+  // Get token balances - only after mint addresses are set
+  const { data: tokenBalanceData, refreshTokenBalance } = useTokenBalance(
+    mintA || '',
+    mintB || ''
+  );
+  
   const tokenBalanceMintA = useMemo(
     () => Number(tokenBalanceData?.[0] ?? 0),
     [tokenBalanceData]
@@ -77,17 +93,17 @@ export default function WarPage() {
     () => Number(tokenBalanceData?.[1] ?? 0),
     [tokenBalanceData]
   );
-
+  
   // Get user state data
   const { data: userStateInfo, refetch: refetchUserState } =
     useGetUserStateInfo(userState, memeWarState);
 
   // Recent trades data
   const { data: tradesData } = useRecentTrades(memeWarState);
-  const [displayTradesData, setDisplayTradesData] = useState<{
-    mintA: TradeData[];
-    mintB: TradeData[];
-  } | null>(null);
+  const [displayTradesData, setDisplayTradesData] = useState({
+    mintA: [],
+    mintB: []
+  });
   const queryClient = useQueryClient();
   const [animateTrade, setAnimateTrade] = useState<{
     index: number;
@@ -103,7 +119,7 @@ export default function WarPage() {
 
   // Chat messages data
   const { data: chatMessages, refresh: refreshChat } = useGetChatMessages(
-    memeWarState!
+    memeWarState || ''
   );
   const { mutate: sendMessage, status: sendStatus } =
     useSendChatMessage(refreshChat);
@@ -132,14 +148,6 @@ export default function WarPage() {
       ? memeWarStateInfo.end_time.toString()
       : undefined
   );
-
-  // Set mint addresses when war state info is loaded
-  useEffect(() => {
-    if (memeWarStateInfo) {
-      setMintA(memeWarStateInfo.mint_a);
-      setMintB(memeWarStateInfo.mint_b);
-    }
-  }, [memeWarStateInfo, setMintA, setMintB]);
 
   // WebSocket implementation for trades
   useEffect(() => {
@@ -177,22 +185,25 @@ export default function WarPage() {
       const isMatchingMintA = processedMessage.mint === mintA;
       const isMatchingMintB = processedMessage.mint === mintB;
       const index = isMatchingMintA ? 0 : isMatchingMintB ? 1 : -1;
-
-      // Update local trade data
+      
+      // Update local trade data - ensure we have proper structures
       setDisplayTradesData((prevData) => {
         if (!prevData) return { mintA: [], mintB: [] };
 
-        const updatedData = { ...prevData };
+        const updatedData = { 
+          mintA: [...(prevData.mintA || [])],
+          mintB: [...(prevData.mintB || [])]
+        };
 
         if (isMatchingMintA) {
           const newTrades = [processedMessage, ...updatedData.mintA];
           updatedData.mintA = newTrades.sort(
-            (a, b) => b.event_time - a.event_time
+            (a, b) => (b.event_time) - (a.event_time)
           );
         } else if (isMatchingMintB) {
           const newTrades = [processedMessage, ...updatedData.mintB];
           updatedData.mintB = newTrades.sort(
-            (a, b) => b.event_time - a.event_time
+            (a, b) => (b.event_time) - (a.event_time)
           );
         }
 
@@ -251,7 +262,7 @@ export default function WarPage() {
   useEffect(() => {
     if (!memeWarState) return;
 
-    const socket: Socket = io(process.env.NEXT_PUBLIC_SERVER_URL!);
+    const socket: Socket = io(process.env.NEXT_PUBLIC_SERVER_URL);
     let animationTimeoutId: NodeJS.Timeout;
 
     socket.on("connect", () => {
@@ -304,11 +315,25 @@ export default function WarPage() {
   // Handle deposit for a token
   const handleDeposit = async (mintIdentifier: 0 | 1, amount: string) => {
     try {
+      // Check if mint addresses are available
+      if (!mintA || !mintB) {
+        console.error("Mint addresses not available yet");
+        showErrorToast("Mint addresses not ready. Please try again.");
+        return;
+      }
+      
       setBtnLoading(mintIdentifier);
+      
       const mintDecimal =
         mintIdentifier === 0
           ? memeWarStateInfo?.mint_a_decimals
           : memeWarStateInfo?.mint_b_decimals;
+      // Input validation
+      if (isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
+        showErrorToast("Please enter a valid amount");
+        setBtnLoading(-1);
+        return;
+      }
       await depositTokens(
         parseFloat(amount),
         mintIdentifier,
@@ -316,7 +341,7 @@ export default function WarPage() {
         refreshTokenBalance,
         mintDecimal ?? 9
       );
-
+      
       // Refresh user state and query data after successful deposit
       refetchUserState();
       queryClient.invalidateQueries({
@@ -338,6 +363,12 @@ export default function WarPage() {
   // Handle withdraw for a token
   const handleWithdraw = async (index: 0 | 1) => {
     try {
+      // Check if mint addresses are available
+      if (!mintA || !mintB) {
+        console.error("Mint addresses not available yet");
+        showErrorToast("Mint addresses not ready. Please try again.");
+        return;
+      }
       setBtnLoading(index);
       await withdrawTokens(index, setBtnLoading, refreshTokenBalance);
 
@@ -347,6 +378,7 @@ export default function WarPage() {
         queryKey: ["memeWarState", memeWarState],
       });
     } catch (e) {
+      console.error("Withdrawal error:", e);
       showErrorToast("Failed to Withdraw Tokens");
       setBtnLoading(-1);
     }
@@ -354,7 +386,7 @@ export default function WarPage() {
 
   // Auto refresh on invalid state
   useEffect(() => {
-    const memeWarStateParam = params.memeWarState;
+    const memeWarStateParam = params.id;
 
     if (
       !memeWarStateParam ||
@@ -371,7 +403,7 @@ export default function WarPage() {
       }, REFRESH_DELAY);
       return () => clearTimeout(timer);
     }
-  }, [memeWarStateInfo, params.memeWarState]);
+  }, [memeWarStateInfo, params.id]);
 
   // Handle manual refresh
   const handleRefresh = useCallback(() => {
@@ -454,7 +486,7 @@ export default function WarPage() {
         priceChange24h: Number(memeWarStateInfo.mint_a_price_change || 0),
         volume24h: Number(memeWarStateInfo.mint_a_volume || 0),
         holders: Number(memeWarStateInfo.mint_a_holders || 0),
-        totalSupply: Number(Billion),
+        totalSupply: Number(Billion || 0),
         amountPledged: mintADeposited || 0,
         pledgers: memeWarStateInfo.mint_a_depositors || 0,
         emoji: "🪙",
@@ -465,18 +497,18 @@ export default function WarPage() {
           telegram: "#",
           website: "#",
         },
-        image: memeWarStateInfo.mint_a_image,
+        image: memeWarStateInfo.mint_a_image || null,
         address: memeWarStateInfo.mint_a,
       },
       coin2: {
         ticker: memeWarStateInfo.mint_b_symbol || "TOKEN_B",
         name: memeWarStateInfo.mint_b_name || "Token B",
-        marketCap: mintBPrice * Number(Billion),
+        marketCap: mintBPrice * Number(Billion || 0),
         price: mintBPrice || 0,
         priceChange24h: Number(memeWarStateInfo.mint_b_price_change || 0),
         volume24h: Number(memeWarStateInfo.mint_b_volume || 0),
         holders: Number(memeWarStateInfo.mint_b_holders || 0),
-        totalSupply: Number(Billion),
+        totalSupply: Number(Billion || 0),
         amountPledged: mintBDeposited || 0,
         pledgers: memeWarStateInfo.mint_b_depositors || 0,
         emoji: "🪙",
@@ -487,14 +519,14 @@ export default function WarPage() {
           telegram: "#",
           website: "#",
         },
-        image: memeWarStateInfo.mint_b_image,
+        image: memeWarStateInfo.mint_b_image || null,
         address: memeWarStateInfo.mint_b,
       },
       totalPledged: mintADeposited + mintBDeposited,
       timeLeft: timeLeft || "00:00:00",
       recentPledges: [],
     } as WarData;
-  }, [memeWarStateInfo, timeLeft]);
+  }, [memeWarStateInfo, timeLeft, mintAPrice, mintBPrice]);
 
   // Return loading state if data isn't ready
   if (!warData) {
@@ -512,10 +544,14 @@ export default function WarPage() {
             memeWarStateInfo={memeWarStateInfo}
             token={warData.coin1}
             totalPledged={warData.totalPledged}
-            handleDeposit={() => handleDeposit(0, leftInput)}
+            handleDeposit={() => {
+              handleDeposit(0, leftInput);
+            }}
             handleWithdraw={() => handleWithdraw(0)}
             pledgeAmount={leftInput}
-            setPledgeAmount={setLeftInput}
+            setPledgeAmount={(value) => {
+              setLeftInput(value);
+            }}
             tokenBalance={tokenBalanceMintA}
             btnLoading={btnLoading === 0}
             userState={userStateInfo}
@@ -547,10 +583,14 @@ export default function WarPage() {
             memeWarStateInfo={memeWarStateInfo}
             token={warData.coin2}
             totalPledged={warData.totalPledged}
-            handleDeposit={() => handleDeposit(1, rightInput)}
+            handleDeposit={() => {
+              handleDeposit(1, rightInput);
+            }}
             handleWithdraw={() => handleWithdraw(1)}
             pledgeAmount={rightInput}
-            setPledgeAmount={setRightInput}
+            setPledgeAmount={(value) => {
+              setRightInput(value);
+            }}
             tokenBalance={tokenBalanceMintB}
             btnLoading={btnLoading === 1}
             userState={userStateInfo}

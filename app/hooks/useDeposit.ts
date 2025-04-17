@@ -2,7 +2,6 @@
 import { Program } from "@coral-xyz/anchor";
 import { BN } from "bn.js";
 
-
 import { useState, useCallback, Dispatch } from 'react';
 import * as anchor from '@project-serum/anchor';
 import { PublicKey, Transaction } from '@solana/web3.js';
@@ -16,7 +15,6 @@ import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { toast } from "sonner";
 import { SetStateAction } from "jotai";
 import { useMintInfo } from "./useMintInfo";
-
 
 const useDepositTokens = (mintAKey: string | null, mintBKey: string | null) => {
   const [error, setError] = useState(null);
@@ -46,30 +44,32 @@ const useDepositTokens = (mintAKey: string | null, mintBKey: string | null) => {
       if (!mintAKey || !mintBKey) {
         throw new Error("Invalid mint keys");
       }
+
       const mintA = new PublicKey(mintAKey)
       const mintB = new PublicKey(mintBKey)
+
       setLoading(mintIdentifier);
       setError(null);
       const tx = new Transaction();
 
-
-      // Fetching derived addresses
       const memeWarRegistryAddress = getProgramDerivedAddressForPair(mintA, mintB);
+
       const memeWarRegistry = await memeProgram!.account.memeWarRegistry.fetch(memeWarRegistryAddress);
+
       const lastValidated = memeWarRegistry.lastValidated as number;
       const depositMint = mintIdentifier === 0 ? mintA : mintB;
 
       const userAta = await findAssociatedTokenAddress({ walletAddress: publicKey!, tokenMintAddress: depositMint });
-      
+
       const memeWarState = await getPDAForMemeSigner(mintA, mintB, lastValidated);
 
       const memeWarStateAta = await findAssociatedTokenAddress({ walletAddress: memeWarState, tokenMintAddress: depositMint });
 
       const userState = await getProgramDerivedAddressForPair(memeWarState, publicKey!);
+
       const userStateValue = await connection.getAccountInfo(userState);
 
       if (!userStateValue) {
-
         const ix = await memeProgram!.methods
           .initUserAccounts()
           .accounts({
@@ -105,15 +105,18 @@ const useDepositTokens = (mintAKey: string | null, mintBKey: string | null) => {
           systemProgram: anchor.web3.SystemProgram.programId,
         }).instruction();
       tx.add(depositIx);
+
       toast.dismiss();
       notifierId = toast.message("Approve Transaction from Wallet", { duration: 20000 });
+
       const signature = await sendTransaction(tx, connection);
-      console.log(`https://explorer.solana.com/tx/${signature}?cluster=devnet`);
+      console.log(`Explorer URL: https://explorer.solana.com/tx/${signature}?cluster=devnet`);
+
       checkStatus({ signature, action: `Deposit ${amount} tokens`, setIsLoading: setLoading, refresh, stopLoadingWithInteger: true });
 
     } catch (err) {
       toast.dismiss(notifierId);
-      console.log(err);
+      console.log("Error in depositTokens:", err);
       throw err;
     }
   }, [mintAKey, mintBKey, memeProgram, publicKey, connection, memeWarGlobalAccount, sendTransaction, checkStatus]);
