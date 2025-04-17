@@ -17,18 +17,18 @@ export function useUserCalculations(userState: UserState | null | undefined) {
         userMintBTotalDeposited: 0,
       };
 
-    const userMintADeposit = Number(userState.mint_a_deposit || 0) / 10 ** 9;
-    const userMintBDeposit = Number(userState.mint_b_deposit || 0) / 10 ** 9;
-    const userMintAPenalty = Number(userState.mint_a_penalty || 0) / 10 ** 9;
-    const userMintBPenalty = Number(userState.mint_b_penalty || 0) / 10 ** 9;
+    const userMintADeposit = Number(userState.mint_a_deposit || 0) / 10 ** 6;
+    const userMintBDeposit = Number(userState.mint_b_deposit || 0) / 10 ** 6;
+    const userMintAPenalty = Number(userState.mint_a_penalty || 0) / 10 ** 6;
+    const userMintBPenalty = Number(userState.mint_b_penalty || 0) / 10 ** 6;
     const userMintAWithdrawn =
-      Number(userState.mint_a_withdrawn || 0) / 10 ** 9;
+      Number(userState.mint_a_withdrawn || 0) / 10 ** 6;
     const userMintBWithdrawn =
-      Number(userState.mint_b_withdrawn || 0) / 10 ** 9;
+      Number(userState.mint_b_withdrawn || 0) / 10 ** 6;
     const userMintARiskFreeDeposit =
-      Number(userState.mint_a_risk_free_deposit || 0) / 10 ** 9;
+      Number(userState.mint_a_risk_free_deposit || 0) / 10 ** 6;
     const userMintBRiskFreeDeposit =
-      Number(userState.mint_b_risk_free_deposit || 0) / 10 ** 9;
+      Number(userState.mint_b_risk_free_deposit || 0) / 10 ** 6;
 
     const userMintATotalDeposited = userMintADeposit + userMintARiskFreeDeposit;
     const userMintBTotalDeposited = userMintBDeposit + userMintBRiskFreeDeposit;

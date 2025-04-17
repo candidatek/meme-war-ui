@@ -44,13 +44,9 @@ export function TokenCard({
   } = useUserCalculations(userState);
 
   // Calculate expected payout
-  const calculateExpectedPayout = (amount: number): number => {
-    if (!amount || !token.amountPledged) return 0;
-    // If this side wins, pledger gets their amount plus proportional share of losing side
-    const otherSideAmount = totalPledged - token.amountPledged;
-    const shareOfPledge = amount / (token.amountPledged || 1); // Prevent division by zero
-    const expectedReward = amount + otherSideAmount * shareOfPledge;
-    return expectedReward || 0;
+  const calculateExpectedPayout = (amount: number, percent: number): number => {
+    if (!amount || !percent) return 0;
+    return amount * (1 + (percent / 100));
   };
 
   const formatSharePercentage = (amount: number, total: number): string => {
@@ -58,7 +54,7 @@ export function TokenCard({
     return ((amount / total) * 100).toFixed(2);
   };
 
-  const warShare = useMemo(() => {
+  const usersWarShare = useMemo(() => {
     try {
       if (!memeWarStateInfo || !userState) return 0;
       if (!userMintATotalDeposited && !userMintBTotalDeposited) return 0;
@@ -88,11 +84,7 @@ export function TokenCard({
   ]);
 
   // Calculate ROI percentage
-  const calculateROI = (amount: number): number => {
-    if (!amount) return 0;
-    const payout = calculateExpectedPayout(amount);
-    return amount > 0 ? ((payout - amount) / amount) * 100 : 0;
-  };
+   
 
   // Handler for max button
   const handleMax = (): void => {
@@ -104,6 +96,9 @@ export function TokenCard({
     setPledgeAmount((tokenBalance / 2).toString());
   };
 
+  const { mintAPrice, mintBPrice, mintAExpectedPayout, mintBExpectedPayout } = useMemeWarCalculations(memeWarStateInfo)
+  const userAmountPledged = index === 0 ? userMintATotalDeposited : userMintBTotalDeposited;
+  const poolAmountPledged = index === 0 ? mintADepositedRaw : mintBDepositedRaw;
   return (
     <div className="bg-card border border-border rounded-lg p-4 sm:p-6">
       {/* Token Header */}
@@ -192,12 +187,11 @@ export function TokenCard({
             <div className="flex flex-wrap items-center gap-x-3 gap-y-1">
               <div className="flex items-center gap-2">
                 <span className="text-lg sm:text-xl font-mono">
-                  ${token.price.toFixed(8)}
+                  ${(index === 0 ? mintAPrice : mintBPrice).toFixed(8)}
                 </span>
                 <span
-                  className={`text-xs sm:text-sm ${
-                    token.priceChange24h >= 0 ? "text-primary" : "text-red-500"
-                  }`}
+                  className={`text-xs sm:text-sm ${token.priceChange24h >= 0 ? "text-primary" : "text-red-500"
+                    }`}
                 >
                   {token.priceChange24h >= 0 ? "+" : ""}
                   {token.priceChange24h.toFixed(2)}%
@@ -280,7 +274,7 @@ export function TokenCard({
         </div>
         <div className="flex justify-between text-xs sm:text-sm">
           <span className="text-muted-foreground">War Share</span>
-          <span className="font-medium">{warShare}%</span>
+          <span className="font-medium">{usersWarShare}%</span>
         </div>
 
         {/* Balance and Utility Buttons */}
@@ -320,15 +314,18 @@ export function TokenCard({
             </div>
             <div className="flex flex-wrap items-baseline gap-1 sm:gap-2">
               <span className="text-base sm:text-lg font-mono text-primary">
-                {formatNumber(calculateExpectedPayout(Number(pledgeAmount)))}
+                {formatNumber(calculateExpectedPayout(Number(userAmountPledged), mintAExpectedPayout))}
               </span>
               <span className="text-xs text-primary">
-                (+{calculateROI(Number(pledgeAmount)).toFixed(2)}% ROI)
+                (+{index === 0 ? mintAExpectedPayout : mintBExpectedPayout}% ROI)
               </span>
             </div>
             <div className="text-xs text-muted-foreground">
               Your share:{" "}
-              {formatSharePercentage(Number(pledgeAmount), token.amountPledged)}{" "}
+              <span className="text-primary">
+              {usersWarShare}{"% "}
+
+              </span>
               of {token.ticker} pool
             </div>
           </div>

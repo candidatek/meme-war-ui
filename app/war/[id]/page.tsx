@@ -31,6 +31,8 @@ import { TokenCard } from "./components/TokenCard";
 import { LiveFeed } from "./components/LiveFeed";
 import { ChatSection } from "./components/ChatSection";
 import { WarShare } from "./components/WarShare";
+import { Billion } from "@/app/utils";
+import { useMemeWarCalculations } from "@/app/hooks/useMemeWarCalculations";
 
 const REFRESH_DELAY = 5000;
 
@@ -398,6 +400,7 @@ export default function WarPage() {
     return 100 - mintAPercentage;
   }, [mintAPercentage]);
 
+  const {mintAPrice, mintBPrice} = useMemeWarCalculations(memeWarStateInfo)
   // Convert blockchain data to UI-friendly format
   const warData = useMemo(() => {
     if (!memeWarStateInfo) {
@@ -410,19 +413,17 @@ export default function WarPage() {
     const mintBDeposited =
       Number(memeWarStateInfo.mint_b_total_deposited) /
       10 ** (memeWarStateInfo.mint_b_decimals || 9);
-    const mintAPrice = Number(memeWarStateInfo.mint_a_price || 0);
-    const mintBPrice = Number(memeWarStateInfo.mint_b_price || 0);
-
+  
     return {
       coin1: {
         ticker: memeWarStateInfo.mint_a_symbol || "TOKEN_A",
         name: memeWarStateInfo.mint_a_name || "Token A",
-        marketCap: mintAPrice * Number(memeWarStateInfo.mint_a_supply || 0),
+        marketCap: mintAPrice * Number(Billion || 0),
         price: mintAPrice || 0,
         priceChange24h: Number(memeWarStateInfo.mint_a_price_change || 0),
         volume24h: Number(memeWarStateInfo.mint_a_volume || 0),
         holders: Number(memeWarStateInfo.mint_a_holders || 0),
-        totalSupply: Number(memeWarStateInfo.mint_a_supply || 0),
+        totalSupply: Number(Billion),
         amountPledged: mintADeposited || 0,
         pledgers: memeWarStateInfo.mint_a_depositors || 0,
         emoji: "🪙",
@@ -439,12 +440,12 @@ export default function WarPage() {
       coin2: {
         ticker: memeWarStateInfo.mint_b_symbol || "TOKEN_B",
         name: memeWarStateInfo.mint_b_name || "Token B",
-        marketCap: mintBPrice * Number(memeWarStateInfo.mint_b_supply || 0),
+        marketCap: mintBPrice * Number(Billion),
         price: mintBPrice || 0,
         priceChange24h: Number(memeWarStateInfo.mint_b_price_change || 0),
         volume24h: Number(memeWarStateInfo.mint_b_volume || 0),
         holders: Number(memeWarStateInfo.mint_b_holders || 0),
-        totalSupply: Number(memeWarStateInfo.mint_b_supply || 0),
+        totalSupply: Number(Billion),
         amountPledged: mintBDeposited || 0,
         pledgers: memeWarStateInfo.mint_b_depositors || 0,
         emoji: "🪙",

@@ -1,24 +1,25 @@
 import { motion } from "framer-motion";
 import { formatNumber } from "@/lib/utils";
 import { WarData } from "@/app/Interfaces";
+import { useMemeWarCalculations } from "@/app/hooks/useMemeWarCalculations";
+import { IMemeWarState } from "@/app/api/getMemeWarStateInfo";
 
 interface WarShareProps {
   warData: WarData;
-  mintAPercentage: number;
-  mintBPercentage: number;
-  memeWarStateInfo: any;
+  memeWarStateInfo: IMemeWarState;
   endedTimeAgo: string;
   timeLeft: string;
 }
 
 export function WarShare({
   warData,
-  mintAPercentage,
-  mintBPercentage,
   memeWarStateInfo,
   endedTimeAgo,
   timeLeft,
 }: WarShareProps) {
+  const {mintAPercentage, mintBPercentage, mintADepositedRaw, mintBDepositedRaw, mintAPrice, mintBPrice} = useMemeWarCalculations(memeWarStateInfo) 
+  const totalDeposit = (mintADepositedRaw + mintBDepositedRaw) *
+  ((mintAPrice + mintBPrice) / 2);
   return (
     <div className="col-span-1 flex flex-col items-center justify-start my-8 md:my-0">
       <div className="w-full md:sticky md:top-4">
@@ -48,7 +49,7 @@ export function WarShare({
             <span className="text-primary font-medium">
               {mintAPercentage.toFixed(1)}%
             </span>
-            <span className="text-[#FF4444] font-medium">
+            <span className="text-[#4CAF50] font-medium">
               {mintBPercentage.toFixed(1)}%
             </span>
           </div>
@@ -56,7 +57,7 @@ export function WarShare({
           {/* Progress Bar */}
           <div className="h-2 sm:h-3 bg-muted rounded-full overflow-hidden relative">
             <motion.div
-              className="absolute left-0 top-0 bottom-0 bg-primary"
+              className="absolute left-0 top-0 bottom-0 bg-[#228B22]"
               style={{
                 width: `${mintAPercentage}%`,
                 borderRadius: "9999px 0 0 9999px",
@@ -67,7 +68,7 @@ export function WarShare({
               transition={{ duration: 0.5 }}
             />
             <motion.div
-              className="absolute right-0 top-0 bottom-0 bg-[#FF4444]"
+              className="absolute right-0 top-0 bottom-0 bg-[#4CAF50]"
               style={{
                 width: `${mintBPercentage}%`,
                 borderRadius: "0 9999px 9999px 0",
@@ -83,25 +84,25 @@ export function WarShare({
           <div className="flex justify-between text-xs">
             <div className="text-left">
               <div className="text-primary font-medium">
-                {formatNumber(warData.coin1.amountPledged)}{" "}
+                {formatNumber(mintADepositedRaw)}{" "}
                 <span className="hidden sm:inline">{warData.coin1.ticker}</span>
               </div>
               <div className="text-muted-foreground mt-0.5">
                 $
                 {formatNumber(
-                  warData.coin1.amountPledged * warData.coin1.price
+                  mintADepositedRaw * mintAPrice
                 )}
               </div>
             </div>
             <div className="text-right">
-              <div className="text-[#FF4444] font-medium">
-                {formatNumber(warData.coin2.amountPledged)}{" "}
+              <div className="text-[#2ECC71] font-medium">
+                {formatNumber(mintBDepositedRaw)}{" "}
                 <span className="hidden sm:inline">{warData.coin2.ticker}</span>
               </div>
               <div className="text-muted-foreground mt-0.5">
                 $
                 {formatNumber(
-                  warData.coin2.amountPledged * warData.coin2.price
+                  mintBDepositedRaw * mintBPrice
                 )}
               </div>
             </div>
@@ -122,13 +123,11 @@ export function WarShare({
           </div>
 
           {/* Winner Declaration */}
-          {memeWarStateInfo?.winner_declared && (
+          {memeWarStateInfo?.war_ended && (
             <div className="mt-3 sm:mt-4 text-center">
               <div className="text-sm text-muted-foreground mb-1">Winner</div>
               <div className="text-base sm:text-xl font-mono">
-                {memeWarStateInfo.winner_declared === warData.coin1.ticker
-                  ? warData.coin1.ticker
-                  : warData.coin2.ticker}
+                {memeWarStateInfo.winner_declared}
               </div>
             </div>
           )}
@@ -140,10 +139,7 @@ export function WarShare({
             </div>
             <div className="text-base sm:text-xl font-mono">
               $
-              {formatNumber(
-                warData.totalPledged *
-                  ((warData.coin1.price + warData.coin2.price) / 2)
-              )}
+              {formatNumber(totalDeposit)}
             </div>
           </div>
         </div>

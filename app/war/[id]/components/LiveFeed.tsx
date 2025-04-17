@@ -63,7 +63,7 @@ export function LiveFeed({
 
                   // Get SOL value from trade data
                   const solValue = trade.amount_in_sol
-                    ? Number(trade.amount_in_sol) / 10 ** 9
+                    ? Number(trade.amount_in_sol) / 10 ** 6
                     : 0;
 
                   return (
