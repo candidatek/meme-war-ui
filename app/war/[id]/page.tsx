@@ -7,6 +7,7 @@ import { useParams } from "next/navigation";
 import { io, Socket } from "socket.io-client";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { AnimatePresence, motion } from "framer-motion";
 
 // API Hooks
 import { useGetChatMessages } from "@/app/api/getChatMessages";
@@ -88,6 +89,10 @@ export default function WarPage() {
     mintB: TradeData[];
   } | null>(null);
   const queryClient = useQueryClient();
+  const [animateTrade, setAnimateTrade] = useState<{
+    index: number;
+    tradeId: string | null;
+  }>({ index: -1, tradeId: null });
 
   // Set display trades when tradesData updates
   useEffect(() => {
@@ -142,6 +147,7 @@ export default function WarPage() {
 
     const socket: Socket = io(process.env.NEXT_PUBLIC_SERVER_URL!);
     let tradeTimeoutId: NodeJS.Timeout | undefined;
+    let animationTimeoutId: NodeJS.Timeout | undefined;
 
     const handleConnect = () => {
       console.log(
@@ -168,13 +174,15 @@ export default function WarPage() {
         tx_signature: message.tx_signature || `tx-${Date.now()}`,
       };
 
+      const isMatchingMintA = processedMessage.mint === mintA;
+      const isMatchingMintB = processedMessage.mint === mintB;
+      const index = isMatchingMintA ? 0 : isMatchingMintB ? 1 : -1;
+
       // Update local trade data
       setDisplayTradesData((prevData) => {
         if (!prevData) return { mintA: [], mintB: [] };
 
         const updatedData = { ...prevData };
-        const isMatchingMintA = processedMessage.mint === mintA;
-        const isMatchingMintB = processedMessage.mint === mintB;
 
         if (isMatchingMintA) {
           const newTrades = [processedMessage, ...updatedData.mintA];
@@ -190,6 +198,26 @@ export default function WarPage() {
 
         return updatedData;
       });
+
+      // Trigger animation only for deposits
+      if (index !== -1 && processedMessage.event_type === "deposit") {
+        // Clear any existing animation timeout
+        if (animationTimeoutId) {
+          clearTimeout(animationTimeoutId);
+        }
+
+        // Set animation state
+        setAnimateTrade({
+          index,
+          tradeId:
+            processedMessage.tx_signature || `${processedMessage.event_time}`,
+        });
+
+        // Set timeout to clear the animation
+        animationTimeoutId = setTimeout(() => {
+          setAnimateTrade({ index: -1, tradeId: null });
+        }, 4000); // Animation duration
+      }
 
       // Also refresh the user state and war state to show updated deposits
       setTimeout(() => {
@@ -208,6 +236,9 @@ export default function WarPage() {
     return () => {
       if (tradeTimeoutId) {
         clearTimeout(tradeTimeoutId);
+      }
+      if (animationTimeoutId) {
+        clearTimeout(animationTimeoutId);
       }
 
       socket.off("connect", handleConnect);
@@ -400,7 +431,7 @@ export default function WarPage() {
     return 100 - mintAPercentage;
   }, [mintAPercentage]);
 
-  const {mintAPrice, mintBPrice} = useMemeWarCalculations(memeWarStateInfo)
+  const { mintAPrice, mintBPrice } = useMemeWarCalculations(memeWarStateInfo);
   // Convert blockchain data to UI-friendly format
   const warData = useMemo(() => {
     if (!memeWarStateInfo) {
@@ -413,7 +444,7 @@ export default function WarPage() {
     const mintBDeposited =
       Number(memeWarStateInfo.mint_b_total_deposited) /
       10 ** (memeWarStateInfo.mint_b_decimals || 9);
-  
+
     return {
       coin1: {
         ticker: memeWarStateInfo.mint_a_symbol || "TOKEN_A",
@@ -541,10 +572,11 @@ export default function WarPage() {
         {/* Combined Live Feed */}
         <div className="lg:col-span-1">
           <LiveFeed
+            memeWarStateInfo={memeWarStateInfo}
             tradesData={displayTradesData}
             warData={warData}
-            memeWarStateInfo={memeWarStateInfo}
             handleRefresh={handleRefresh}
+            animateTrade={animateTrade}
           />
         </div>
 

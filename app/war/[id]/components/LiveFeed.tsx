@@ -1,4 +1,3 @@
-import { useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { formatNumber, formatWalletAddress } from "@/lib/utils";
 import { TradeData, WarData } from "@/app/Interfaces";
@@ -13,6 +12,10 @@ interface LiveFeedProps {
   warData: WarData;
   memeWarStateInfo: any;
   handleRefresh: () => void;
+  animateTrade: {
+    index: number;
+    tradeId: string | null;
+  };
 }
 
 export function LiveFeed({
@@ -20,12 +23,8 @@ export function LiveFeed({
   warData,
   memeWarStateInfo,
   handleRefresh,
+  animateTrade,
 }: LiveFeedProps) {
-  const [animateTrade, setAnimateTrade] = useState<{
-    index: number;
-    tradeId: string | null;
-  }>({ index: -1, tradeId: null });
-
   return (
     <div className="bg-card border border-border rounded-lg">
       <div className="p-4 border-b border-border flex justify-between">
