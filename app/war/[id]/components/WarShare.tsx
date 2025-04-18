@@ -46,7 +46,7 @@ export function WarShare({
         <div className="mb-4 md:mb-6 text-center">
           <div className="text-sm text-muted-foreground mb-1">Price Ratio</div>
           <div className="font-mono text-base md:text-lg">
-            1 : {(warData.coin2.price / warData.coin1.price || 0).toFixed(8)}
+            1 : {(warData.coin2.price / warData.coin1.price || 0).toFixed(2)}
           </div>
           <div className="text-xs text-muted-foreground mt-1">
             {warData.coin1.ticker} : {warData.coin2.ticker}
