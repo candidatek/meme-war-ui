@@ -978,7 +978,8 @@ function CoinCard({ coin, isTopWar, align, onClick }: CoinCardProps) {
                 {" "}
                 {formatNumber(coin.amountPledged)}
               </span>
-              {coin.amountPledgedInSol && " $" + coin.amountPledgedInSol}
+              {coin.amountPledgedInSol &&
+                " $" + coin.amountPledgedInSol.toFixed(2)}
             </span>
           </div>
           <div className="flex items-end">
