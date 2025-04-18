@@ -493,7 +493,7 @@ export function MemeCoinWars() {
           </div>
 
           {/* Right Side: Search Input & Animations Toggle */}
-          <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="flex items-center gap-2 w-full sm:w-auto mt-2">
             <div className="flex-grow sm:flex-grow-0 w-full sm:w-64">
               <SearchInput
                 placeholder="Search by Symbol or Mint Address..."
