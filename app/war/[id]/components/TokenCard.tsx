@@ -333,13 +333,15 @@ export function TokenCard({
           <div className="flex gap-2">
             <button
               onClick={handleHalf}
-              className="px-2 py-1 bg-primary/20 text-primary rounded hover:bg-primary/30 transition-colors"
+              disabled={isWarEnded}
+              className="px-2 py-1 bg-primary/20 text-primary rounded hover:bg-primary/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               HALF
             </button>
             <button
               onClick={handleMax}
-              className="px-2 py-1 bg-primary/20 text-primary rounded hover:bg-primary/30 transition-colors"
+              disabled={isWarEnded}
+              className="px-2 py-1 bg-primary/20 text-primary rounded hover:bg-primary/30 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               MAX
             </button>
@@ -354,7 +356,8 @@ export function TokenCard({
           value={pledgeAmount}
           onChange={(e) => setPledgeAmount(e.target.value)}
           placeholder={`Enter amount`}
-          className="w-full bg-muted border-border rounded px-3 py-2 text-sm"
+          disabled={isWarEnded}
+          className="w-full bg-muted border-border rounded px-3 py-2 text-sm disabled:opacity-50 disabled:cursor-not-allowed"
         />
 
         {/* Expected Payout Section */}
@@ -403,7 +406,7 @@ export function TokenCard({
             </button>
             <button
               onClick={handleWithdraw}
-              disabled={localBtnLoading || disableUnpledgeBtn}
+              disabled={localBtnLoading || isWarEnded || disableUnpledgeBtn}
               className="bg-muted hover:bg-muted/90 text-foreground py-2 rounded text-xs sm:text-sm font-medium border border-border disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {localBtnLoading ? "Processing..." : "Unpledge"}
