@@ -59,20 +59,16 @@ export default function StartWarPage() {
   const { publicKey } = useWallet();
 
   // Promo code state
-  const [promoCode, setPromoCode] = useState<string>('');
+  const [promoCode, setPromoCode] = useState<string>("");
   const [isPromoModalOpen, setIsPromoModalOpen] = useState<boolean>(false);
   const [shouldValidate, setShouldValidate] = useState<boolean>(false);
 
   // Use the hook for promo code validation
-  const { 
-    isPromoCodeValid, 
+  const {
+    isPromoCodeValid,
     isLoading: isValidatingPromo,
-    isError: promoValidationError 
-  } = useApplyPromoCode(
-    promoCode,
-    publicKey?.toString() || '',
-    shouldValidate
-  );
+    isError: promoValidationError,
+  } = useApplyPromoCode(promoCode, publicKey?.toString() || "", shouldValidate);
 
   const { data: existingMemeWarRegistry, isLoading: isMemeWarRegistryLoading } =
     useGetMemeWarRegistry(coin1Data.mintAddress, coin2Data.mintAddress);
@@ -539,6 +535,20 @@ export default function StartWarPage() {
     }
   };
 
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout | null = null;
+
+    if (disableCreateWarBtn && !isCreateWarLoading) {
+      timeoutId = setTimeout(() => {
+        setDisableCreateWarBtn(false);
+      }, 15000);
+    }
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [disableCreateWarBtn, isCreateWarLoading]);
+
   return (
     <TooltipProvider>
       {/* Promo Code Modal */}
@@ -549,51 +559,58 @@ export default function StartWarPage() {
         height="auto"
         position="center"
       >
-        <div style={{ textAlign: 'center' }}>
-          <h2 style={{ fontSize: '24px', marginBottom: '20px' }}>
+        <div style={{ textAlign: "center" }}>
+          <h2 style={{ fontSize: "24px", marginBottom: "20px" }}>
             Enter Promo Code
           </h2>
 
-          <p>
-            Please enter a valid promo code to start a war.
-          </p>
+          <p>Please enter a valid promo code to start a war.</p>
 
-          <form onSubmit={handlePromoCodeSubmit} style={{ margin: '20px 0' }}>
+          <form onSubmit={handlePromoCodeSubmit} style={{ margin: "20px 0" }}>
             <Input
               value={promoCode}
               onChange={(e) => setPromoCode(e.target.value)}
               placeholder="Enter your promo code"
               style={{
-                padding: '10px',
-                fontSize: '16px',
-                width: '100%',
-                marginBottom: '10px',
-                background: 'rgba(255, 255, 255, 0.1)',
-                border: '1px solid rgba(255, 255, 255, 0.2)',
-                borderRadius: '4px',
-                color: 'white'
+                padding: "10px",
+                fontSize: "16px",
+                width: "100%",
+                marginBottom: "10px",
+                background: "rgba(255, 255, 255, 0.1)",
+                border: "1px solid rgba(255, 255, 255, 0.2)",
+                borderRadius: "4px",
+                color: "white",
               }}
             />
-            
+
             {promoValidationError && shouldValidate && (
-              <p style={{ color: '#ff6b6b', marginTop: '10px', fontSize: '14px' }}>
+              <p
+                style={{
+                  color: "#ff6b6b",
+                  marginTop: "10px",
+                  fontSize: "14px",
+                }}
+              >
                 Invalid promo code. Please try again.
               </p>
             )}
 
-            <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+            <div style={{ display: "flex", gap: "10px", marginTop: "20px" }}>
               <Button
                 type="button"
-                onClick={() => {setIsPromoModalOpen(false); setPromoCode('')}}
+                onClick={() => {
+                  setIsPromoModalOpen(false);
+                  setPromoCode("");
+                }}
                 style={{
                   flex: 1,
-                  padding: '10px 0'
+                  padding: "10px 0",
                 }}
                 variant={"outline"}
               >
                 Cancel
               </Button>
-              
+
               <Button
                 type="submit"
                 disabled={isValidatingPromo || !promoCode}
@@ -602,7 +619,7 @@ export default function StartWarPage() {
                 }}
                 variant={"default"}
               >
-                {isValidatingPromo ? 'Validating...' : 'Apply Code'}
+                {isValidatingPromo ? "Validating..." : "Apply Code"}
               </Button>
             </div>
           </form>
@@ -635,14 +652,10 @@ export default function StartWarPage() {
           {/* Promo Code Status */}
           <div className="mb-4 text-sm">
             {isPromoCodeValid ? (
-              <p className="text-green-500">
-                Promo code applied: {promoCode}
-              </p>
+              <p className="text-green-500">Promo code applied: {promoCode}</p>
             ) : (
               <div className="flex items-center gap-2">
-                <p className="text-amber-500">
-                  No promo code applied
-                </p>
+                <p className="text-amber-500">No promo code applied</p>
                 <Button
                   variant="outline"
                   size="sm"
