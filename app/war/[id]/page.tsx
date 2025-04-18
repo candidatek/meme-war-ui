@@ -69,20 +69,14 @@ export default function WarPage() {
   }, [memeWarStateInfo, setMintA, setMintB]);
 
   // Initialize deposit/withdraw hooks - only after mint addresses are set
-  const { depositTokens } = useDepositTokens(
-    mintA || '',
-    mintB || ''
-  );
+  const { depositTokens } = useDepositTokens(mintA || "", mintB || "");
 
-  const { withdrawTokens } = useWithdrawTokens(
-    mintA || '',
-    mintB || ''
-  );
+  const { withdrawTokens } = useWithdrawTokens(mintA || "", mintB || "");
 
   // Get token balances - only after mint addresses are set
   const { data: tokenBalanceData, refreshTokenBalance } = useTokenBalance(
-    mintA || '',
-    mintB || ''
+    mintA || "",
+    mintB || ""
   );
 
   const tokenBalanceMintA = useMemo(
@@ -102,7 +96,7 @@ export default function WarPage() {
   const { data: tradesData } = useRecentTrades(memeWarState);
   const [displayTradesData, setDisplayTradesData] = useState({
     mintA: [],
-    mintB: []
+    mintB: [],
   });
   const queryClient = useQueryClient();
   const [animateTrade, setAnimateTrade] = useState<{
@@ -119,7 +113,7 @@ export default function WarPage() {
 
   // Chat messages data
   const { data: chatMessages, refresh: refreshChat } = useGetChatMessages(
-    memeWarState || ''
+    memeWarState || ""
   );
   const { mutate: sendMessage, status: sendStatus } =
     useSendChatMessage(refreshChat);
@@ -192,18 +186,18 @@ export default function WarPage() {
 
         const updatedData = {
           mintA: [...(prevData.mintA || [])],
-          mintB: [...(prevData.mintB || [])]
+          mintB: [...(prevData.mintB || [])],
         };
 
         if (isMatchingMintA) {
           const newTrades = [processedMessage, ...updatedData.mintA];
           updatedData.mintA = newTrades.sort(
-            (a, b) => (b.event_time) - (a.event_time)
+            (a, b) => b.event_time - a.event_time
           );
         } else if (isMatchingMintB) {
           const newTrades = [processedMessage, ...updatedData.mintB];
           updatedData.mintB = newTrades.sort(
-            (a, b) => (b.event_time) - (a.event_time)
+            (a, b) => b.event_time - a.event_time
           );
         }
 
@@ -227,7 +221,7 @@ export default function WarPage() {
         // Set timeout to clear the animation
         animationTimeoutId = setTimeout(() => {
           setAnimateTrade({ index: -1, tradeId: null });
-        }, 2500); // Animation duration
+        }, 3500); // Animation duration increased
       }
 
       // Also refresh the user state and war state to show updated deposits
@@ -606,11 +600,6 @@ export default function WarPage() {
           />
         </div>
       </div>
-      {animateTrade.index === 0 && <div className={`absolute left-0 top-[50vh] w-[100px] h-20 border animate-scroll-top  
-                    
-                            `}>
-        Shrihari asd
-      </div>}
 
       {/* Live Feed and Chat Section */}
       <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">

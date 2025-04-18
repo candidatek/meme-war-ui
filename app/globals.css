@@ -399,15 +399,18 @@
     transform: translateX(-50%);
   }
 }
+
 @keyframes scroll-top {
   0% {
     transform: translateY(400px);
   }
+
   40% {
     opacity: 40px;
     visibility: visible;
     transform: translateY(180px);
   }
+
   100% {
     opacity: 0;
     visibility: hidden;
