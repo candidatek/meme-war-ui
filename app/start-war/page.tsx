@@ -6,6 +6,7 @@ import { Info } from "lucide-react";
 import { toast } from "sonner";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
+import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input"; // Added Input for promo code
@@ -117,6 +118,10 @@ export default function StartWarPage() {
   const { data: mintAInfo } = useMintInfo(coin1Data.mintAddress);
   const { data: mintBInfo } = useMintInfo(coin2Data.mintAddress);
 
+  const [activeExistingWarId, setActiveExistingWarId] = useState<string | null>(
+    null
+  );
+
   // Handle promo code validation success
   useEffect(() => {
     if (isPromoCodeValid) {
@@ -160,6 +165,16 @@ export default function StartWarPage() {
       }
     }
   }, [mintAInfo, mintBInfo, coin1Data.mintAddress, coin2Data.mintAddress]);
+
+  useEffect(() => {
+    // Update activeExistingWarId state based on fetched registry data
+    if (existingMemeWarRegistry && !existingMemeWarRegistry.war_ended) {
+      // Assuming the registry object has a 'meme_war_state' property with the ID
+      setActiveExistingWarId(existingMemeWarRegistry.meme_war_state || null);
+    } else {
+      setActiveExistingWarId(null);
+    }
+  }, [existingMemeWarRegistry]);
 
   const handleCreateMemeWarDetails = async () => {
     try {
@@ -297,9 +312,12 @@ export default function StartWarPage() {
       return;
     }
 
-    if (existingMemeWarRegistry && !existingMemeWarRegistry.war_ended) {
-      showErrorToast("A meme war already exists for these tokens!");
-      return;
+    if (activeExistingWarId) {
+      // Optionally show a toast here too, or rely on the UI message + disabled button
+      showErrorToast(
+        "An active war already exists for this pair. Cannot start a new one."
+      );
+      return; // Prevent submission if active war exists
     }
 
     // Check if promo code is valid
@@ -690,6 +708,28 @@ export default function StartWarPage() {
               setRiskFreeSol={setRiskFreeSol}
             />
 
+            {/* Conditional UI for Existing War */}
+            {activeExistingWarId && (
+              <Card className="border-yellow-500 border-2 bg-yellow-900/20">
+                <CardHeader>
+                  <CardTitle className="text-yellow-500">
+                    Active War Found!
+                  </CardTitle>
+                  <CardDescription className="text-yellow-300">
+                    A war already exists between these two tokens. You cannot
+                    create a new one.
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <Link href={`/war/${activeExistingWarId}`} passHref>
+                    <Button variant="secondary" className="w-full">
+                      Go to Existing War
+                    </Button>
+                  </Link>
+                </CardContent>
+              </Card>
+            )}
+
             <div className="flex justify-center">
               <Button
                 type="submit"
@@ -702,8 +742,7 @@ export default function StartWarPage() {
                     !mintAInfo ||
                     !mintBInfo ||
                     !isPromoCodeValid || // Disable if no valid promo code
-                    (existingMemeWarRegistry &&
-                      !existingMemeWarRegistry.war_ended)
+                    activeExistingWarId !== null // Updated condition: disable if active war exists
                 )}
               >
                 {isCreateWarLoading
