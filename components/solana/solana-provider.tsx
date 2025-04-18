@@ -41,7 +41,6 @@ export function SolanaProvider({ children }: { children: ReactNode }) {
     console.error(error);
   }, []);
 
-  
   //   useEffect(() => {
   //     // This will only run in the browser, not during SSR
   //     import('@solana/wallet-adapter-react-ui/styles.css')
@@ -62,19 +61,16 @@ export function SolanaProvider({ children }: { children: ReactNode }) {
                 toast:
                   "flex items-center bg-green rounded-sm p-5 text-green-1 bg-card text-xl rounded-2 min-w-[100px]", // Added p-5 for 20px padding, text-xl for larger font
                 title: "font-semibold pr-4 text-xl", // Added text-xl for 20px font
-                description: "text-xl", 
+                description: "text-xl",
                 icon: "flex items-center justify-center size-10",
               },
               style: {
-                border: '5px solid rgba(76, 175, 80, 0.75)', // Semi-transparent green border
+                border: "5px solid #4CAF50", // Solid green border
                 padding: "20px",
                 borderRadius: "12px",
                 fontSize: "40px",
-                boxShadow: '0 0 15px rgba(76, 175, 80, 0.5)', // Green glow
-                backdropFilter: 'blur(18px)', // Blur effect
-                WebkitBackdropFilter: 'blur(18px)', // For Safari support
-                background: 'rgba(0, 0, 0, 0)' // Semi-transparent background
-              }
+                background: "rgba(0, 0, 0, 0.75)", // Slightly less transparent background
+              },
             }}
           />
         </WalletModalProvider>

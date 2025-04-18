@@ -127,7 +127,7 @@ export const showErrorToast = (
   toast.error(message, {
     description: options?.description,
     duration: options?.duration ?? 5000,
-    style: { backgroundColor: "#FF8A8A", color: "#FFFFFF" },
+    style: { border: "5px solid red" },
   });
 };
 
