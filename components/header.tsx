@@ -2,13 +2,13 @@
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { Swords, Wallet, Menu, User } from "lucide-react";
+import { Swords, User, Menu } from "lucide-react";
 import Image from "next/image";
 import { useState } from "react";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
 import { motion, AnimatePresence } from "framer-motion";
 import { useRouter } from "next/navigation";
+import { WalletButton } from "./solana/solana-provider";
 
 export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -71,7 +71,7 @@ export function Header() {
             </Button>
 
             {/* Show the wallet button but smaller on mobile */}
-            <WalletMultiButton className="phantom-button !px-2 xs:!px-3 sm:!px-4 !text-xs sm:!text-sm !h-8 sm:!h-10 md:!h-10" />
+            <WalletButton className="phantom-button !px-2 xs:!px-3 sm:!px-4 !text-xs sm:!text-sm !h-8 sm:!h-10 md:!h-10" />
 
             {/* Mobile Menu Button */}
             <Button

@@ -22,8 +22,6 @@ export const useApplyPromoCode = (code: string, walletAddress: string, enabled =
         staleTime: Infinity, // Promo code validation doesn't need frequent refetching
         retry: 1, // Only retry once if it fails
     });
-    
-
     return {
         ...query,
         isPromoCodeValid: query.isSuccess && query.data?.success === true,
