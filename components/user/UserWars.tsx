@@ -134,7 +134,7 @@ const UserWars: React.FC<UserWarsProps> = ({ userWars = [] }) => {
           <MemeWarCard
             key={war.meme_war_state}
             war={war}
-            onClick={() => router.push(`/meme-wars/${war.meme_war_state}`)}
+            onClick={() => router.push(`/war/${war.meme_war_state}`)}
           />
         ))}
       </div>
