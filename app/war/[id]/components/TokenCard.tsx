@@ -1,4 +1,4 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { Megaphone } from "lucide-react";
 import { motion } from "framer-motion";
 import { formatNumber, formatWalletAddress } from "@/lib/utils";
@@ -26,6 +26,9 @@ export function TokenCard({
 }: TokenCardProps) {
   const [isWarRoomOpen, setIsWarRoomOpen] = useState<boolean>(false);
   const [isCopied, setIsCopied] = useState<boolean>(false);
+  const [localBtnLoading, setLocalBtnLoading] = useState<boolean>(
+    Boolean(btnLoading)
+  );
 
   const { mintADepositedRaw, mintBDepositedRaw } =
     useMemeWarCalculations(memeWarStateInfo);
@@ -43,10 +46,39 @@ export function TokenCard({
     userMintBTotalDeposited,
   } = useUserCalculations(userState);
 
-  // Calculate expected payout
+  useEffect(() => {
+    setLocalBtnLoading(Boolean(btnLoading));
+
+    let timeoutId: NodeJS.Timeout | null = null;
+
+    if (btnLoading) {
+      timeoutId = setTimeout(() => {
+        setLocalBtnLoading(false);
+      }, 15000);
+    }
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [btnLoading]);
+
+  useEffect(() => {
+    let timeoutId: NodeJS.Timeout | null = null;
+
+    if (localBtnLoading && !btnLoading) {
+      timeoutId = setTimeout(() => {
+        setLocalBtnLoading(false);
+      }, 15000);
+    }
+
+    return () => {
+      if (timeoutId) clearTimeout(timeoutId);
+    };
+  }, [localBtnLoading, btnLoading]);
+
   const calculateExpectedPayout = (amount: number, percent: number): number => {
     if (!amount || !percent) return 0;
-    return amount * (1 + (percent / 100));
+    return amount * (1 + percent / 100);
   };
 
   const formatSharePercentage = (amount: number, total: number): string => {
@@ -83,10 +115,6 @@ export function TokenCard({
     mintBDepositedRaw,
   ]);
 
-  // Calculate ROI percentage
-   
-
-  // Handler for max button
   const handleMax = (): void => {
     setPledgeAmount(tokenBalance.toString());
   };
@@ -96,14 +124,22 @@ export function TokenCard({
     setPledgeAmount((tokenBalance / 2).toString());
   };
 
-  const { mintAPrice, mintBPrice, mintAExpectedPayout, mintBExpectedPayout } = useMemeWarCalculations(memeWarStateInfo)
-  const userAmountPledged = index === 0 ? userMintATotalDeposited : userMintBTotalDeposited;
+  const { mintAPrice, mintBPrice, mintAExpectedPayout, mintBExpectedPayout } =
+    useMemeWarCalculations(memeWarStateInfo);
+  const userAmountPledged =
+    index === 0 ? userMintATotalDeposited : userMintBTotalDeposited;
   const poolAmountPledged = index === 0 ? mintADepositedRaw : mintBDepositedRaw;
-  const payoutPercent = index === 0 ? mintAExpectedPayout(Number(pledgeAmount ?? 0)) : mintBExpectedPayout(Number(pledgeAmount ?? 0));
-  const expectedPayout = calculateExpectedPayout(Number(userAmountPledged + Number(pledgeAmount)), payoutPercent);
+  const payoutPercent =
+    index === 0
+      ? mintAExpectedPayout(Number(pledgeAmount ?? 0))
+      : mintBExpectedPayout(Number(pledgeAmount ?? 0));
+  const expectedPayout = calculateExpectedPayout(
+    Number(userAmountPledged + Number(pledgeAmount)),
+    payoutPercent
+  );
   const expectedPayoutFormatted = formatNumber(expectedPayout);
-  const expectedPayoutDollar = expectedPayout * (index === 0 ? mintAPrice : mintBPrice);
-  
+  const expectedPayoutDollar =
+    expectedPayout * (index === 0 ? mintAPrice : mintBPrice);
 
   return (
     <div className="bg-card border border-border rounded-lg p-4 sm:p-6">
@@ -196,8 +232,9 @@ export function TokenCard({
                   ${(index === 0 ? mintAPrice : mintBPrice).toFixed(8)}
                 </span>
                 <span
-                  className={`text-xs sm:text-sm ${token.priceChange24h >= 0 ? "text-primary" : "text-red-500"
-                    }`}
+                  className={`text-xs sm:text-sm ${
+                    token.priceChange24h >= 0 ? "text-primary" : "text-red-500"
+                  }`}
                 >
                   {token.priceChange24h >= 0 ? "+" : ""}
                   {token.priceChange24h.toFixed(2)}%
@@ -275,11 +312,15 @@ export function TokenCard({
           <span className="text-muted-foreground">Amount Pledged</span>
           <span className="font-medium retro-text">
             {formatNumber(index === 0 ? mintADepositedRaw : mintBDepositedRaw)}{" "}
-            {token.ticker}
-            {" "}
+            {token.ticker}{" "}
             <span className="text-xs text-gray-400">
-            ${formatNumber(index === 0 ? mintADepositedRaw  * mintAPrice : mintBDepositedRaw *  mintBPrice)}{" "}
-              </span> 
+              $
+              {formatNumber(
+                index === 0
+                  ? mintADepositedRaw * mintAPrice
+                  : mintBDepositedRaw * mintBPrice
+              )}{" "}
+            </span>
           </span>
         </div>
         <div className="flex justify-between text-xs sm:text-sm">
@@ -317,27 +358,33 @@ export function TokenCard({
         />
 
         {/* Expected Payout Section */}
-        {(userAmountPledged || pledgeAmount && Number(pledgeAmount) > 0) && (
+        {(userAmountPledged || (pledgeAmount && Number(pledgeAmount) > 0)) && (
           <div className="bg-muted/30 rounded-lg p-2 sm:p-3 space-y-1 sm:space-y-2">
             <div className="text-xs text-muted-foreground">
               Expected Payout if {token.ticker} Wins
             </div>
             <div className="flex flex-wrap items-baseline gap-1 sm:gap-2">
               <span className="text-base sm:text-lg font-mono retro-text">
-                {formatNumber(calculateExpectedPayout(Number(userAmountPledged + Number(pledgeAmount)), payoutPercent))}{" "}
+                {formatNumber(
+                  calculateExpectedPayout(
+                    Number(userAmountPledged + Number(pledgeAmount)),
+                    payoutPercent
+                  )
+                )}{" "}
               </span>
               <span className="text-xs text-primary">
                 (+{payoutPercent && payoutPercent.toFixed(2)}% ROI)
               </span>
               <span className="text-base sm:text-lg font-mono retro-text">
-                ${expectedPayoutDollar ? expectedPayoutDollar?.toFixed(2): null}{" "}
+                $
+                {expectedPayoutDollar ? expectedPayoutDollar?.toFixed(2) : null}{" "}
               </span>
             </div>
             <div className="text-xs text-muted-foreground">
               Your share:{" "}
               <span className="text-primary">
-              {usersWarShare}{"% "}
-
+                {usersWarShare}
+                {"% "}
               </span>
               of {token.ticker} pool
             </div>
@@ -349,17 +396,17 @@ export function TokenCard({
           <div className="grid grid-cols-2 gap-2">
             <button
               onClick={handleDeposit}
-              disabled={btnLoading || isWarEnded || disablePledgeBtn}
+              disabled={localBtnLoading || isWarEnded || disablePledgeBtn}
               className="bg-primary hover:bg-primary/90 text-primary-foreground py-2 rounded text-xs sm:text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {btnLoading ? "Processing..." : `Pledge ${token.ticker}`}
+              {localBtnLoading ? "Processing..." : `Pledge ${token.ticker}`}
             </button>
             <button
               onClick={handleWithdraw}
-              disabled={disableUnpledgeBtn}
+              disabled={localBtnLoading || disableUnpledgeBtn}
               className="bg-muted hover:bg-muted/90 text-foreground py-2 rounded text-xs sm:text-sm font-medium border border-border disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              {btnLoading ? "Processing..." : "Unpledge"}
+              {localBtnLoading ? "Processing..." : "Unpledge"}
             </button>
           </div>
         ) : (
