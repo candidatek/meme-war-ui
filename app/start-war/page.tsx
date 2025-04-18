@@ -582,42 +582,28 @@ export default function StartWarPage() {
             )}
 
             <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
-              <button
+              <Button
                 type="button"
                 onClick={() => {setIsPromoModalOpen(false); setPromoCode('')}}
                 style={{
                   flex: 1,
-                  padding: '10px 0',
-                  backgroundColor: 'rgba(255, 255, 255, 0.1)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: 'pointer',
-                  fontWeight: 'bold',
-                  fontSize: '16px'
+                  padding: '10px 0'
                 }}
+                variant={"outline"}
               >
                 Cancel
-              </button>
+              </Button>
               
-              <button
+              <Button
                 type="submit"
                 disabled={isValidatingPromo || !promoCode}
                 style={{
                   flex: 1,
-                  padding: '10px 0',
-                  backgroundColor: '#8EEFC0',
-                  color: 'black',
-                  border: 'none',
-                  borderRadius: '4px',
-                  cursor: promoCode ? 'pointer' : 'not-allowed',
-                  fontWeight: 'bold',
-                  fontSize: '16px',
-                  opacity: promoCode ? 1 : 0.7
                 }}
+                variant={"default"}
               >
                 {isValidatingPromo ? 'Validating...' : 'Apply Code'}
-              </button>
+              </Button>
             </div>
           </form>
         </div>
