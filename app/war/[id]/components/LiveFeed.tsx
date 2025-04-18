@@ -25,9 +25,93 @@ export function LiveFeed({
   handleRefresh,
   animateTrade,
 }: LiveFeedProps) {
-  return (
-    <div className="bg-card border border-border rounded-lg">
+  // Animation component rendered at top level for visibility
+  const renderAnimation = () => {
+    if (animateTrade.index === -1 || !animateTrade.tradeId) return null;
 
+    // Find the trade that triggered the animation
+    const allTrades = [
+      ...(tradesData?.mintA || []),
+      ...(tradesData?.mintB || []),
+    ];
+
+    const animatingTrade = allTrades.find(
+      (trade) =>
+        (trade.tx_signature || `${trade.event_time}`) === animateTrade.tradeId
+    );
+
+    if (!animatingTrade || animatingTrade.event_type !== "deposit") return null;
+
+    const isMintA = animatingTrade.mint === warData.coin1.address;
+    const coin = isMintA ? warData.coin1 : warData.coin2;
+    const decimals = isMintA
+      ? memeWarStateInfo?.mint_a_decimals
+      : memeWarStateInfo?.mint_b_decimals;
+    const amount = Number(animatingTrade.amount) / 10 ** (decimals || 9);
+
+    return (
+      <motion.div
+        key={`animation-${animateTrade.tradeId}`}
+        initial={{
+          opacity: 1,
+          y: 100,
+          filter: "blur(0px)",
+        }}
+        animate={{
+          opacity: 0,
+          y: -150,
+          filter: "blur(8px)",
+        }}
+        exit={{ opacity: 0 }}
+        transition={{
+          duration: 3,
+          ease: "easeOut",
+          opacity: { delay: 1, duration: 2 },
+          filter: { delay: 0.5, duration: 2.5 },
+        }}
+        style={{
+          position: "fixed",
+          bottom: "10%",
+          right: "5%",
+          zIndex: 9999,
+          pointerEvents: "none",
+        }}
+      >
+        <div
+          className="flex items-center gap-2"
+          style={{ textShadow: "0 2px 4px rgba(0,0,0,0.5)" }}
+        >
+          <img
+            src={
+              isMintA
+                ? memeWarStateInfo?.mint_a_image
+                : memeWarStateInfo?.mint_b_image
+            }
+            alt={coin.ticker}
+            className="w-8 h-8 object-cover rounded-full shadow-lg"
+          />
+          <div className="flex flex-col">
+            <div
+              className="text-lg font-bold text-primary"
+              style={{ textShadow: "0 2px 4px rgba(0,0,0,0.5)" }}
+            >
+              +{formatNumber(amount)} {coin.ticker}
+            </div>
+            <div
+              className="text-xs text-white"
+              style={{ textShadow: "0 2px 4px rgba(0,0,0,0.8)" }}
+            >
+              {formatWalletAddress(animatingTrade.wallet_address)}
+            </div>
+          </div>
+        </div>
+      </motion.div>
+    );
+  };
+
+  return (
+    <div className="bg-card border border-border rounded-lg relative">
+      {renderAnimation()}
       <div className="p-4 border-b border-border flex justify-between">
         <h2 className="text-lg md:text-xl font-medium">Live Feed</h2>
         <div onClick={handleRefresh} className="cursor-pointer text-sm">
@@ -66,6 +150,14 @@ export function LiveFeed({
                     ? Number(trade.amount_in_sol) / 10 ** 6
                     : 0;
 
+                  // Check if this is the trade that triggered the animation
+                  const isAnimating =
+                    animateTrade.tradeId ===
+                      (trade.tx_signature || `${trade.event_time}`) &&
+                    ((isMintA && animateTrade.index === 0) ||
+                      (!isMintA && animateTrade.index === 1)) &&
+                    i === 0;
+
                   return (
                     <motion.div
                       key={`${trade.wallet_address}-${trade.event_time}`}
@@ -74,13 +166,11 @@ export function LiveFeed({
                       exit={{ opacity: 0, height: 0 }}
                       transition={{ duration: 0.2 }}
                       className={`group flex items-center justify-between p-2.5 rounded-lg border-b border-border/10 last:border-0 transition-all duration-200
-                  ${animateTrade.index === (isMintA ? 0 : 1) &&
-                          animateTrade.tradeId ===
-                          (trade.tx_signature || `${trade.event_time}`) &&
-                          i === 0
-                          ? "animate-pulse bg-emerald-50/30"
-                          : "hover:bg-muted/40 hover:shadow-sm"
-                        }`}
+                  ${
+                    isAnimating
+                      ? "animate-pulse bg-emerald-50/30"
+                      : "hover:bg-muted/40 hover:shadow-sm"
+                  }`}
                     >
                       <a
                         href={`https://solscan.io/tx/${trade.tx_signature}?cluster=devnet`}
@@ -106,29 +196,6 @@ export function LiveFeed({
                               }}
                             />
                           </div>
-
-
-                          {animateTrade.index === 0 && <div className={`absolute left-0 top-[50vh] max-w-[200px] h-20  animate-scroll-top  
-                    
-                    `}>
-                             <div className=" rounded-md   flex items-center justify-center overflow-hidden">
-                            <img
-                              src={
-                                isMintA
-                                  ? memeWarStateInfo?.mint_a_image
-                                  : memeWarStateInfo?.mint_b_image
-                              }
-                              alt={coin.ticker}
-                              className="w-[60px] h-[60px] object-cover rounded-lg"
-                             
-                            />
-                           
-                            <div className="text-[32px] text-primary">
-                             +{formatNumber(amount)}
-                            </div>
-                          </div>
-                          </div>}
-
 
                           <div className="flex flex-col">
                             <div className="flex items-center gap-2">
@@ -187,7 +254,6 @@ export function LiveFeed({
           </AnimatePresence>
         </div>
       </div>
-
     </div>
   );
 }
