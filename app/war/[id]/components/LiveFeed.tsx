@@ -3,6 +3,8 @@ import { formatNumber, formatWalletAddress } from "@/lib/utils";
 import { TradeData, WarData } from "@/app/Interfaces";
 import { TransactionBadge } from "@/components/ui/transactionBadge";
 import { formatTimeAgo } from "../utils/formatTimeAgo";
+import { createPortal } from "react-dom";
+import { useEffect, useState } from "react";
 
 interface LiveFeedProps {
   tradesData: {
@@ -25,9 +27,15 @@ export function LiveFeed({
   handleRefresh,
   animateTrade,
 }: LiveFeedProps) {
-  // Animation component rendered at top level for visibility
+  const [isBrowser, setIsBrowser] = useState(false);
+
+  useEffect(() => {
+    setIsBrowser(true);
+  }, []);
+
   const renderAnimation = () => {
-    if (animateTrade.index === -1 || !animateTrade.tradeId) return null;
+    if (animateTrade.index === -1 || !animateTrade.tradeId || !isBrowser)
+      return null;
 
     // Find the trade that triggered the animation
     const allTrades = [
@@ -49,17 +57,17 @@ export function LiveFeed({
       : memeWarStateInfo?.mint_b_decimals;
     const amount = Number(animatingTrade.amount) / 10 ** (decimals || 9);
 
-    return (
+    const animation = (
       <motion.div
         key={`animation-${animateTrade.tradeId}`}
         initial={{
           opacity: 1,
-          y: 100,
+          y: 0,
           filter: "blur(0px)",
         }}
         animate={{
           opacity: 0,
-          y: -150,
+          y: -250,
           filter: "blur(8px)",
         }}
         exit={{ opacity: 0 }}
@@ -71,7 +79,7 @@ export function LiveFeed({
         }}
         style={{
           position: "fixed",
-          bottom: "10%",
+          bottom: "20px",
           right: "5%",
           zIndex: 9999,
           pointerEvents: "none",
@@ -107,8 +115,9 @@ export function LiveFeed({
         </div>
       </motion.div>
     );
-  };
 
+    return createPortal(animation, document.body);
+  };
 
   return (
     <div className="bg-card border border-border rounded-lg relative">
