@@ -308,48 +308,43 @@ export default function WarPage() {
 
   // Handle deposit for a token
   const handleDeposit = async (mintIdentifier: 0 | 1, amount: string) => {
+    if (!publicKey || !memeWarState) {
+      showErrorToast("Connect wallet first.");
+      return;
+    }
+
+    if (isNaN(Number(amount)) || Number(amount) <= 0) {
+      showErrorToast("Invalid deposit amount.");
+      return;
+    }
+
+    const balance =
+      mintIdentifier === 0 ? tokenBalanceMintA : tokenBalanceMintB;
+    if (Number(amount) > balance) {
+      showErrorToast("Insufficient balance.");
+      return;
+    }
+
+    setBtnLoading(mintIdentifier);
+
     try {
-      // Check if mint addresses are available
-      if (!mintA || !mintB) {
-        console.error("Mint addresses not available yet");
-        showErrorToast("Mint addresses not ready. Please try again.");
-        return;
-      }
+      const mintAddress = mintIdentifier === 0 ? mintA : mintB;
+      const txSignature = await depositTokens(mintAddress, amount);
 
-      setBtnLoading(mintIdentifier);
-
-      const mintDecimal =
-        mintIdentifier === 0
-          ? memeWarStateInfo?.mint_a_decimals
-          : memeWarStateInfo?.mint_b_decimals;
-      // Input validation
-      if (isNaN(parseFloat(amount)) || parseFloat(amount) <= 0) {
-        showErrorToast("Please enter a valid amount");
-        setBtnLoading(-1);
-        return;
-      }
-      await depositTokens(
-        parseFloat(amount),
-        mintIdentifier,
-        setBtnLoading,
-        refreshTokenBalance,
-        mintDecimal ?? 9
-      );
-
-      // Refresh user state and query data after successful deposit
-      refetchUserState();
-      queryClient.invalidateQueries({
-        queryKey: ["memeWarState", memeWarState],
-      });
-
-      // Reset input fields after successful deposit
-      if (mintIdentifier === 0) {
-        setLeftInput("1");
+      if (txSignature) {
+        console.log("Deposit successful:", txSignature);
+        refreshTokenBalance();
+        refetchUserState();
+        queryClient.invalidateQueries({
+          queryKey: ["memeWarState", memeWarState],
+        });
       } else {
-        setRightInput("1");
+        showErrorToast("Deposit failed. Please try again.");
       }
-    } catch (e) {
-      showErrorToast("Failed to Deposit Tokens");
+    } catch (error: any) {
+      console.error("Deposit error:", error);
+      showErrorToast(`Deposit failed: ${error.message || "Unknown error"}`);
+    } finally {
       setBtnLoading(-1);
     }
   };
