@@ -27,6 +27,7 @@ export function LiveFeed({
 }: LiveFeedProps) {
   return (
     <div className="bg-card border border-border rounded-lg">
+
       <div className="p-4 border-b border-border flex justify-between">
         <h2 className="text-lg md:text-xl font-medium">Live Feed</h2>
         <div onClick={handleRefresh} className="cursor-pointer text-sm">
@@ -73,14 +74,13 @@ export function LiveFeed({
                       exit={{ opacity: 0, height: 0 }}
                       transition={{ duration: 0.2 }}
                       className={`group flex items-center justify-between p-2.5 rounded-lg border-b border-border/10 last:border-0 transition-all duration-200
-                  ${
-                    animateTrade.index === (isMintA ? 0 : 1) &&
-                    animateTrade.tradeId ===
-                      (trade.tx_signature || `${trade.event_time}`) &&
-                    i === 0
-                      ? "animate-pulse bg-emerald-50/30"
-                      : "hover:bg-muted/40 hover:shadow-sm"
-                  }`}
+                  ${animateTrade.index === (isMintA ? 0 : 1) &&
+                          animateTrade.tradeId ===
+                          (trade.tx_signature || `${trade.event_time}`) &&
+                          i === 0
+                          ? "animate-pulse bg-emerald-50/30"
+                          : "hover:bg-muted/40 hover:shadow-sm"
+                        }`}
                     >
                       <a
                         href={`https://solscan.io/tx/${trade.tx_signature}?cluster=devnet`}
@@ -106,6 +106,29 @@ export function LiveFeed({
                               }}
                             />
                           </div>
+
+
+                          {animateTrade.index === 0 && <div className={`absolute left-0 top-[50vh] max-w-[200px] h-20  animate-scroll-top  
+                    
+                    `}>
+                             <div className=" rounded-md   flex items-center justify-center overflow-hidden">
+                            <img
+                              src={
+                                isMintA
+                                  ? memeWarStateInfo?.mint_a_image
+                                  : memeWarStateInfo?.mint_b_image
+                              }
+                              alt={coin.ticker}
+                              className="w-[60px] h-[60px] object-cover rounded-lg"
+                             
+                            />
+                           
+                            <div className="text-[32px] text-primary">
+                             +{formatNumber(amount)}
+                            </div>
+                          </div>
+                          </div>}
+
 
                           <div className="flex flex-col">
                             <div className="flex items-center gap-2">
@@ -164,6 +187,7 @@ export function LiveFeed({
           </AnimatePresence>
         </div>
       </div>
+
     </div>
   );
 }

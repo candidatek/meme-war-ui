@@ -1,5 +1,5 @@
 import { formatNumber } from '@/lib/utils';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useSolPrice } from '../api/getSolPrice';
 import { IMemeWarState } from '../api/getMemeWarStateInfo';
 
@@ -20,8 +20,8 @@ interface MemeWarCalculations {
   mintBDepositedInDollar: number;
   mintAPrice: number;
   mintBPrice: number;
-  mintAExpectedPayout: number;
-  mintBExpectedPayout: number;
+  mintAExpectedPayout: (num: number) => number ;
+  mintBExpectedPayout: (num: number) => number;
 }
 
 export const useMemeWarCalculations = (memeWarState: IMemeWarState | undefined): MemeWarCalculations => { // This useMemeWarCalculations is being used w 3 types: IDashboardWar, War, IMemeWarState. 
@@ -29,7 +29,7 @@ export const useMemeWarCalculations = (memeWarState: IMemeWarState | undefined):
   const mintADepositedRaw = useMemo(() => {                                         // Would need to make all the types same in order to use it for this. If they are all the same, I will refactor to use one for all.
     if (memeWarState) {
       return ((Number(memeWarState.mint_a_deposit) + Number(memeWarState?.mint_a_risk_free_deposit)) -
-        Number(memeWarState.mint_a_withdrawn) -
+        Number(memeWarState?.mint_a_withdrawn) -
         Number(memeWarState?.mint_a_penalty)) /
         10 ** 6;
     }
@@ -196,27 +196,28 @@ export const useMemeWarCalculations = (memeWarState: IMemeWarState | undefined):
     return 0;
   }, [memeWarState, price]);
 
-  const mintAExpectedPayout = useMemo(() => {
+  const mintAExpectedPayout = useCallback((pledgeAmount: number) => {
     if (!memeWarState || !Number(mintADepositedInSol)) {
       return 0;
     }
     
-    const aAmount = Number(mintADepositedInSol);
+    const aAmount = Number(mintADepositedInSol) + (Number(pledgeAmount) / Number(memeWarState.mint_a_sol_ratio));
     const bAmount = Number(mintBDepositedInSol);
     
     const payout = bAmount / aAmount * 100;
     return Math.min(payout, 100);
   }, [memeWarState, mintADepositedInSol, mintBDepositedInSol]);
   
-  const mintBExpectedPayout = useMemo(() => {
+  const mintBExpectedPayout = useCallback((pledgeAmount: number) => {
     if (!memeWarState || !Number(mintBDepositedInSol)) {
       return 0;
     }
     
-    const aAmount = Number(mintADepositedInSol);
-    const bAmount = Number(mintBDepositedInSol);
+    const aAmount = Number(mintADepositedInSol) ;
+    const bAmount = Number(mintBDepositedInSol) + (Number(pledgeAmount) / Number(memeWarState.mint_b_sol_ratio));
     
     const payout = aAmount / bAmount * 100;
+    console.log(aAmount, bAmount, payout)
     return Math.min(payout, 100);
   }, [memeWarState, mintADepositedInSol, mintBDepositedInSol]);
 

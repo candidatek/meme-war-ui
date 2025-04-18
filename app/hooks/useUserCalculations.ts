@@ -30,8 +30,8 @@ export function useUserCalculations(userState: UserState | null | undefined) {
     const userMintBRiskFreeDeposit =
       Number(userState.mint_b_risk_free_deposit || 0) / 10 ** 6;
 
-    const userMintATotalDeposited = userMintADeposit + userMintARiskFreeDeposit;
-    const userMintBTotalDeposited = userMintBDeposit + userMintBRiskFreeDeposit;
+    const userMintATotalDeposited = userMintADeposit + userMintARiskFreeDeposit - userMintAWithdrawn - userMintAPenalty;
+    const userMintBTotalDeposited = userMintBDeposit + userMintBRiskFreeDeposit - userMintBWithdrawn - userMintBPenalty;
 
     return {
       userMintADeposit,

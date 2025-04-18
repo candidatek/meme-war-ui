@@ -399,9 +399,31 @@
     transform: translateX(-50%);
   }
 }
+@keyframes scroll-top {
+  0% {
+    transform: translateY(400px);
+  }
+  40% {
+    opacity: 40px;
+    visibility: visible;
+    transform: translateY(180px);
+  }
+  100% {
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(0);
+  }
+}
+
 
 .animate-scroll {
   animation: scroll 20s linear infinite;
+}
+
+.animate-scroll-top {
+  animation: scroll-top 4s linear infinite;
+  left: 40px;
+  right: 0;
 }
 
 /* Wallet Button Styling */

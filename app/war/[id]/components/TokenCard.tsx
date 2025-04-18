@@ -99,6 +99,12 @@ export function TokenCard({
   const { mintAPrice, mintBPrice, mintAExpectedPayout, mintBExpectedPayout } = useMemeWarCalculations(memeWarStateInfo)
   const userAmountPledged = index === 0 ? userMintATotalDeposited : userMintBTotalDeposited;
   const poolAmountPledged = index === 0 ? mintADepositedRaw : mintBDepositedRaw;
+  const payoutPercent = index === 0 ? mintAExpectedPayout(Number(pledgeAmount ?? 0)) : mintBExpectedPayout(Number(pledgeAmount ?? 0));
+  const expectedPayout = calculateExpectedPayout(Number(userAmountPledged + Number(pledgeAmount)), payoutPercent);
+  const expectedPayoutFormatted = formatNumber(expectedPayout);
+  const expectedPayoutDollar = expectedPayout * (index === 0 ? mintAPrice : mintBPrice);
+  
+
   return (
     <div className="bg-card border border-border rounded-lg p-4 sm:p-6">
       {/* Token Header */}
@@ -267,9 +273,13 @@ export function TokenCard({
       <div className="bg-background/50 rounded-lg p-3 sm:p-4 space-y-3 sm:space-y-4">
         <div className="flex justify-between text-xs sm:text-sm">
           <span className="text-muted-foreground">Amount Pledged</span>
-          <span className="font-medium">
+          <span className="font-medium retro-text">
             {formatNumber(index === 0 ? mintADepositedRaw : mintBDepositedRaw)}{" "}
             {token.ticker}
+            {" "}
+            <span className="text-xs text-gray-400">
+            ${formatNumber(index === 0 ? mintADepositedRaw  * mintAPrice : mintBDepositedRaw *  mintBPrice)}{" "}
+              </span> 
           </span>
         </div>
         <div className="flex justify-between text-xs sm:text-sm">
@@ -307,17 +317,20 @@ export function TokenCard({
         />
 
         {/* Expected Payout Section */}
-        {pledgeAmount && Number(pledgeAmount) > 0 && (
+        {(userAmountPledged || pledgeAmount && Number(pledgeAmount) > 0) && (
           <div className="bg-muted/30 rounded-lg p-2 sm:p-3 space-y-1 sm:space-y-2">
             <div className="text-xs text-muted-foreground">
               Expected Payout if {token.ticker} Wins
             </div>
             <div className="flex flex-wrap items-baseline gap-1 sm:gap-2">
-              <span className="text-base sm:text-lg font-mono text-primary">
-                {formatNumber(calculateExpectedPayout(Number(userAmountPledged), mintAExpectedPayout))}
+              <span className="text-base sm:text-lg font-mono retro-text">
+                {formatNumber(calculateExpectedPayout(Number(userAmountPledged + Number(pledgeAmount)), payoutPercent))}{" "}
               </span>
               <span className="text-xs text-primary">
-                (+{index === 0 ? mintAExpectedPayout : mintBExpectedPayout}% ROI)
+                (+{payoutPercent && payoutPercent.toFixed(2)}% ROI)
+              </span>
+              <span className="text-base sm:text-lg font-mono retro-text">
+                ${expectedPayoutDollar ? expectedPayoutDollar?.toFixed(2): null}{" "}
               </span>
             </div>
             <div className="text-xs text-muted-foreground">

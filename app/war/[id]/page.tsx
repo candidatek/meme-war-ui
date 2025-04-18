@@ -70,12 +70,12 @@ export default function WarPage() {
 
   // Initialize deposit/withdraw hooks - only after mint addresses are set
   const { depositTokens } = useDepositTokens(
-    mintA || '', 
+    mintA || '',
     mintB || ''
   );
-  
+
   const { withdrawTokens } = useWithdrawTokens(
-    mintA || '', 
+    mintA || '',
     mintB || ''
   );
 
@@ -84,7 +84,7 @@ export default function WarPage() {
     mintA || '',
     mintB || ''
   );
-  
+
   const tokenBalanceMintA = useMemo(
     () => Number(tokenBalanceData?.[0] ?? 0),
     [tokenBalanceData]
@@ -93,7 +93,7 @@ export default function WarPage() {
     () => Number(tokenBalanceData?.[1] ?? 0),
     [tokenBalanceData]
   );
-  
+
   // Get user state data
   const { data: userStateInfo, refetch: refetchUserState } =
     useGetUserStateInfo(userState, memeWarState);
@@ -185,12 +185,12 @@ export default function WarPage() {
       const isMatchingMintA = processedMessage.mint === mintA;
       const isMatchingMintB = processedMessage.mint === mintB;
       const index = isMatchingMintA ? 0 : isMatchingMintB ? 1 : -1;
-      
+
       // Update local trade data - ensure we have proper structures
       setDisplayTradesData((prevData) => {
         if (!prevData) return { mintA: [], mintB: [] };
 
-        const updatedData = { 
+        const updatedData = {
           mintA: [...(prevData.mintA || [])],
           mintB: [...(prevData.mintB || [])]
         };
@@ -227,7 +227,7 @@ export default function WarPage() {
         // Set timeout to clear the animation
         animationTimeoutId = setTimeout(() => {
           setAnimateTrade({ index: -1, tradeId: null });
-        }, 4000); // Animation duration
+        }, 2500); // Animation duration
       }
 
       // Also refresh the user state and war state to show updated deposits
@@ -321,9 +321,9 @@ export default function WarPage() {
         showErrorToast("Mint addresses not ready. Please try again.");
         return;
       }
-      
+
       setBtnLoading(mintIdentifier);
-      
+
       const mintDecimal =
         mintIdentifier === 0
           ? memeWarStateInfo?.mint_a_decimals
@@ -341,7 +341,7 @@ export default function WarPage() {
         refreshTokenBalance,
         mintDecimal ?? 9
       );
-      
+
       // Refresh user state and query data after successful deposit
       refetchUserState();
       queryClient.invalidateQueries({
@@ -606,6 +606,11 @@ export default function WarPage() {
           />
         </div>
       </div>
+      {animateTrade.index === 0 && <div className={`absolute left-0 top-[50vh] w-[100px] h-20 border animate-scroll-top  
+                    
+                            `}>
+        Shrihari asd
+      </div>}
 
       {/* Live Feed and Chat Section */}
       <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
