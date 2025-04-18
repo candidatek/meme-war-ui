@@ -1,7 +1,10 @@
 import { formatNumber } from '@/lib/utils';
-import { useCallback, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSolPrice } from '../api/getSolPrice';
 import { IMemeWarState } from '../api/getMemeWarStateInfo';
+import { useMintInfo } from './useMintInfo';
+import { PublicKey } from '@solana/web3.js';
+import { useConnection } from '@solana/wallet-adapter-react';
 
 interface MemeWarCalculations {
   rfPlusMintADeposited: string;
@@ -26,6 +29,45 @@ interface MemeWarCalculations {
 
 export const useMemeWarCalculations = (memeWarState: IMemeWarState | undefined): MemeWarCalculations => { // This useMemeWarCalculations is being used w 3 types: IDashboardWar, War, IMemeWarState. 
   const { data: { price = 130 } = {} } = useSolPrice()
+
+  const { data: mintAInfo, isLoading: isMintALoading } = useMintInfo(memeWarState?.mint_a || null);
+  const { data: mintBInfo, isLoading: isMintBLoading } = useMintInfo(memeWarState?.mint_b || null);
+  const {connection} = useConnection();
+
+  const [mintARatio, setMintARatio] = useState<number | null>(null);
+
+  useEffect(() => {
+    const fetchMintARatio = async () => {
+      if (mintAInfo && connection) {
+        try {
+          const mintABaseVault = new PublicKey(
+            mintAInfo.pool_base_token_account
+          );
+          const mintAQuoteVault = new PublicKey(
+            mintAInfo.pool_quote_token_account
+          );
+
+          const tokenBalance = await connection.getTokenAccountBalance(
+            mintABaseVault
+          );
+          const quoteBalance = await connection.getTokenAccountBalance(
+            mintAQuoteVault
+          );
+
+          const ratio =
+            parseFloat(tokenBalance.value.amount) /
+            parseFloat(quoteBalance.value.amount);
+          setMintARatio(ratio);
+        } catch (error) {
+          console.error("Error fetching mint A ratio:", error);
+          setMintARatio(null);
+        }
+      }
+    };
+
+    fetchMintARatio();
+  }, [mintAInfo, connection]);
+
   const mintADepositedRaw = useMemo(() => {                                         // Would need to make all the types same in order to use it for this. If they are all the same, I will refactor to use one for all.
     if (memeWarState) {
       return ((Number(memeWarState.mint_a_deposit) + Number(memeWarState?.mint_a_risk_free_deposit)) -
