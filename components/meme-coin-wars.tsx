@@ -20,6 +20,8 @@ import CryptoStyleModal from "./ui/modal";
 import ToastStyleModal from "./ui/modal";
 import { useFirstVisitModal } from "@/app/hooks/useFirstVisitModal";
 import { IMemeWarState } from "@/app/api/getMemeWarStateInfo";
+import { Button } from "@/components/ui/button";
+import { ChevronDown } from "lucide-react";
 
 // Define a combined type for the data from getWarDetails
 interface CombinedWarData extends IMemeWarState {
@@ -435,15 +437,21 @@ export function MemeCoinWars() {
       )}
 
       <div className="container mx-auto px-2 sm:px-4 h-full flex flex-col">
-        <div className="flex flex-col sm:flex-row items-center justify-between mb-4 sm:mb-6 gap-4">
+        <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-4">
-            <h2 className="text-lg sm:text-xl font-medium">MARKET</h2>
+            <h2 className="text-xl sm:text-2xl font-bold text-primary">
+              MARKET
+            </h2>
             <div className="relative">
               <button
                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                className="flex items-center gap-2 px-4 py-2 rounded-md bg-muted/50 hover:bg-muted text-sm font-medium"
+                className="flex items-center gap-1 px-3 py-1.5 rounded-md bg-muted/50 hover:bg-muted text-sm font-medium border border-input"
               >
-                sort: {sortOptions.find((opt) => opt.value === sortBy)?.label}
+                sort:{" "}
+                <span className="font-semibold">
+                  {sortOptions.find((opt) => opt.value === sortBy)?.label ||
+                    sortBy}
+                </span>
                 <svg
                   className={`w-4 h-4 transition-transform ${
                     isDropdownOpen ? "rotate-180" : ""
@@ -484,16 +492,15 @@ export function MemeCoinWars() {
             </div>
           </div>
 
-          {/* Search Input */}
-          <div className="w-full sm:w-64">
-            <SearchInput
-              placeholder="Search by Symbol or Mint Address..."
-              onSearchChange={handleSearch}
-              isLoading={searchTerm !== "" && isSearchLoading}
-            />
-          </div>
-
-          <div className="flex items-center gap-2">
+          {/* Right Side: Search Input & Animations Toggle */}
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            <div className="flex-grow sm:flex-grow-0 w-full sm:w-64">
+              <SearchInput
+                placeholder="Search by Symbol or Mint Address..."
+                onSearchChange={handleSearch}
+                isLoading={searchTerm !== "" && isSearchLoading}
+              />
+            </div>
             <motion.button
               onClick={toggleAnimations}
               className="relative flex items-center gap-1 px-2 sm:px-3 py-1 rounded text-xs font-medium bg-muted hover:bg-muted/80 transition-colors overflow-hidden group"
