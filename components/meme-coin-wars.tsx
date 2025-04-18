@@ -73,8 +73,8 @@ const coinEmojis: Record<string, string> = {
 };
 
 export function MemeCoinWars() {
-  const [sortBy, setSortBy] = useState<string>('volume');
-  const [filterBy, setFilterBy] = useState<string>('all');
+  const [sortBy, setSortBy] = useState<string>("volume");
+  const [filterBy, setFilterBy] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 4;
   const [totalItems, setTotalItems] = useState<number>(0);
@@ -83,10 +83,14 @@ export function MemeCoinWars() {
   const {
     isOpen: isModalOpen,
     closeModalPermanently,
-    isInitialized
-  } = useFirstVisitModal('has-seen-pump-intro-modal', true);
+    isInitialized,
+  } = useFirstVisitModal("has-seen-pump-intro-modal", true);
 
-  const { data: warArray, isError, isLoading } = useGetWarDetails(
+  const {
+    data: warArray,
+    isError,
+    isLoading,
+  } = useGetWarDetails(
     sortBy,
     filterBy,
     itemsPerPage,
@@ -122,12 +126,12 @@ export function MemeCoinWars() {
     }
   }, []);
 
-
   useEffect(() => {
     if (warArray) {
-      const estimatedTotal = warArray.length < itemsPerPage
-        ? (currentPage - 1) * itemsPerPage + warArray.length
-        : Math.max(currentPage * itemsPerPage, totalItems);
+      const estimatedTotal =
+        warArray.length < itemsPerPage
+          ? (currentPage - 1) * itemsPerPage + warArray.length
+          : Math.max(currentPage * itemsPerPage, totalItems);
 
       setTotalItems(estimatedTotal);
       setTotalPages(Math.max(1, Math.ceil(estimatedTotal / itemsPerPage)));
@@ -255,7 +259,7 @@ export function MemeCoinWars() {
   const goToPage = (page: number) => {
     if (page >= 1 && page <= totalPages) {
       setCurrentPage(page);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
+      window.scrollTo({ top: 0, behavior: "smooth" });
     }
   };
 
@@ -290,7 +294,7 @@ export function MemeCoinWars() {
       }
 
       if (start > 2) {
-        pageNumbers.push('...');
+        pageNumbers.push("...");
       }
 
       for (let i = start; i <= end; i++) {
@@ -298,7 +302,7 @@ export function MemeCoinWars() {
       }
 
       if (end < totalPages - 1) {
-        pageNumbers.push('...');
+        pageNumbers.push("...");
       }
 
       pageNumbers.push(totalPages);
@@ -350,51 +354,71 @@ export function MemeCoinWars() {
           height="auto"
           position="center"
         >
-          <div style={{ textAlign: 'center' }}>
-            <h2 style={{ fontSize: '24px', marginBottom: '20px' }}>
+          <div style={{ textAlign: "center" }}>
+            <h2 style={{ fontSize: "24px", marginBottom: "20px" }}>
               how it works
             </h2>
 
             <p>
-              pump allows <span style={{ color: '#4CAF50' }}>anyone</span> to create coins. all coins created on Pump are<br />
-              <span style={{ color: '#4CAF50' }}>fair-launch</span>, meaning everyone has equal access to buy and sell<br />
+              pump allows <span style={{ color: "#4CAF50" }}>anyone</span> to
+              create coins. all coins created on Pump are
+              <br />
+              <span style={{ color: "#4CAF50" }}>fair-launch</span>, meaning
+              everyone has equal access to buy and sell
+              <br />
               when the coin is first created.
             </p>
 
-            <div style={{ margin: '20px 0' }}>
-              <p><strong>step 1:</strong> pick a coin that you like</p>
-              <p><strong>step 2:</strong> buy the coin on the bonding curve</p>
-              <p><strong>step 3:</strong> sell at any time to lock in your profits or losses</p>
+            <div style={{ margin: "20px 0" }}>
+              <p>
+                <strong>step 1:</strong> pick a coin that you like
+              </p>
+              <p>
+                <strong>step 2:</strong> buy the coin on the bonding curve
+              </p>
+              <p>
+                <strong>step 3:</strong> sell at any time to lock in your
+                profits or losses
+              </p>
             </div>
 
             <p>
-              by clicking this button you agree to the terms and conditions and<br />
+              by clicking this button you agree to the terms and conditions and
+              <br />
               certify that you are over 18 years old
             </p>
 
             <button
               onClick={closeModalPermanently}
               style={{
-                marginTop: '20px',
-                marginBottom: '20px',
-                padding: '10px 0',
-                width: '100%',
-                backgroundColor: '#8EEFC0',
-                color: 'black',
-                border: 'none',
-                borderRadius: '4px',
-                cursor: 'pointer',
-                fontWeight: 'bold',
-                fontSize: '16px'
+                marginTop: "20px",
+                marginBottom: "20px",
+                padding: "10px 0",
+                width: "100%",
+                backgroundColor: "#8EEFC0",
+                color: "black",
+                border: "none",
+                borderRadius: "4px",
+                cursor: "pointer",
+                fontWeight: "bold",
+                fontSize: "16px",
               }}
             >
               I'm ready to pump
             </button>
 
-            <div style={{ fontSize: '14px', color: '#aaa' }}>
-              <a href="#" style={{ color: '#aaa', marginRight: '10px' }}>privacy policy</a> |
-              <a href="#" style={{ color: '#aaa', margin: '0 10px' }}>terms of service</a> |
-              <a href="#" style={{ color: '#aaa', marginLeft: '10px' }}>fees</a>
+            <div style={{ fontSize: "14px", color: "#aaa" }}>
+              <a href="#" style={{ color: "#aaa", marginRight: "10px" }}>
+                privacy policy
+              </a>{" "}
+              |
+              <a href="#" style={{ color: "#aaa", margin: "0 10px" }}>
+                terms of service
+              </a>{" "}
+              |
+              <a href="#" style={{ color: "#aaa", marginLeft: "10px" }}>
+                fees
+              </a>
             </div>
           </div>
         </ToastStyleModal>
@@ -411,8 +435,9 @@ export function MemeCoinWars() {
               >
                 sort: {sortOptions.find((opt) => opt.value === sortBy)?.label}
                 <svg
-                  className={`w-4 h-4 transition-transform ${isDropdownOpen ? "rotate-180" : ""
-                    }`}
+                  className={`w-4 h-4 transition-transform ${
+                    isDropdownOpen ? "rotate-180" : ""
+                  }`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -436,8 +461,9 @@ export function MemeCoinWars() {
                           setCurrentPage(1); // Reset to first page when sorting changes
                           setIsDropdownOpen(false);
                         }}
-                        className={`w-full text-left px-4 py-2 text-sm hover:bg-primary/10 ${sortBy === option.value ? "bg-primary/20" : ""
-                          }`}
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-primary/10 ${
+                          sortBy === option.value ? "bg-primary/20" : ""
+                        }`}
                       >
                         {option.label}
                       </button>
@@ -468,7 +494,9 @@ export function MemeCoinWars() {
                 animationsEnabled ? "Disable animations" : "Enable animations"
               }
               whileTap={{ scale: 0.95 }}
-              whileHover={{ boxShadow: "0 0 8px rgba(var(--primary-rgb), 0.4)" }}
+              whileHover={{
+                boxShadow: "0 0 8px rgba(var(--primary-rgb), 0.4)",
+              }}
               transition={{
                 type: "spring",
                 stiffness: 400,
@@ -542,11 +570,11 @@ export function MemeCoinWars() {
                     animate={
                       animationsEnabled
                         ? {
-                          scale: [0, 1, 0],
-                          opacity: [0, 0.8, 0],
-                          x: [(i - 2) * 10, (i - 2) * 30],
-                          y: [0, i % 2 === 0 ? -20 : 20],
-                        }
+                            scale: [0, 1, 0],
+                            opacity: [0, 0.8, 0],
+                            x: [(i - 2) * 10, (i - 2) * 30],
+                            y: [0, i % 2 === 0 ? -20 : 20],
+                          }
                         : { scale: 0, opacity: 0 }
                     }
                     transition={{
@@ -564,10 +592,10 @@ export function MemeCoinWars() {
                   animate={
                     animationsEnabled
                       ? {
-                        width: ["0%", "150%"],
-                        height: ["0%", "150%"],
-                        opacity: [0, 0.5, 0],
-                      }
+                          width: ["0%", "150%"],
+                          height: ["0%", "150%"],
+                          opacity: [0, 0.5, 0],
+                        }
                       : { width: 0, height: 0, opacity: 0 }
                   }
                   transition={{
@@ -697,15 +725,11 @@ function WarItem({
         {/* Center VS */}
         <div className="col-span-1 flex items-center justify-center">
           <div className="flex flex-col items-center ">
-
-
             <VsComponent />
 
-            <div className="mt-[-10px] retro-text text-[10px] sm:text-xs">
-              Time left
-            </div>
+            <div className="mt-[-10px] text-[10px] sm:text-xs">Time left</div>
             <motion.div
-              className="retro-text text-[30px] animated sm:text-sm"
+              className="text-[30px] animated sm:text-sm"
               animate={{
                 scale: isShaking ? 1.2 : 1,
                 rotate: isShaking ? [0, -5, 5, -5, 0] : 0,
@@ -815,8 +839,9 @@ function CoinCard({ coin, isTopWar, align, onClick }: CoinCardProps) {
   console.log(coin);
   return (
     <div
-      className={`coin-card p-2 sm:p-3 md:p-4 ${isTopWar ? "top-war" : ""
-        } cursor-pointer`}
+      className={`coin-card p-2 sm:p-3 md:p-4 ${
+        isTopWar ? "top-war" : ""
+      } cursor-pointer`}
       onClick={onClick}
     >
       <div className="flex flex-col gap-2 sm:gap-3">
@@ -851,8 +876,9 @@ function CoinCard({ coin, isTopWar, align, onClick }: CoinCardProps) {
                   {coin.ticker}
                 </span>
                 <span
-                  className={`text-xs ${isPositive ? "positive" : "negative"
-                    } hidden xs:inline`}
+                  className={`text-xs ${
+                    isPositive ? "positive" : "negative"
+                  } hidden xs:inline`}
                 >
                   {isPositive ? "+" : ""}
                   {percentChange.toFixed(2)}%
@@ -928,7 +954,7 @@ function CoinCard({ coin, isTopWar, align, onClick }: CoinCardProps) {
             <span className="text-muted-foreground text-[10px] sm:text-xs">
               Tokens Pledged
             </span>
-            <span className="stat-value text-primary truncate">
+            <span className="stat-value truncate">
               <span className="text-white">
                 {" "}
                 {formatNumber(coin.amountPledged)}
