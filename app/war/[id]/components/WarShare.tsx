@@ -28,6 +28,13 @@ export function WarShare({
   } = useMemeWarCalculations(memeWarStateInfo);
   const totalDeposit =
     (mintADepositedRaw + mintBDepositedRaw) * ((mintAPrice + mintBPrice) / 2);
+
+  const isMintAHigher = mintAPercentage >= mintBPercentage;
+  const mintAColorClass = isMintAHigher ? "text-green-600" : "text-red-600";
+  const mintBColorClass = isMintAHigher ? "text-red-600" : "text-green-600";
+  const mintABgColorClass = isMintAHigher ? "bg-green-600" : "bg-red-600";
+  const mintBBgColorClass = isMintAHigher ? "bg-red-600" : "bg-green-600";
+
   return (
     <div className="col-span-1 flex flex-col items-center justify-start my-8 md:my-0">
       <div className="w-full md:sticky md:top-4">
@@ -54,10 +61,10 @@ export function WarShare({
 
           {/* Progress Labels */}
           <div className="flex justify-between text-xs mb-1">
-            <span className="text-primary font-medium">
+            <span className={`${mintAColorClass} font-medium`}>
               {mintAPercentage.toFixed(1)}%
             </span>
-            <span className="text-[#4CAF50] font-medium">
+            <span className={`${mintBColorClass} font-medium`}>
               {mintBPercentage.toFixed(1)}%
             </span>
           </div>
@@ -65,7 +72,7 @@ export function WarShare({
           {/* Progress Bar */}
           <div className="h-2 sm:h-3 bg-muted rounded-full overflow-hidden relative">
             <motion.div
-              className="absolute left-0 top-0 bottom-0 bg-[#228B22]"
+              className={`absolute left-0 top-0 bottom-0 ${mintABgColorClass}`}
               style={{
                 width: `${mintAPercentage}%`,
                 borderRadius: "9999px 0 0 9999px",
@@ -76,7 +83,7 @@ export function WarShare({
               transition={{ duration: 0.5 }}
             />
             <motion.div
-              className="absolute right-0 top-0 bottom-0 bg-[#4CAF50]"
+              className={`absolute right-0 top-0 bottom-0 ${mintBBgColorClass}`}
               style={{
                 width: `${mintBPercentage}%`,
                 borderRadius: "0 9999px 9999px 0",
@@ -91,7 +98,7 @@ export function WarShare({
           {/* Token Amounts */}
           <div className="flex justify-between text-xs">
             <div className="text-left">
-              <div className="text-primary font-medium">
+              <div className={`${mintAColorClass} font-medium`}>
                 {formatNumber(mintADepositedRaw)}{" "}
                 <span className="hidden sm:inline">{warData.coin1.ticker}</span>
               </div>
@@ -100,7 +107,7 @@ export function WarShare({
               </div>
             </div>
             <div className="text-right">
-              <div className="text-[#2ECC71] font-medium">
+              <div className={`${mintBColorClass} font-medium`}>
                 {formatNumber(mintBDepositedRaw)}{" "}
                 <span className="hidden sm:inline">{warData.coin2.ticker}</span>
               </div>
