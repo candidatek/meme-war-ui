@@ -15,6 +15,10 @@ import { SearchInput } from "@/components/common/SearchInput";
 import { formatNumber } from "@/lib/utils";
 import useCountdown from "@/app/hooks/useCountdown";
 import VsComponent from "./VsComponent";
+import SimpleCustomizableModal from "./ui/modal";
+import CryptoStyleModal from "./ui/modal";
+import ToastStyleModal from "./ui/modal";
+import { useFirstVisitModal } from "@/app/hooks/useFirstVisitModal";
 
 interface Pledge {
   id: string;
@@ -76,13 +80,19 @@ export function MemeCoinWars() {
   const [totalItems, setTotalItems] = useState<number>(0);
   const [totalPages, setTotalPages] = useState<number>(1);
 
+  const {
+    isOpen: isModalOpen,
+    closeModalPermanently,
+    isInitialized
+  } = useFirstVisitModal('has-seen-pump-intro-modal', true);
+
   const { data: warArray, isError, isLoading } = useGetWarDetails(
-    sortBy, 
-    filterBy, 
-    itemsPerPage, 
+    sortBy,
+    filterBy,
+    itemsPerPage,
     (currentPage - 1) * itemsPerPage
   );
-  
+
   const [wars, setWars] = useState<War[]>([]);
   const [shakingWarId, setShakingWarId] = useState<number | null>(null);
   const [animationsEnabled, setAnimationsEnabled] = useState(true);
@@ -115,10 +125,10 @@ export function MemeCoinWars() {
 
   useEffect(() => {
     if (warArray) {
-      const estimatedTotal = warArray.length < itemsPerPage 
+      const estimatedTotal = warArray.length < itemsPerPage
         ? (currentPage - 1) * itemsPerPage + warArray.length
         : Math.max(currentPage * itemsPerPage, totalItems);
-      
+
       setTotalItems(estimatedTotal);
       setTotalPages(Math.max(1, Math.ceil(estimatedTotal / itemsPerPage)));
     }
@@ -260,17 +270,17 @@ export function MemeCoinWars() {
   const getVisiblePageNumbers = () => {
     const pageNumbers = [];
     const maxVisiblePages = 5;
-    
+
     if (totalPages <= maxVisiblePages) {
       for (let i = 1; i <= totalPages; i++) {
         pageNumbers.push(i);
       }
     } else {
       pageNumbers.push(1);
-      
+
       let start = Math.max(2, currentPage - 1);
       let end = Math.min(totalPages - 1, currentPage + 1);
-      
+
       if (end - start + 1 < maxVisiblePages - 2) {
         if (currentPage < totalPages / 2) {
           end = Math.min(totalPages - 1, start + maxVisiblePages - 3);
@@ -278,22 +288,22 @@ export function MemeCoinWars() {
           start = Math.max(2, end - (maxVisiblePages - 3));
         }
       }
-      
+
       if (start > 2) {
         pageNumbers.push('...');
       }
-      
+
       for (let i = start; i <= end; i++) {
         pageNumbers.push(i);
       }
-      
+
       if (end < totalPages - 1) {
         pageNumbers.push('...');
       }
-      
+
       pageNumbers.push(totalPages);
     }
-    
+
     return pageNumbers;
   };
 
@@ -330,213 +340,274 @@ export function MemeCoinWars() {
   }
 
   return (
-    <div className="container mx-auto px-2 sm:px-4 h-full flex flex-col">
-      <div className="flex flex-col sm:flex-row items-center justify-between mb-4 sm:mb-6 gap-4">
-        <div className="flex items-center gap-4">
-          <h2 className="text-lg sm:text-xl font-medium">MARKET</h2>
-          <div className="relative">
+    <>
+      {/* Only render the modal after client-side initialization */}
+      {isInitialized && (
+        <ToastStyleModal
+          isOpen={isModalOpen}
+          onClose={closeModalPermanently}
+          width={500}
+          height="auto"
+          position="center"
+        >
+          <div style={{ textAlign: 'center' }}>
+            <h2 style={{ fontSize: '24px', marginBottom: '20px' }}>
+              how it works
+            </h2>
+
+            <p>
+              pump allows <span style={{ color: '#4CAF50' }}>anyone</span> to create coins. all coins created on Pump are<br />
+              <span style={{ color: '#4CAF50' }}>fair-launch</span>, meaning everyone has equal access to buy and sell<br />
+              when the coin is first created.
+            </p>
+
+            <div style={{ margin: '20px 0' }}>
+              <p><strong>step 1:</strong> pick a coin that you like</p>
+              <p><strong>step 2:</strong> buy the coin on the bonding curve</p>
+              <p><strong>step 3:</strong> sell at any time to lock in your profits or losses</p>
+            </div>
+
+            <p>
+              by clicking this button you agree to the terms and conditions and<br />
+              certify that you are over 18 years old
+            </p>
+
             <button
-              onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-              className="flex items-center gap-2 px-4 py-2 rounded-md bg-muted/50 hover:bg-muted text-sm font-medium"
+              onClick={closeModalPermanently}
+              style={{
+                marginTop: '20px',
+                marginBottom: '20px',
+                padding: '10px 0',
+                width: '100%',
+                backgroundColor: '#8EEFC0',
+                color: 'black',
+                border: 'none',
+                borderRadius: '4px',
+                cursor: 'pointer',
+                fontWeight: 'bold',
+                fontSize: '16px'
+              }}
             >
-              sort: {sortOptions.find((opt) => opt.value === sortBy)?.label}
-              <svg
-                className={`w-4 h-4 transition-transform ${isDropdownOpen ? "rotate-180" : ""
-                  }`}
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M19 9l-7 7-7-7"
-                />
-              </svg>
+              I'm ready to pump
             </button>
-            {isDropdownOpen && (
-              <div className="absolute z-10 mt-2 w-48 rounded-md shadow-lg bg-card border-2 border-primary/20">
-                <div className="py-1">
-                  {sortOptions.map((option) => (
-                    <button
-                      key={option.value}
-                      onClick={() => {
-                        setSortBy(option.value);
-                        setCurrentPage(1); // Reset to first page when sorting changes
-                        setIsDropdownOpen(false);
-                      }}
-                      className={`w-full text-left px-4 py-2 text-sm hover:bg-primary/10 ${sortBy === option.value ? "bg-primary/20" : ""
-                        }`}
-                    >
-                      {option.label}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            )}
+
+            <div style={{ fontSize: '14px', color: '#aaa' }}>
+              <a href="#" style={{ color: '#aaa', marginRight: '10px' }}>privacy policy</a> |
+              <a href="#" style={{ color: '#aaa', margin: '0 10px' }}>terms of service</a> |
+              <a href="#" style={{ color: '#aaa', marginLeft: '10px' }}>fees</a>
+            </div>
           </div>
-        </div>
+        </ToastStyleModal>
+      )}
 
-        {/* Search Input */}
-        <div className="w-full sm:w-64">
-          <SearchInput
-            placeholder="Search by Symbol or Mint Address..."
-            onSearchChange={handleSearch}
-            isLoading={searchTerm !== "" && isSearchLoading}
-          />
-        </div>
-
-        <div className="flex items-center gap-2">
-          <motion.button
-            onClick={toggleAnimations}
-            className="relative flex items-center gap-1 px-2 sm:px-3 py-1 rounded text-xs font-medium bg-muted hover:bg-muted/80 transition-colors overflow-hidden group"
-            aria-label={
-              animationsEnabled ? "Disable animations" : "Enable animations"
-            }
-            title={
-              animationsEnabled ? "Disable animations" : "Enable animations"
-            }
-            whileTap={{ scale: 0.95 }}
-            whileHover={{ boxShadow: "0 0 8px rgba(var(--primary-rgb), 0.4)" }}
-            transition={{
-              type: "spring",
-              stiffness: 400,
-              damping: 17,
-            }}
-          >
-            <motion.div
-              className="absolute inset-0 bg-primary/40 scale-x-0 origin-left"
-              animate={{ scaleX: animationsEnabled ? 1 : 0 }}
-              transition={{ duration: 0.3, ease: "easeInOut" }}
-            />
-            <motion.div
-              className="relative z-10 w-4 h-4 flex items-center justify-center"
-              animate={{ rotate: animationsEnabled ? 0 : 180 }}
-              transition={{ duration: 0.3, type: "spring" }}
-            >
-              {animationsEnabled ? (
+      <div className="container mx-auto px-2 sm:px-4 h-full flex flex-col">
+        <div className="flex flex-col sm:flex-row items-center justify-between mb-4 sm:mb-6 gap-4">
+          <div className="flex items-center gap-4">
+            <h2 className="text-lg sm:text-xl font-medium">MARKET</h2>
+            <div className="relative">
+              <button
+                onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                className="flex items-center gap-2 px-4 py-2 rounded-md bg-muted/50 hover:bg-muted text-sm font-medium"
+              >
+                sort: {sortOptions.find((opt) => opt.value === sortBy)?.label}
                 <svg
-                  className="w-4 h-4"
-                  viewBox="0 0 24 24"
+                  className={`w-4 h-4 transition-transform ${isDropdownOpen ? "rotate-180" : ""
+                    }`}
                   fill="none"
                   stroke="currentColor"
-                  strokeWidth="2"
-                >
-                  <path d="M8 11V8.5a4.5 4.5 0 019 0v7M8 12v3.5a4.5 4.5 0 009 0V8" />
-                </svg>
-              ) : (
-                <svg
-                  className="w-4 h-4"
                   viewBox="0 0 24 24"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="2"
                 >
-                  <line x1="5" y1="12" x2="19" y2="12" />
-                  <polyline points="5 12 9 16" />
-                  <polyline points="5 12 9 8" />
-                  <line x1="19" y1="6" x2="15" y2="6" />
-                  <line x1="19" y1="18" x2="15" y2="18" />
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth={2}
+                    d="M19 9l-7 7-7-7"
+                  />
                 </svg>
+              </button>
+              {isDropdownOpen && (
+                <div className="absolute z-10 mt-2 w-48 rounded-md shadow-lg bg-card border-2 border-primary/20">
+                  <div className="py-1">
+                    {sortOptions.map((option) => (
+                      <button
+                        key={option.value}
+                        onClick={() => {
+                          setSortBy(option.value);
+                          setCurrentPage(1); // Reset to first page when sorting changes
+                          setIsDropdownOpen(false);
+                        }}
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-primary/10 ${sortBy === option.value ? "bg-primary/20" : ""
+                          }`}
+                      >
+                        {option.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
               )}
-            </motion.div>
-            <motion.span
-              className="relative z-10 hidden sm:inline"
-              initial={false}
-              animate={{
-                opacity: [1, 0.8, 1],
-                y: animationsEnabled ? [2, 0] : 0,
-              }}
+            </div>
+          </div>
+
+          {/* Search Input */}
+          <div className="w-full sm:w-64">
+            <SearchInput
+              placeholder="Search by Symbol or Mint Address..."
+              onSearchChange={handleSearch}
+              isLoading={searchTerm !== "" && isSearchLoading}
+            />
+          </div>
+
+          <div className="flex items-center gap-2">
+            <motion.button
+              onClick={toggleAnimations}
+              className="relative flex items-center gap-1 px-2 sm:px-3 py-1 rounded text-xs font-medium bg-muted hover:bg-muted/80 transition-colors overflow-hidden group"
+              aria-label={
+                animationsEnabled ? "Disable animations" : "Enable animations"
+              }
+              title={
+                animationsEnabled ? "Disable animations" : "Enable animations"
+              }
+              whileTap={{ scale: 0.95 }}
+              whileHover={{ boxShadow: "0 0 8px rgba(var(--primary-rgb), 0.4)" }}
               transition={{
-                opacity: { duration: 0.3 },
-                y: { duration: 0.2 },
+                type: "spring",
+                stiffness: 400,
+                damping: 17,
               }}
             >
-              {animationsEnabled ? "Animations On" : "Animations Off"}
-            </motion.span>
-            {/* Animated decorative elements */}
-            <div className="absolute inset-0 overflow-hidden pointer-events-none">
-              {/* Multiple particles that animate outward when enabled */}
-              {Array.from({ length: 5 }).map((_, i) => (
+              <motion.div
+                className="absolute inset-0 bg-primary/40 scale-x-0 origin-left"
+                animate={{ scaleX: animationsEnabled ? 1 : 0 }}
+                transition={{ duration: 0.3, ease: "easeInOut" }}
+              />
+              <motion.div
+                className="relative z-10 w-4 h-4 flex items-center justify-center"
+                animate={{ rotate: animationsEnabled ? 0 : 180 }}
+                transition={{ duration: 0.3, type: "spring" }}
+              >
+                {animationsEnabled ? (
+                  <svg
+                    className="w-4 h-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <path d="M8 11V8.5a4.5 4.5 0 019 0v7M8 12v3.5a4.5 4.5 0 009 0V8" />
+                  </svg>
+                ) : (
+                  <svg
+                    className="w-4 h-4"
+                    viewBox="0 0 24 24"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="2"
+                  >
+                    <line x1="5" y1="12" x2="19" y2="12" />
+                    <polyline points="5 12 9 16" />
+                    <polyline points="5 12 9 8" />
+                    <line x1="19" y1="6" x2="15" y2="6" />
+                    <line x1="19" y1="18" x2="15" y2="18" />
+                  </svg>
+                )}
+              </motion.div>
+              <motion.span
+                className="relative z-10 hidden sm:inline"
+                initial={false}
+                animate={{
+                  opacity: [1, 0.8, 1],
+                  y: animationsEnabled ? [2, 0] : 0,
+                }}
+                transition={{
+                  opacity: { duration: 0.3 },
+                  y: { duration: 0.2 },
+                }}
+              >
+                {animationsEnabled ? "Animations On" : "Animations Off"}
+              </motion.span>
+              {/* Animated decorative elements */}
+              <div className="absolute inset-0 overflow-hidden pointer-events-none">
+                {/* Multiple particles that animate outward when enabled */}
+                {Array.from({ length: 5 }).map((_, i) => (
+                  <motion.div
+                    key={`particle-${i}`}
+                    className="absolute rounded-full bg-primary/80"
+                    style={{
+                      width: `${3 + (i % 2)}px`,
+                      height: `${3 + (i % 2)}px`,
+                      left: `${50 + i * 5 - 10}%`,
+                      top: `${50 + Math.sin(i) * 20}%`,
+                    }}
+                    initial={{ scale: 0, opacity: 0 }}
+                    animate={
+                      animationsEnabled
+                        ? {
+                          scale: [0, 1, 0],
+                          opacity: [0, 0.8, 0],
+                          x: [(i - 2) * 10, (i - 2) * 30],
+                          y: [0, i % 2 === 0 ? -20 : 20],
+                        }
+                        : { scale: 0, opacity: 0 }
+                    }
+                    transition={{
+                      duration: 0.7,
+                      delay: i * 0.04,
+                      ease: "easeOut",
+                    }}
+                  />
+                ))}
+
+                {/* Ripple effect */}
                 <motion.div
-                  key={`particle-${i}`}
-                  className="absolute rounded-full bg-primary/80"
-                  style={{
-                    width: `${3 + (i % 2)}px`,
-                    height: `${3 + (i % 2)}px`,
-                    left: `${50 + i * 5 - 10}%`,
-                    top: `${50 + Math.sin(i) * 20}%`,
-                  }}
-                  initial={{ scale: 0, opacity: 0 }}
+                  className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary/30"
+                  initial={{ width: 0, height: 0, opacity: 0 }}
                   animate={
                     animationsEnabled
                       ? {
-                        scale: [0, 1, 0],
-                        opacity: [0, 0.8, 0],
-                        x: [(i - 2) * 10, (i - 2) * 30],
-                        y: [0, i % 2 === 0 ? -20 : 20],
+                        width: ["0%", "150%"],
+                        height: ["0%", "150%"],
+                        opacity: [0, 0.5, 0],
                       }
-                      : { scale: 0, opacity: 0 }
+                      : { width: 0, height: 0, opacity: 0 }
                   }
                   transition={{
-                    duration: 0.7,
-                    delay: i * 0.04,
+                    duration: 0.6,
                     ease: "easeOut",
+                    times: [0, 0.5, 1],
                   }}
                 />
-              ))}
-
-              {/* Ripple effect */}
+              </div>
+            </motion.button>
+          </div>
+        </div>
+        <div className="flex-1 overflow-y-auto space-y-2 pr-1">
+          <AnimatePresence>
+            {wars.map((war, index) => (
               <motion.div
-                className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 rounded-full border border-primary/30"
-                initial={{ width: 0, height: 0, opacity: 0 }}
-                animate={
-                  animationsEnabled
-                    ? {
-                      width: ["0%", "150%"],
-                      height: ["0%", "150%"],
-                      opacity: [0, 0.5, 0],
-                    }
-                    : { width: 0, height: 0, opacity: 0 }
-                }
-                transition={{
-                  duration: 0.6,
-                  ease: "easeOut",
-                  times: [0, 0.5, 1],
-                }}
-              />
+                key={war.warId}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -20 }}
+                transition={{ duration: 0.2 }}
+              >
+                <WarItem
+                  war={war}
+                  index={index}
+                  isShaking={index === shakingWarId}
+                  onPledgeClick={() => router.push(`/war/${war.warId}`)}
+                  animationsEnabled={animationsEnabled}
+                />
+              </motion.div>
+            ))}
+          </AnimatePresence>
+          {searchTerm && wars.length === 0 && !isSearchLoading && (
+            <div className="text-center text-muted-foreground py-8">
+              No wars found matching "{searchTerm}".
             </div>
-          </motion.button>
+          )}
         </div>
       </div>
-      <div className="flex-1 overflow-y-auto space-y-2 pr-1">
-        <AnimatePresence>
-          {wars.map((war, index) => (
-            <motion.div
-              key={war.warId}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -20 }}
-              transition={{ duration: 0.2 }}
-            >
-              <WarItem
-                war={war}
-                index={index}
-                isShaking={index === shakingWarId}
-                onPledgeClick={() => router.push(`/war/${war.warId}`)}
-                animationsEnabled={animationsEnabled}
-              />
-            </motion.div>
-          ))}
-        </AnimatePresence>
-        {searchTerm && wars.length === 0 && !isSearchLoading && (
-          <div className="text-center text-muted-foreground py-8">
-            No wars found matching "{searchTerm}".
-          </div>
-        )}
-      </div>
-    </div>
+    </>
   );
 }
 

@@ -8,6 +8,7 @@ import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
 
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input"; // Added Input for promo code
 import {
   Card,
   CardContent,
@@ -25,6 +26,7 @@ import { getPDAForMemeSigner, sortPublicKeys } from "../utils";
 import { showErrorToast } from "@/components/toast-utils";
 import { useMintInfo } from "../hooks/useMintInfo";
 import { useGetMemeWarRegistry } from "../hooks/useGetMemeWarRegistry";
+import ToastStyleModal from "@/components/ui/modal";
 
 // Import components from the local components directory
 import { CoinForm } from "./components/CoinForm";
@@ -37,6 +39,7 @@ import {
   TokenResponse,
   createDefaultCoinData,
 } from "../types";
+import { useApplyPromoCode } from "../api/validatePromoCode";
 
 export default function StartWarPage() {
   const router = useRouter();
@@ -54,6 +57,22 @@ export default function StartWarPage() {
   const [coin1Data, setCoin1Data] = useState<CoinData>(createDefaultCoinData());
   const [coin2Data, setCoin2Data] = useState<CoinData>(createDefaultCoinData());
   const { publicKey } = useWallet();
+
+  // Promo code state
+  const [promoCode, setPromoCode] = useState<string>('');
+  const [isPromoModalOpen, setIsPromoModalOpen] = useState<boolean>(false);
+  const [shouldValidate, setShouldValidate] = useState<boolean>(false);
+
+  // Use the hook for promo code validation
+  const { 
+    isPromoCodeValid, 
+    isLoading: isValidatingPromo,
+    isError: promoValidationError 
+  } = useApplyPromoCode(
+    promoCode,
+    publicKey?.toString() || '',
+    shouldValidate
+  );
 
   const { data: existingMemeWarRegistry, isLoading: isMemeWarRegistryLoading } =
     useGetMemeWarRegistry(coin1Data.mintAddress, coin2Data.mintAddress);
@@ -101,6 +120,28 @@ export default function StartWarPage() {
   const { memeProgram } = useProgramDetails();
   const { data: mintAInfo } = useMintInfo(coin1Data.mintAddress);
   const { data: mintBInfo } = useMintInfo(coin2Data.mintAddress);
+
+  // Handle promo code validation success
+  useEffect(() => {
+    if (isPromoCodeValid) {
+      setIsPromoModalOpen(false);
+      toast.success("Promo code applied successfully!", {
+        duration: 3000,
+        position: "bottom-left",
+      });
+    }
+  }, [isPromoCodeValid]);
+
+  // Show error if promo validation fails
+  useEffect(() => {
+    if (promoValidationError && shouldValidate) {
+      showErrorToast("Invalid promo code. Please try again.", {
+        duration: 3000,
+        position: "bottom-left",
+      });
+      setShouldValidate(false);
+    }
+  }, [promoValidationError, shouldValidate]);
 
   useEffect(() => {
     // Only check tokens when we have both addresses AND they're valid length
@@ -265,6 +306,12 @@ export default function StartWarPage() {
       return;
     }
 
+    // Check if promo code is valid
+    if (!isPromoCodeValid) {
+      setIsPromoModalOpen(true);
+      return;
+    }
+
     try {
       const createdMemeStateString = await createMemeRegistry(
         selectedDuration,
@@ -304,6 +351,14 @@ export default function StartWarPage() {
           error instanceof Error ? error.message : "Unknown error"
         }`
       );
+    }
+  };
+
+  // Handle promo code submission
+  const handlePromoCodeSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (promoCode) {
+      setShouldValidate(true);
     }
   };
 
@@ -486,74 +541,76 @@ export default function StartWarPage() {
 
   return (
     <TooltipProvider>
+      {/* Promo Code Modal */}
+      <ToastStyleModal
+        isOpen={isPromoModalOpen}
+        onClose={() => setIsPromoModalOpen(false)}
+        width={500}
+        height="auto"
+        position="center"
+      >
+        <div style={{ textAlign: 'center' }}>
+          <h2 style={{ fontSize: '24px', marginBottom: '20px' }}>
+            Enter Promo Code
+          </h2>
+
+          <p>
+            Please enter a valid promo code to start a war.
+          </p>
+
+          <form onSubmit={handlePromoCodeSubmit} style={{ margin: '20px 0' }}>
+            <Input
+              value={promoCode}
+              onChange={(e) => setPromoCode(e.target.value)}
+              placeholder="Enter your promo code"
+              style={{
+                padding: '10px',
+                fontSize: '16px',
+                width: '100%',
+                marginBottom: '10px',
+                background: 'rgba(255, 255, 255, 0.1)',
+                border: '1px solid rgba(255, 255, 255, 0.2)',
+                borderRadius: '4px',
+                color: 'white'
+              }}
+            />
+            
+            {promoValidationError && shouldValidate && (
+              <p style={{ color: '#ff6b6b', marginTop: '10px', fontSize: '14px' }}>
+                Invalid promo code. Please try again.
+              </p>
+            )}
+
+            <div style={{ display: 'flex', gap: '10px', marginTop: '20px' }}>
+              <Button
+                type="button"
+                onClick={() => {setIsPromoModalOpen(false); setPromoCode('')}}
+                style={{
+                  flex: 1,
+                  padding: '10px 0'
+                }}
+                variant={"outline"}
+              >
+                Cancel
+              </Button>
+              
+              <Button
+                type="submit"
+                disabled={isValidatingPromo || !promoCode}
+                style={{
+                  flex: 1,
+                }}
+                variant={"default"}
+              >
+                {isValidatingPromo ? 'Validating...' : 'Apply Code'}
+              </Button>
+            </div>
+          </form>
+        </div>
+      </ToastStyleModal>
+
       <div className="container mx-auto px-4 py-6 sm:py-8">
         <div className="max-w-4xl mx-auto">
-          {/* <Card className="mb-6 sm:mb-8">
-            <CardHeader
-              className="cursor-pointer"
-              onClick={() => setShowLaunchCoins(!showLaunchCoins)}
-            >
-              <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2 sm:gap-0">
-                <div className="flex flex-col gap-2">
-                  <CardTitle>Launch 2 new Meme Coins</CardTitle>
-                  <CardDescription>
-                    Launch two new meme coins and start a war between them!
-                  </CardDescription>
-                </div>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    setShowLaunchCoins(!showLaunchCoins);
-                  }}
-                >
-                  {showLaunchCoins ? "Hide" : "Show"}
-                </Button>
-              </div>
-            </CardHeader>
-
-            {showLaunchCoins && (
-              <CardContent>
-                <form onSubmit={handleLaunchCoins} className="space-y-8">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6 md:gap-8">
-                    <LaunchCoinForm
-                      key="launch-coin-1"
-                      data={launchCoin1}
-                      setData={setLaunchCoin1}
-                      title="First Coin"
-                      coinIndex={1}
-                      filePreview={filePreview1}
-                      handleImageChange={handleImageChange}
-                    />
-                    <LaunchCoinForm
-                      key="launch-coin-2"
-                      data={launchCoin2}
-                      setData={setLaunchCoin2}
-                      title="Second Coin"
-                      coinIndex={2}
-                      filePreview={filePreview2}
-                      handleImageChange={handleImageChange}
-                    />
-                  </div>
-
-                  <div className="flex justify-center">
-                    <Button
-                      type="submit"
-                      size="lg"
-                      className="w-full sm:w-auto sm:px-8"
-                      disabled={!publicKey || Boolean(isCreatingTokens)}
-                    >
-                      {Boolean(isCreatingTokens)
-                        ? "Launching..."
-                        : "Launch Coins"}
-                    </Button>
-                  </div>
-                </form>
-              </CardContent>
-            )}
-          </Card> */}
-
           <h1 className="text-2xl sm:text-3xl font-bold mb-2">
             Start a Meme Coin War
           </h1>
@@ -572,6 +629,28 @@ export default function StartWarPage() {
               <p className="text-amber-500">
                 Please connect your wallet to start a war
               </p>
+            )}
+          </div>
+
+          {/* Promo Code Status */}
+          <div className="mb-4 text-sm">
+            {isPromoCodeValid ? (
+              <p className="text-green-500">
+                Promo code applied: {promoCode}
+              </p>
+            ) : (
+              <div className="flex items-center gap-2">
+                <p className="text-amber-500">
+                  No promo code applied
+                </p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsPromoModalOpen(true)}
+                >
+                  Enter Code
+                </Button>
+              </div>
             )}
           </div>
 
@@ -609,6 +688,7 @@ export default function StartWarPage() {
                     Boolean(disableCreateWarBtn) ||
                     !mintAInfo ||
                     !mintBInfo ||
+                    !isPromoCodeValid || // Disable if no valid promo code
                     (existingMemeWarRegistry &&
                       !existingMemeWarRegistry.war_ended)
                 )}
@@ -617,6 +697,8 @@ export default function StartWarPage() {
                   ? "Starting War..."
                   : disableCreateWarBtn
                   ? "War Started!"
+                  : !isPromoCodeValid
+                  ? "Enter Promo Code"
                   : "Start War"}
               </Button>
             </div>
