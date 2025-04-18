@@ -3,6 +3,7 @@ import { formatNumber } from "@/lib/utils";
 import { WarData } from "@/app/Interfaces";
 import { useMemeWarCalculations } from "@/app/hooks/useMemeWarCalculations";
 import { IMemeWarState } from "@/app/api/getMemeWarStateInfo";
+import VsComponent from "@/components/VsComponent";
 
 interface WarShareProps {
   warData: WarData;
@@ -17,14 +18,21 @@ export function WarShare({
   endedTimeAgo,
   timeLeft,
 }: WarShareProps) {
-  const {mintAPercentage, mintBPercentage, mintADepositedRaw, mintBDepositedRaw, mintAPrice, mintBPrice} = useMemeWarCalculations(memeWarStateInfo) 
-  const totalDeposit = (mintADepositedRaw + mintBDepositedRaw) *
-  ((mintAPrice + mintBPrice) / 2);
+  const {
+    mintAPercentage,
+    mintBPercentage,
+    mintADepositedRaw,
+    mintBDepositedRaw,
+    mintAPrice,
+    mintBPrice,
+  } = useMemeWarCalculations(memeWarStateInfo);
+  const totalDeposit =
+    (mintADepositedRaw + mintBDepositedRaw) * ((mintAPrice + mintBPrice) / 2);
   return (
     <div className="col-span-1 flex flex-col items-center justify-start my-8 md:my-0">
       <div className="w-full md:sticky md:top-4">
-        <div className="text-4xl md:text-6xl font-bold mb-4 md:mb-8 text-center">
-          VS
+        <div className="flex justify-center items-center mb-4 md:mb-8">
+          <VsComponent />
         </div>
 
         {/* Coin Ratio */}
@@ -88,10 +96,7 @@ export function WarShare({
                 <span className="hidden sm:inline">{warData.coin1.ticker}</span>
               </div>
               <div className="text-muted-foreground mt-0.5">
-                $
-                {formatNumber(
-                  mintADepositedRaw * mintAPrice
-                )}
+                ${formatNumber(mintADepositedRaw * mintAPrice)}
               </div>
             </div>
             <div className="text-right">
@@ -100,10 +105,7 @@ export function WarShare({
                 <span className="hidden sm:inline">{warData.coin2.ticker}</span>
               </div>
               <div className="text-muted-foreground mt-0.5">
-                $
-                {formatNumber(
-                  mintBDepositedRaw * mintBPrice
-                )}
+                ${formatNumber(mintBDepositedRaw * mintBPrice)}
               </div>
             </div>
           </div>
@@ -138,8 +140,7 @@ export function WarShare({
               Total Pledged
             </div>
             <div className="text-base sm:text-xl font-mono">
-              $
-              {formatNumber(totalDeposit)}
+              ${formatNumber(totalDeposit)}
             </div>
           </div>
         </div>
