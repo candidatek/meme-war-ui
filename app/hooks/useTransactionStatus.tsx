@@ -38,8 +38,13 @@ export const useTransactionStatus = () => {
           const toastElement = (
             <div>
               <div>{action}</div>
-              {/* TODO: Add link to transaction explorer */}
-              {/* <a href={`https://solscan.io/tx/${signature}`}>Txn link</a> */}
+              <a
+                href={`https://solscan.io/tx/${signature}${
+                  process.env.NEXT_PUBLIC_ENVIRONMENT ? "?cluster=devnet" : ""
+                }`}
+              >
+                Txn link
+              </a>
             </div>
           );
           toast.dismiss();
