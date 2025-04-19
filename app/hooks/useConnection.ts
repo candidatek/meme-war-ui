@@ -3,7 +3,7 @@ import { useState, useEffect } from "react";
 
 const useConnection = () => {
   const [connection, setConnection] = useState<Connection>(
-    new Connection("api.devnet.solana.com")
+    new Connection("https://api.devnet.solana.com")
   );
 
   useEffect(() => {
