@@ -1,15 +1,13 @@
-import { useState, useEffect, Dispatch, SetStateAction } from 'react';
-import { toast } from 'sonner';
-import { useConnection } from '@solana/wallet-adapter-react';
-import { type TransactionSignature } from '@solana/web3.js';
-import { showErrorToast } from '@/components/toast-utils';
-
- 
+import { useState, useEffect, Dispatch, SetStateAction } from "react";
+import { toast } from "sonner";
+import { useConnection } from "@solana/wallet-adapter-react";
+import { type TransactionSignature } from "@solana/web3.js";
+import { showErrorToast } from "@/components/toast-utils";
 
 type TransactionDetails = {
   signature: TransactionSignature;
   action: string;
-  setIsLoading: Dispatch<SetStateAction<boolean | number>>; 
+  setIsLoading: Dispatch<SetStateAction<boolean | number>>;
   refresh?: () => void;
   stopLoadingWithInteger?: boolean;
 };
@@ -32,31 +30,35 @@ export const useTransactionStatus = () => {
             blockhash: latestBlockhash.blockhash,
             lastValidBlockHeight: latestBlockhash.lastValidBlockHeight,
           },
-          'confirmed'
+          "confirmed"
         );
 
         if (!res.value.err) {
           setIsLoading(false);
-          const toastMessage = action
-
-          // Show success toast
+          const toastElement = (
+            <div>
+              <div>{action}</div>
+              {/* TODO: Add link to transaction explorer */}
+              {/* <a href={`https://solscan.io/tx/${signature}`}>Txn link</a> */}
+            </div>
+          );
           toast.dismiss();
-          toast.success(toastMessage);
+          toast.success(toastElement);
 
           // Invalidate token balance queries to fetch the latest balances
-          if(txDetails.refresh) {
+          if (txDetails.refresh) {
             txDetails.refresh();
-          } 
+          }
         } else {
           setIsLoading(false);
-          showErrorToast('Transaction error: ' + res.value.err.toString());
+          showErrorToast("Transaction error: " + res.value.err.toString());
         }
       } catch (err) {
         setIsLoading(txDetails.stopLoadingWithInteger ? -1 : false);
-        showErrorToast('Failed to confirm transaction: ' + err);
+        showErrorToast("Failed to confirm transaction: " + err);
       } finally {
         setIsLoading(txDetails.stopLoadingWithInteger ? -1 : false);
-          setTxDetails(null);
+        setTxDetails(null);
       }
     };
 
@@ -66,17 +68,13 @@ export const useTransactionStatus = () => {
   }, [txDetails, connection]);
 
   const checkStatus = (transactionDetails: TransactionDetails) => {
-
     toast.dismiss();
-    
-    toast(
-      <div>Confirming Transaction</div>,
-      { 
-        dismissible: false, 
-        duration: 2000,
-        id: "transaction-confirmation"
-      }
-    );
+
+    toast(<div>Confirming Transaction</div>, {
+      dismissible: false,
+      duration: 2000,
+      id: "transaction-confirmation",
+    });
 
     setTxDetails(transactionDetails);
     return transactionDetails.signature;

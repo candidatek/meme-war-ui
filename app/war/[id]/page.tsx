@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-unused-vars */
-// @ts-nocheck
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
@@ -7,7 +5,6 @@ import { useParams } from "next/navigation";
 import { io, Socket } from "socket.io-client";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useQueryClient } from "@tanstack/react-query";
-import { AnimatePresence, motion } from "framer-motion";
 
 // API Hooks
 import { useGetChatMessages } from "@/app/api/getChatMessages";
@@ -94,7 +91,10 @@ export default function WarPage() {
 
   // Recent trades data
   const { data: tradesData } = useRecentTrades(memeWarState);
-  const [displayTradesData, setDisplayTradesData] = useState({
+  const [displayTradesData, setDisplayTradesData] = useState<{
+    mintA: TradeData[];
+    mintB: TradeData[];
+  }>({
     mintA: [],
     mintB: [],
   });
@@ -328,9 +328,8 @@ export default function WarPage() {
     setBtnLoading(mintIdentifier);
 
     try {
-      const mintAddress = mintIdentifier === 0 ? mintA : mintB;
       const txSignature = await depositTokens(
-        amount,
+        Number(amount),
         mintIdentifier,
         setBtnLoading
       );
@@ -345,6 +344,7 @@ export default function WarPage() {
       } else {
         showErrorToast("Deposit failed. Please try again.");
       }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error("Deposit error:", error);
       showErrorToast(`Deposit failed: ${error.message || "Unknown error"}`);
@@ -413,7 +413,6 @@ export default function WarPage() {
       await handleSignIn();
     }
 
-    // @ts-ignore - We've updated the API to accept string | number | null
     sendMessage({
       pubKey: pubKey!,
       newMessage,
@@ -430,31 +429,6 @@ export default function WarPage() {
   };
 
   // Calculate percentages and amounts for display
-  const totalPledged = useMemo(() => {
-    if (!memeWarStateInfo) return 0;
-
-    const mintADeposited =
-      Number(memeWarStateInfo.mint_a_total_deposited) /
-      10 ** (memeWarStateInfo.mint_a_decimals || 9);
-    const mintBDeposited =
-      Number(memeWarStateInfo.mint_b_total_deposited) /
-      10 ** (memeWarStateInfo.mint_b_decimals || 9);
-
-    return mintADeposited + mintBDeposited;
-  }, [memeWarStateInfo]);
-
-  const mintAPercentage = useMemo(() => {
-    if (!memeWarStateInfo || totalPledged === 0) return 0;
-
-    const mintADeposited =
-      Number(memeWarStateInfo.mint_a_total_deposited) /
-      10 ** (memeWarStateInfo.mint_a_decimals || 9);
-    return (mintADeposited / totalPledged) * 100;
-  }, [memeWarStateInfo, totalPledged]);
-
-  const mintBPercentage = useMemo(() => {
-    return 100 - mintAPercentage;
-  }, [mintAPercentage]);
 
   const { mintAPrice, mintBPrice } = useMemeWarCalculations(memeWarStateInfo);
   // Convert blockchain data to UI-friendly format
@@ -563,11 +537,9 @@ export default function WarPage() {
         {/* Center VS Section */}
         <WarShare
           warData={warData}
-          mintAPercentage={mintAPercentage}
-          mintBPercentage={mintBPercentage}
           memeWarStateInfo={memeWarStateInfo}
           endedTimeAgo={endedTimeAgo}
-          timeLeft={timeLeft}
+          timeLeft={timeLeft as string}
         />
 
         {/* Right Token */}
