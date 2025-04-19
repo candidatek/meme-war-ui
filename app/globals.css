@@ -9,43 +9,32 @@
 
 @layer base {
   :root {
-    /* Stake.com dark theme */
-    --background: 206 39% 16%;
-    /* #1a2c38 */
-    --foreground: 220 14% 96%;
-    /* #f5f6fa */
+    /* Trading platform dark theme */
+    --background: 0 0% 7%;
+    /* Very dark gray, almost black */
+    --foreground: 0 0% 95%;
 
-    --card: 206 25% 25%;
-    /* #2f4553 */
-    --card-foreground: 220 14% 96%;
-    /* #f5f6fa */
+    --card: 0 0% 10%;
+    --card-foreground: 0 0% 95%;
 
-    --primary: 120 100% 45%;
-    /* #00e701 */
-    --primary-foreground: 206 39% 16%;
-    /* #1a2c38 */
+    --primary: 135 94% 39%;
+    /* Bright green */
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 45 93% 50%;
-    /* #f0b90b */
-    --secondary-foreground: 206 39% 16%;
-    /* #1a2c38 */
+    --secondary: 0 72% 51%;
+    /* Red for negative values */
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 206 25% 30%;
-    /* #375062 */
-    --muted-foreground: 206 22% 69%;
-    /* #a0b3c1 */
+    --muted: 0 0% 15%;
+    --muted-foreground: 0 0% 60%;
 
-    --accent: 120 100% 45%;
-    /* #00e701 */
-    --accent-foreground: 206 39% 16%;
-    /* #1a2c38 */
+    --accent: 135 94% 39%;
+    /* Same as primary for consistency */
+    --accent-foreground: 0 0% 100%;
 
-    --border: 206 25% 30%;
-    /* #375062 */
-    --input: 206 25% 25%;
-    /* #2f4553 */
-    --ring: 120 100% 45%;
-    /* #00e701 */
+    --border: 0 0% 15%;
+    --input: 0 0% 15%;
+    --ring: 135 94% 39%;
 
     --radius: 0.5rem;
   }
