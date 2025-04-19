@@ -9,6 +9,7 @@ interface UserProfileResponse {
     username: string | null;
     socialHandle: string | null;
     createdAt: string | null;
+    bio: string | null;
     totalPledged: string;
     totalWars: number;
     totalVictories: number;
