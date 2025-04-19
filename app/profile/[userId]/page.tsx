@@ -57,6 +57,7 @@ const UserProfile = () => {
   const handleProfileUpdate = async (data: {
     username: string;
     twitterHandle: string;
+    bio: string;
   }) => {
     if (!userId || typeof userId !== "string") {
       showErrorToast("Cannot update profile: No wallet address");
@@ -84,6 +85,7 @@ const UserProfile = () => {
         wallet_address: userId,
         username: data.username,
         social_handle: data.twitterHandle,
+        bio: data.bio,
       },
       {
         onSuccess: () => {
@@ -147,8 +149,13 @@ const UserProfile = () => {
                 ? new Date(userProfile.createdAt).toLocaleDateString()
                 : "11/04/2025"}
             </p>
+            {userProfile?.bio && (
+              <p className="text-sm text-muted-foreground mb-6 text-center w-full px-4">
+                {userProfile.bio}
+              </p>
+            )}
 
-            <div className="w-full mb-4 p-3 bg-secondary/20 rounded-md flex items-center justify-between">
+            <div className="w-full mb-4 p-3 bg-gray-700 rounded-md flex items-center justify-between">
               <span className="text-sm font-mono text-muted-foreground">
                 {userId
                   ? formatWalletAddress(userId as string)
@@ -175,7 +182,7 @@ const UserProfile = () => {
                 }`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="w-full p-3 bg-secondary/20 rounded-md flex items-center justify-between text-sm text-muted-foreground hover:text-primary transition-colors"
+                className="w-full p-3 bg-gray-700 rounded-md flex items-center justify-between text-sm text-muted-foreground hover:text-primary transition-colors"
               >
                 <span>
                   https://x.com/{userProfile?.socialHandle || "tokenwarrior"}
@@ -185,17 +192,17 @@ const UserProfile = () => {
             </div>
 
             <div className="w-full grid grid-cols-3 gap-4 mb-6">
-              <div className="bg-secondary/10 p-4 rounded-md flex flex-col items-center">
+              <div className="bg-gray-800 p-4 rounded-md flex flex-col items-center">
                 <p className="text-lg font-semibold text-primary">
                   ${Number(userStats.totalPledged).toFixed(2)}
                 </p>
                 <p className="text-xs text-muted-foreground">Total Pledged</p>
               </div>
-              <div className="bg-secondary/10 p-4 rounded-md flex flex-col items-center">
+              <div className="bg-gray-800 p-4 rounded-md flex flex-col items-center">
                 <p className="text-lg font-semibold">{userStats.wars}</p>
                 <p className="text-xs text-muted-foreground">Wars</p>
               </div>
-              <div className="bg-secondary/10 p-4 rounded-md flex flex-col items-center">
+              <div className="bg-gray-800 p-4 rounded-md flex flex-col items-center">
                 <p className="text-lg font-semibold">{userStats.victories}</p>
                 <p className="text-xs text-muted-foreground">Victories</p>
               </div>
@@ -203,7 +210,7 @@ const UserProfile = () => {
 
             <button
               onClick={() => setIsEditDialogOpen(true)}
-              className="w-full py-2 px-4 bg-secondary/20 hover:bg-secondary/30 text-sm font-medium rounded-md transition-colors"
+              className="w-full py-2 px-4 bg-gray-600 hover:bg-gray-500 text-white text-sm font-medium rounded-md transition-colors"
               disabled={updateProfile.isPending}
             >
               {updateProfile.isPending ? "Saving..." : "Edit Profile"}
@@ -235,6 +242,7 @@ const UserProfile = () => {
         onClose={() => setIsEditDialogOpen(false)}
         defaultUsername={userProfile?.username || ""}
         defaultTwitterHandle={userProfile?.socialHandle || ""}
+        defaultBio={userProfile?.bio || ""}
         onSave={handleProfileUpdate}
       />
     </div>

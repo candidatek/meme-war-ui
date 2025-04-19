@@ -6,6 +6,7 @@ interface UpdateProfileData {
   wallet_address: string;
   username?: string;
   social_handle?: string;
+  bio?: string;
 }
 
 /**

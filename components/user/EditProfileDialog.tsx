@@ -11,6 +11,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
 import { AtSign, User } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -39,7 +40,12 @@ interface EditProfileDialogProps {
   onClose: () => void;
   defaultUsername?: string;
   defaultTwitterHandle?: string;
-  onSave: (data: { username: string; twitterHandle: string }) => void;
+  defaultBio?: string;
+  onSave: (data: {
+    username: string;
+    twitterHandle: string;
+    bio: string;
+  }) => void;
 }
 
 const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
@@ -47,11 +53,19 @@ const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
   onClose,
   defaultUsername = "",
   defaultTwitterHandle = "",
+  defaultBio = "",
   onSave,
 }) => {
   const [username, setUsername] = useState(defaultUsername);
   const [twitterHandle, setTwitterHandle] = useState(defaultTwitterHandle);
+  const [bio, setBio] = useState(defaultBio);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  React.useEffect(() => {
+    setUsername(defaultUsername);
+    setTwitterHandle(defaultTwitterHandle);
+    setBio(defaultBio);
+  }, [defaultUsername, defaultTwitterHandle, defaultBio, isOpen]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,6 +78,7 @@ const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
       onSave({
         username,
         twitterHandle,
+        bio,
       });
 
       onClose();
@@ -117,6 +132,17 @@ const EditProfileDialog: React.FC<EditProfileDialogProps> = ({
                 placeholder="Your Twitter handle (without @)"
               />
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="bio">Bio</Label>
+            <Textarea
+              id="bio"
+              value={bio}
+              onChange={(e) => setBio(e.target.value)}
+              placeholder="Tell us a little about yourself"
+              className="min-h-[100px]"
+            />
           </div>
 
           <DialogFooter className="pt-4">
