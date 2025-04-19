@@ -7,7 +7,7 @@ import VsComponent from "@/components/VsComponent";
 
 interface WarShareProps {
   warData: WarData;
-  memeWarStateInfo: IMemeWarState;
+  memeWarStateInfo: IMemeWarState | undefined;
   endedTimeAgo: string;
   timeLeft: string;
 }
