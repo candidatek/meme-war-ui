@@ -1,11 +1,11 @@
 import { useQuery } from "@tanstack/react-query";
 import { useWallet } from "@solana/wallet-adapter-react";
-import { useConnection } from "@solana/wallet-adapter-react";
 import { useMemo } from "react";
+import useConnection from "./useConnection";
 
 const useWalletInfo = () => {
   const { wallet, sendTransaction } = useWallet();
-  const { connection } = useConnection();
+  const connection = useConnection();
 
   const publicKey = useMemo(
     () => wallet?.adapter?.publicKey ?? null,

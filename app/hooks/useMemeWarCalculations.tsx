@@ -4,8 +4,8 @@ import { useSolPrice } from "../api/getSolPrice";
 import { IMemeWarState } from "../api/getMemeWarStateInfo";
 import { useMintInfo } from "./useMintInfo";
 import { PublicKey } from "@solana/web3.js";
-import { useConnection } from "@solana/wallet-adapter-react";
 import { getTokenRatio } from "../utils";
+import useConnection from "./useConnection";
 
 interface MemeWarCalculations {
   rfPlusMintADeposited: string;
@@ -36,7 +36,7 @@ export const useMemeWarCalculations = (
 
   const { data: mintAInfo } = useMintInfo(memeWarState?.mint_a || null);
   const { data: mintBInfo } = useMintInfo(memeWarState?.mint_b || null);
-  const { connection } = useConnection();
+  const connection = useConnection();
 
   const [mintARatio, setMintARatio] = useState<number | null>(null);
   const [mintBRatio, setMintBRatio] = useState<number | null>(null);

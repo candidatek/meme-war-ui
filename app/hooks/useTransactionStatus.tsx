@@ -1,8 +1,8 @@
 import { useState, useEffect, Dispatch, SetStateAction } from "react";
 import { toast } from "sonner";
-import { useConnection } from "@solana/wallet-adapter-react";
 import { type TransactionSignature } from "@solana/web3.js";
 import { showErrorToast } from "@/components/toast-utils";
+import useConnection from "./useConnection";
 
 type TransactionDetails = {
   signature: TransactionSignature;
@@ -13,7 +13,7 @@ type TransactionDetails = {
 };
 
 export const useTransactionStatus = () => {
-  const { connection } = useConnection();
+  const connection = useConnection();
 
   const [txDetails, setTxDetails] = useState<TransactionDetails | null>(null);
 
