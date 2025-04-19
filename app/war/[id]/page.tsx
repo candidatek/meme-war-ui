@@ -329,7 +329,11 @@ export default function WarPage() {
 
     try {
       const mintAddress = mintIdentifier === 0 ? mintA : mintB;
-      const txSignature = await depositTokens(mintAddress, amount);
+      const txSignature = await depositTokens(
+        amount,
+        mintIdentifier,
+        setBtnLoading
+      );
 
       if (txSignature) {
         console.log("Deposit successful:", txSignature);
