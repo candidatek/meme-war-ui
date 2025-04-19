@@ -72,7 +72,7 @@
 .retro-text {
   font-family: 'PixelFont', monospace;
   text-shadow:
-    1.2px 1.2px 0 hsl(var(--primary));
+    0.3px 0.3px 0 hsl(var(--primary));
 }
 
 .coin-card {
