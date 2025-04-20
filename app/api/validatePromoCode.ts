@@ -9,7 +9,7 @@ interface ApplyPromoCodeResponse {
 
 const applyPromoCode = async (code: string, walletAddress: string): Promise<ApplyPromoCodeResponse> => {
     const response = await axios.get<ApplyPromoCodeResponse>(
-        `${SERVER_URL}/applyPromoCode?code=${code}&walletAddress=${walletAddress}`
+        `${SERVER_URL}/applyCode?code=${code}&walletAddress=${walletAddress}`
     );
     return response.data;
 };
