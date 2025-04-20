@@ -1,5 +1,5 @@
 import { motion } from "framer-motion";
-import { formatNumber } from "@/lib/utils";
+import { formatNumber, formatPublicKey } from "@/lib/utils";
 import { WarData } from "@/app/Interfaces";
 import { useMemeWarCalculations } from "@/app/hooks/useMemeWarCalculations";
 import { IMemeWarState } from "@/app/api/getMemeWarStateInfo";
@@ -132,11 +132,30 @@ export function WarShare({
           </div>
 
           {/* Winner Declaration */}
-          {memeWarStateInfo?.war_ended && (
+          {memeWarStateInfo?.war_ended && memeWarStateInfo.winner_declared && (
             <div className="mt-3 sm:mt-4 text-center">
               <div className="text-sm text-muted-foreground mb-1">Winner</div>
               <div className="text-base sm:text-xl font-mono">
-                {memeWarStateInfo.winner_declared}
+                {(() => {
+                  const winnerAddress = memeWarStateInfo.winner_declared;
+                  if (winnerAddress === "11111111111111111111111111111111") {
+                    return "No Clear Winner";
+                  } else if (winnerAddress === warData.coin1.address) {
+                    return (
+                      <>
+                        {warData.coin1.name} ({formatPublicKey(winnerAddress)})
+                      </>
+                    );
+                  } else if (winnerAddress === warData.coin2.address) {
+                    return (
+                      <>
+                        {warData.coin2.name} ({formatPublicKey(winnerAddress)})
+                      </>
+                    );
+                  } else {
+                    return formatPublicKey(winnerAddress);
+                  }
+                })()}
               </div>
             </div>
           )}
