@@ -138,7 +138,7 @@ export function LiveFeed({
                   ...trade,
                   uniqueId:
                     trade.tx_signature ||
-                    `${trade.wallet_address}-${trade.event_time}`,
+                    `${trade.wallet_address}-${trade.event_time}-${trade.event_type}-${trade.amount}`,
                 }))
                 .filter(
                   (trade, index, self) =>
@@ -146,7 +146,7 @@ export function LiveFeed({
                     self.findIndex((t) => t.uniqueId === trade.uniqueId)
                 )
                 .sort((a, b) => b.event_time - a.event_time)
-                .slice(0, 10)
+                .slice(0, 15)
                 .map((trade, i) => {
                   const isMintA = trade.mint === warData.coin1.address;
                   const coin = isMintA ? warData.coin1 : warData.coin2;
@@ -170,7 +170,8 @@ export function LiveFeed({
 
                   return (
                     <motion.div
-                      key={`${trade.wallet_address}-${trade.event_time}`}
+                      key={trade.uniqueId}
+                      layout
                       initial={{ opacity: 0, y: -10 }}
                       animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, height: 0 }}

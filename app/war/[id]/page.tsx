@@ -173,7 +173,7 @@ export default function WarPage() {
         amount: message.amount?.toString() || "0",
         wallet_address: message.wallet_address || "unknown",
         event_time: message.event_time || Date.now(),
-        tx_signature: message.tx_signature || `tx-${Date.now()}`,
+        tx_signature: message.tx_signature,
       };
 
       const isMatchingMintA = processedMessage.mint === mintA;
