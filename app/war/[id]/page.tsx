@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams } from "next/navigation";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useQueryClient } from "@tanstack/react-query";
+import { useRouteProgress } from "@/app/hooks/useRouteProgress";
 
 // API Hooks
 import { useGetChatMessages } from "@/app/api/getChatMessages";
@@ -48,15 +49,30 @@ export default function WarPage() {
   } = useMemeWarContext();
   const { socket, isConnected } = useSocket();
 
+  const { startProgress, endProgress } = useRouteProgress();
+
   // Set memeWarState from URL parameters
   useEffect(() => {
     if (params?.id) {
+      startProgress();
       setMemeWarState(params.id as string);
+      setTimeout(() => {
+        endProgress();
+      }, 300);
     }
-  }, [params, setMemeWarState]);
+  }, [params, setMemeWarState, startProgress, endProgress]);
 
   // Get meme war state data
-  const { data: memeWarStateInfo } = useMemeWarStateInfo(memeWarState);
+  const { data: memeWarStateInfo, isLoading: isLoadingWarState } =
+    useMemeWarStateInfo(memeWarState);
+
+  useEffect(() => {
+    if (isLoadingWarState) {
+      startProgress();
+    } else {
+      endProgress();
+    }
+  }, [isLoadingWarState, startProgress, endProgress]);
 
   // Make sure mint addresses are set before initializing hooks
   useEffect(() => {
@@ -171,7 +187,7 @@ export default function WarPage() {
         return;
       }
       // console.log("[WebSocket] Received game update for current war:", message);
-      
+
       if (!message || typeof message !== "object") {
         return;
       }
@@ -306,13 +322,16 @@ export default function WarPage() {
 
   // Handle deposit for a token
   const handleDeposit = async (mintIdentifier: 0 | 1, amount: string) => {
-    if (!publicKey || !memeWarState) {
-      showErrorToast("Connect wallet first.");
+    if (!publicKey) {
+      showErrorToast("Please connect your wallet first!");
       return;
     }
 
+    startProgress();
+
     if (isNaN(Number(amount)) || Number(amount) <= 0) {
       showErrorToast("Invalid deposit amount.");
+      endProgress();
       return;
     }
 
@@ -320,6 +339,7 @@ export default function WarPage() {
       mintIdentifier === 0 ? tokenBalanceMintA : tokenBalanceMintB;
     if (Number(amount) > balance) {
       showErrorToast("Insufficient balance.");
+      endProgress();
       return;
     }
 
@@ -347,28 +367,49 @@ export default function WarPage() {
       showErrorToast(`Deposit failed: ${error.message || "Unknown error"}`);
     } finally {
       setBtnLoading(-1);
+      // End loading indicator
+      endProgress();
     }
   };
 
   // Handle withdraw for a token
   const handleWithdraw = async (index: 0 | 1) => {
+    if (!publicKey) {
+      showErrorToast("Please connect your wallet first!");
+      return;
+    }
+
+    startProgress();
+
     try {
-      if (!mintA || !mintB) {
-        console.error("Mint addresses not available yet");
-        showErrorToast("Mint addresses not ready. Please try again.");
+      setBtnLoading(index);
+
+      let depositAmount = 0;
+      if (userStateInfo) {
+        depositAmount =
+          index === 0
+            ? parseFloat(userStateInfo.mint_a_deposit) -
+              parseFloat(userStateInfo.mint_a_withdrawn)
+            : parseFloat(userStateInfo.mint_b_deposit) -
+              parseFloat(userStateInfo.mint_b_withdrawn);
+      }
+
+      if (depositAmount <= 0) {
+        showErrorToast("No tokens to withdraw.");
+        endProgress();
         return;
       }
-      setBtnLoading(index);
-      await withdrawTokens(index, setBtnLoading, refreshTokenBalance);
 
-      refetchUserState();
-      queryClient.invalidateQueries({
-        queryKey: ["memeWarState", memeWarState],
+      await withdrawTokens(index, setBtnLoading, () => {
+        refetchUserState();
+        refreshTokenBalance();
       });
-    } catch (e) {
-      console.error("Withdrawal error:", e);
-      showErrorToast("Failed to Withdraw Tokens");
+    } catch (error) {
+      console.error("Withdraw error:", error);
+      showErrorToast("Failed to withdraw tokens. Please try again.");
+    } finally {
       setBtnLoading(-1);
+      endProgress();
     }
   };
 
