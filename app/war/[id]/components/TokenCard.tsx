@@ -30,7 +30,7 @@ export function TokenCard({
     Boolean(btnLoading)
   );
 
-  const { mintADepositedRaw, mintBDepositedRaw } =
+  const { mintADepositedRaw, mintBDepositedRaw, mintADepositedInSol, mintBDepositedInSol } =
     useMemeWarCalculations(memeWarStateInfo);
 
   const {
@@ -140,9 +140,21 @@ export function TokenCard({
   const expectedPayoutFormatted = formatNumber(expectedPayout);
   const expectedPayoutDollar =
     expectedPayout * (index === 0 ? mintAPrice : mintBPrice);
+  const hasMintA = Number(mintADepositedInSol) > 0;
+  const hasMintB = Number(mintBDepositedInSol) > 0;
 
+  let borderClass = '';
+  if (!hasMintA || !hasMintB) {
+    borderClass = 'border-gray-500 border-2';
+  } else {
+    const isLeading = index === 0
+      ? mintADepositedInSol > mintBDepositedInSol
+      : mintBDepositedInSol > mintADepositedInSol;
+    borderClass = isLeading ? 'border-primary border-[2px]' : 'border-red-500 border-[2px]';
+  }
   return (
-    <div className="bg-card border border-border rounded-lg p-4 sm:p-6">
+    <div 
+    className={`bg-card border rounded-lg p-4 sm:p-6 ${borderClass}`}>
       {/* Token Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4 sm:mb-6">
         {/* Left Side: Icon, Name, Socials */}
@@ -232,9 +244,8 @@ export function TokenCard({
                   ${(index === 0 ? mintAPrice : mintBPrice).toFixed(8)}
                 </span>
                 <span
-                  className={`text-xs sm:text-sm ${
-                    token.priceChange24h >= 0 ? "text-primary" : "text-red-500"
-                  }`}
+                  className={`text-xs sm:text-sm ${token.priceChange24h >= 0 ? "text-primary" : "text-red-500"
+                    }`}
                 >
                   {token.priceChange24h >= 0 ? "+" : ""}
                   {token.priceChange24h.toFixed(2)}%
