@@ -144,14 +144,18 @@ export default function WarPage() {
       : undefined
   );
 
+  // --- Consolidated WebSocket Effect ---
   useEffect(() => {
     if (!socket || !isConnected || !memeWarState || !mintA || !mintB) {
       return;
     }
 
-    const roomName = `game-${memeWarState}`;
+    // Define the single room name
+    const roomName = "game";
+    // Original: const roomName = `game-${memeWarState}`;
+
     console.log(`Subscribing to room: ${roomName}`);
-    socket.emit("subscribeToGame", roomName);
+    socket.emit("subscribeToGame", roomName); // Subscribe to static 'game' room
 
     let animationTimeoutId: NodeJS.Timeout | undefined;
     let chatAnimationTimeoutId: NodeJS.Timeout | undefined;
@@ -159,10 +163,15 @@ export default function WarPage() {
     const handleGameUpdate = (
       message: TradeData & { meme_war_state?: string }
     ) => {
+      // Keep the crucial filtering logic
       if (message.meme_war_state !== memeWarState) {
+        // console.log(
+        //   `[WebSocket] Ignoring game update for different war. Received: ${message.meme_war_state}, Current: ${memeWarState}`
+        // );
         return;
       }
-
+      // console.log("[WebSocket] Received game update for current war:", message);
+      
       if (!message || typeof message !== "object") {
         return;
       }
@@ -225,9 +234,15 @@ export default function WarPage() {
     const handleChatUpdate = (
       message: ChatMessage & { meme_war_state?: string }
     ) => {
+      // Keep the crucial filtering logic
       if (message.meme_war_state !== memeWarState) {
+        // console.log(
+        //   `[WebSocket] Ignoring chat update for different war: ${message.meme_war_state}, current: ${memeWarState}`
+        // );
         return;
       }
+      // console.log("[WebSocket] Received chat update for current war:", message);
+
       if (!message || typeof message !== "object") return;
 
       setLastMessageId(message.id!);
@@ -255,8 +270,10 @@ export default function WarPage() {
     socket.on("gameUpdate", handleGameUpdate);
     socket.on("chatUpdate", handleChatUpdate);
 
+    // Cleanup function
     return () => {
-      socket.emit("unsubscribeFromGame", roomName);
+      console.log(`Unsubscribing from room: ${roomName}`);
+      socket.emit("unsubscribeFromGame", roomName); // Unsubscribe from static 'game' room
       socket.off("gameUpdate", handleGameUpdate);
       socket.off("chatUpdate", handleChatUpdate);
 
@@ -270,7 +287,7 @@ export default function WarPage() {
   }, [
     socket,
     isConnected,
-    memeWarState,
+    memeWarState, // Keep memeWarState dependency for filtering logic inside handlers
     mintA,
     mintB,
     refetchUserState,
