@@ -144,7 +144,6 @@ export default function WarPage() {
       : undefined
   );
 
-  // --- Consolidated WebSocket Effect ---
   useEffect(() => {
     if (!socket || !isConnected || !memeWarState || !mintA || !mintB) {
       return;
@@ -227,13 +226,8 @@ export default function WarPage() {
       message: ChatMessage & { meme_war_state?: string }
     ) => {
       if (message.meme_war_state !== memeWarState) {
-        console.log(
-          `Ignoring chat update for different war: ${message.meme_war_state}, current: ${memeWarState}`
-        );
         return;
       }
-      console.log("Received chat update for current war:", message);
-
       if (!message || typeof message !== "object") return;
 
       setLastMessageId(message.id!);
@@ -262,7 +256,6 @@ export default function WarPage() {
     socket.on("chatUpdate", handleChatUpdate);
 
     return () => {
-      console.log(`Unsubscribing from room: ${roomName}`);
       socket.emit("unsubscribeFromGame", roomName);
       socket.off("gameUpdate", handleGameUpdate);
       socket.off("chatUpdate", handleChatUpdate);
