@@ -7,18 +7,19 @@ import { ReactQueryProvider } from "./react-query-provider"
 import { MemeWarProvider } from "./context/memeWarStateContext"
 import { SolanaProvider } from "@/components/solana/solana-provider"
 import { ClusterProvider } from "@/components/cluster/cluster-data-access"
+import { SocketProvider } from "./context/socketContext"
 
-const inter = Inter({ subsets: ["latin"] })
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
   title: "Meme Coin Wars",
   description: "Watch and participate in epic battles between meme coins!",
-}
+};
 
 export default function RootLayout({
   children,
 }: {
-  children: React.ReactNode
+  children: React.ReactNode;
 }) {
   return (
     <html lang="en">
@@ -27,15 +28,16 @@ export default function RootLayout({
           <ClusterProvider>
             <SolanaProvider>
               <MemeWarProvider>
+                <SocketProvider>
                 <LayoutClient>
                   {children}
                 </LayoutClient>
+                </SocketProvider>
               </MemeWarProvider>
             </SolanaProvider>
           </ClusterProvider>
         </ReactQueryProvider>
       </body>
     </html>
-  )
+  );
 }
-

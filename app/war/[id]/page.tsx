@@ -2,7 +2,6 @@
 
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams } from "next/navigation";
-import { io, Socket } from "socket.io-client";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useQueryClient } from "@tanstack/react-query";
 
@@ -13,6 +12,7 @@ import { useRecentTrades } from "@/app/api/getRecentTrades";
 import { useGetUserStateInfo } from "@/app/api/getUserState";
 import { useSendChatMessage } from "@/app/api/sendChatMessage";
 import { useMemeWarContext } from "@/app/context/memeWarStateContext";
+import { useSocket } from "@/app/context/socketContext";
 import { useAuth } from "@/app/hooks/useAuth";
 import useCountdown from "@/app/hooks/useCountdown";
 import useDepositTokens from "@/app/hooks/useDeposit";
@@ -46,6 +46,7 @@ export default function WarPage() {
     setMintA,
     setMintB,
   } = useMemeWarContext();
+  const { socket, isConnected } = useSocket();
 
   // Set memeWarState from URL parameters
   useEffect(() => {
@@ -143,33 +144,41 @@ export default function WarPage() {
       : undefined
   );
 
-  // WebSocket implementation for trades
+  // --- Consolidated WebSocket Effect ---
   useEffect(() => {
-    if (!memeWarState || !mintA || !mintB) return;
+    if (!socket || !isConnected || !memeWarState || !mintA || !mintB) {
+      return;
+    }
 
-    const socket: Socket = io(process.env.NEXT_PUBLIC_SERVER_URL!);
-    let tradeTimeoutId: NodeJS.Timeout | undefined;
+    // Define the single room name
+    const roomName = "game";
+    // Original: const roomName = `game-${memeWarState}`;
+
+    console.log(`Subscribing to room: ${roomName}`);
+    socket.emit("subscribeToGame", roomName); // Subscribe to static 'game' room
+
     let animationTimeoutId: NodeJS.Timeout | undefined;
+    let chatAnimationTimeoutId: NodeJS.Timeout | undefined;
 
-    const handleConnect = () => {
-      console.log(
-        "Trade WebSocket connected, subscribing to game:",
-        memeWarState
-      );
-      socket.emit("subscribeToGame", "game-" + memeWarState);
-    };
+    const handleGameUpdate = (
+      message: TradeData & { meme_war_state?: string }
+    ) => {
+      // Keep the crucial filtering logic
+      if (message.meme_war_state !== memeWarState) {
+        // console.log(
+        //   `[WebSocket] Ignoring game update for different war. Received: ${message.meme_war_state}, Current: ${memeWarState}`
+        // );
+        return;
+      }
+      // console.log("[WebSocket] Received game update for current war:", message);
+      
+      if (!message || typeof message !== "object") {
+        return;
+      }
 
-    const handleGameUpdate = (message: TradeData) => {
-      console.log("Received trade update from WebSocket:", message);
-
-      // Handle new message format that might include different structure
-      // Make sure message has required fields before processing
-      if (!message || typeof message !== "object") return;
-
-      // Extract the necessary data from the message
       const processedMessage: TradeData = {
         event_type: message.event_type || "deposit",
-        mint: message.mint || mintA || mintB, // Default to mintA if mint is not provided
+        mint: message.mint || mintA || mintB,
         amount: message.amount?.toString() || "0",
         wallet_address: message.wallet_address || "unknown",
         event_time: message.event_time || Date.now(),
@@ -180,15 +189,12 @@ export default function WarPage() {
       const isMatchingMintB = processedMessage.mint === mintB;
       const index = isMatchingMintA ? 0 : isMatchingMintB ? 1 : -1;
 
-      // Update local trade data - ensure we have proper structures
       setDisplayTradesData((prevData) => {
         if (!prevData) return { mintA: [], mintB: [] };
-
         const updatedData = {
           mintA: [...(prevData.mintA || [])],
           mintB: [...(prevData.mintB || [])],
         };
-
         if (isMatchingMintA) {
           const newTrades = [processedMessage, ...updatedData.mintA];
           updatedData.mintA = newTrades.sort(
@@ -200,101 +206,93 @@ export default function WarPage() {
             (a, b) => b.event_time - a.event_time
           );
         }
-
         return updatedData;
       });
 
-      // Trigger animation only for deposits
       if (index !== -1 && processedMessage.event_type === "deposit") {
-        // Clear any existing animation timeout
         if (animationTimeoutId) {
           clearTimeout(animationTimeoutId);
         }
-
-        // Set animation state
         setAnimateTrade({
           index,
           tradeId:
             processedMessage.tx_signature || `${processedMessage.event_time}`,
         });
-
-        // Set timeout to clear the animation
         animationTimeoutId = setTimeout(() => {
           setAnimateTrade({ index: -1, tradeId: null });
-        }, 3500); // Animation duration increased
+        }, 3500);
       }
 
-      // Also refresh the user state and war state to show updated deposits
       setTimeout(() => {
         refetchUserState();
         queryClient.invalidateQueries({
           queryKey: ["memeWarState", memeWarState],
         });
-      }, 2000); // Give time for blockchain state to update
+      }, 2000);
     };
 
-    // Set up event listeners
-    socket.on("connect", handleConnect);
-    socket.on("gameUpdate", handleGameUpdate);
-
-    // Cleanup function
-    return () => {
-      if (tradeTimeoutId) {
-        clearTimeout(tradeTimeoutId);
+    const handleChatUpdate = (
+      message: ChatMessage & { meme_war_state?: string }
+    ) => {
+      // Keep the crucial filtering logic
+      if (message.meme_war_state !== memeWarState) {
+        // console.log(
+        //   `[WebSocket] Ignoring chat update for different war: ${message.meme_war_state}, current: ${memeWarState}`
+        // );
+        return;
       }
-      if (animationTimeoutId) {
-        clearTimeout(animationTimeoutId);
-      }
+      // console.log("[WebSocket] Received chat update for current war:", message);
 
-      socket.off("connect", handleConnect);
-      socket.off("gameUpdate", handleGameUpdate);
-      socket.disconnect();
-    };
-  }, [memeWarState, mintA, mintB, refetchUserState, queryClient]);
+      if (!message || typeof message !== "object") return;
 
-  // Chat WebSocket implementation
-  useEffect(() => {
-    if (!memeWarState) return;
-
-    const socket: Socket = io(process.env.NEXT_PUBLIC_SERVER_URL);
-    let animationTimeoutId: NodeJS.Timeout;
-
-    socket.on("connect", () => {
-      socket.emit("subscribeToGame", "game-" + memeWarState);
-    });
-
-    socket.on("chatUpdate", (message: ChatMessage) => {
       setLastMessageId(message.id!);
-      console.log("Received chat update from WebSocket:", message);
 
-      if (animationTimeoutId) {
-        clearTimeout(animationTimeoutId);
+      if (chatAnimationTimeoutId) {
+        clearTimeout(chatAnimationTimeoutId);
       }
-
-      // Set timeout to clear the animation
-      animationTimeoutId = setTimeout(() => {
+      chatAnimationTimeoutId = setTimeout(() => {
         setLastMessageId(null);
       }, 1000);
 
       setDisplayMessages((prevMessages) => {
+        if (prevMessages?.some((m) => m.id === message.id)) {
+          return prevMessages;
+        }
         const updatedMessages = [...(prevMessages || []), message];
-
-        // Sort by descending time
         return updatedMessages.sort(
           (a, b) =>
             new Date(b.sender_time).getTime() -
             new Date(a.sender_time).getTime()
         );
       });
-    });
+    };
 
+    socket.on("gameUpdate", handleGameUpdate);
+    socket.on("chatUpdate", handleChatUpdate);
+
+    // Cleanup function
     return () => {
+      console.log(`Unsubscribing from room: ${roomName}`);
+      socket.emit("unsubscribeFromGame", roomName); // Unsubscribe from static 'game' room
+      socket.off("gameUpdate", handleGameUpdate);
+      socket.off("chatUpdate", handleChatUpdate);
+
       if (animationTimeoutId) {
         clearTimeout(animationTimeoutId);
       }
-      socket.disconnect();
+      if (chatAnimationTimeoutId) {
+        clearTimeout(chatAnimationTimeoutId);
+      }
     };
-  }, [memeWarState]);
+  }, [
+    socket,
+    isConnected,
+    memeWarState, // Keep memeWarState dependency for filtering logic inside handlers
+    mintA,
+    mintB,
+    refetchUserState,
+    queryClient,
+  ]);
 
   useEffect(() => {
     if (chatMessages) {
@@ -344,7 +342,6 @@ export default function WarPage() {
       } else {
         showErrorToast("Deposit failed. Please try again.");
       }
-      // eslint-disable-next-line @typescript-eslint/no-explicit-any
     } catch (error: any) {
       console.error("Deposit error:", error);
       showErrorToast(`Deposit failed: ${error.message || "Unknown error"}`);
@@ -356,7 +353,6 @@ export default function WarPage() {
   // Handle withdraw for a token
   const handleWithdraw = async (index: 0 | 1) => {
     try {
-      // Check if mint addresses are available
       if (!mintA || !mintB) {
         console.error("Mint addresses not available yet");
         showErrorToast("Mint addresses not ready. Please try again.");
@@ -365,7 +361,6 @@ export default function WarPage() {
       setBtnLoading(index);
       await withdrawTokens(index, setBtnLoading, refreshTokenBalance);
 
-      // Refresh user state and query data after successful withdrawal
       refetchUserState();
       queryClient.invalidateQueries({
         queryKey: ["memeWarState", memeWarState],
@@ -429,9 +424,7 @@ export default function WarPage() {
   };
 
   // Calculate percentages and amounts for display
-
   const { mintAPrice, mintBPrice } = useMemeWarCalculations(memeWarStateInfo);
-  // Convert blockchain data to UI-friendly format
   const warData = useMemo(() => {
     if (!memeWarStateInfo) {
       return null;
