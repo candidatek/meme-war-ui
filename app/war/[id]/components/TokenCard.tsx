@@ -6,6 +6,18 @@ import { TokenCardProps } from "@/app/Interfaces";
 import { useMemeWarCalculations } from "@/app/hooks/useMemeWarCalculations";
 import { useUserCalculations } from "@/app/hooks/useUserCalculations";
 import { WarRoomDialog } from "./WarRoomDialog";
+import { useWallet } from "@solana/wallet-adapter-react";
+import dynamic from "next/dynamic";
+
+const WalletMultiButtonDynamic = dynamic(
+  async () => {
+    const { WalletMultiButton } = await import("@solana/wallet-adapter-react-ui");
+    return function StyledWalletMultiButton(props: any) {
+      return <WalletMultiButton {...props} />;
+    };
+  },
+  { ssr: false }
+);
 
 export function TokenCard({
   memeWarStateInfo,
@@ -29,6 +41,7 @@ export function TokenCard({
   const [localBtnLoading, setLocalBtnLoading] = useState<boolean>(
     Boolean(btnLoading)
   );
+  const wallet = useWallet();
 
   const { mintADepositedRaw, mintBDepositedRaw } =
     useMemeWarCalculations(memeWarStateInfo);
@@ -141,11 +154,18 @@ export function TokenCard({
   const expectedPayoutDollar =
     expectedPayout * (index === 0 ? mintAPrice : mintBPrice);
 
+  // Wallet connection status tracking for UX
+  const [isConnecting, setIsConnecting] = useState(false);
+  
+  const handleConnectClick = () => {
+    setIsConnecting(true);
+    // Reset connecting state after 3 seconds (gives time for wallet modal to appear)
+    setTimeout(() => setIsConnecting(false), 3000);
+  };
+
   return (
     <div className="bg-card border border-border rounded-lg p-4 sm:p-6">
-      {/* Token Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4 sm:mb-6">
-        {/* Left Side: Icon, Name, Socials */}
         <div className="flex items-center gap-3 sm:gap-4">
           <div className="w-24 h-24 sm:w-12 sm:h-12 rounded-full bg-muted flex items-center justify-center text-xl sm:text-2xl overflow-hidden shrink-0">
             {token.image ? (
@@ -394,7 +414,6 @@ export function TokenCard({
           </div>
         )}
 
-        {/* Action Buttons */}
         {publicKey ? (
           <div className="grid grid-cols-2 gap-2">
             <button
@@ -413,9 +432,10 @@ export function TokenCard({
             </button>
           </div>
         ) : (
-          <button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-2 rounded text-xs sm:text-sm font-medium">
-            Connect Wallet
-          </button>
+          <WalletMultiButtonDynamic 
+            className="phantom-button w-full !py-2 !px-6 !h-auto !text-xs sm:!text-sm !rounded"
+            onClick={handleConnectClick}
+          />
         )}
 
         {/* User Stats */}
