@@ -449,6 +449,7 @@
 .wallet-button-wrapper button {
   /* background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.7)) !important; */
   background-color: hsl(var(--primary)) !important;
+  /* Restore to original green */
   /* Replaced gradient with solid color */
   border: 1px solid hsl(var(--border)) !important;
   color: hsl(var(--primary-foreground)) !important;
@@ -458,6 +459,7 @@
   border-radius: 0.5rem !important;
   transition: all 0.3s ease !important;
   box-shadow: 0 0 10px rgba(var(--primary-rgb), 0.3) !important;
+  /* Restore to original */
   text-transform: uppercase !important;
   letter-spacing: 0.05em !important;
   position: relative !important;
@@ -495,7 +497,6 @@
   /* Removed shine animation */
 }
 
-/* Override the default wallet adapter styles */
 .wallet-adapter-button {
   /* background: linear-gradient(135deg, hsl(var(--primary)), hsl(var(--primary) / 0.7)) !important; */
   background-color: hsl(var(--primary)) !important;
@@ -545,6 +546,16 @@
   /* Removed shine animation */
 }
 
+.wallet-adapter-modal .wallet-adapter-button {
+  background-color: #512da8 !important;
+  box-shadow: 0 0 10px rgba(81, 45, 168, 0.3) !important;
+}
+
+.wallet-adapter-modal .wallet-adapter-button:hover {
+  box-shadow: 0 0 15px rgba(81, 45, 168, 0.5) !important;
+  background-color: #673ab7 !important;
+}
+
 /* Style the wallet modal */
 .wallet-adapter-modal {
   background: hsl(var(--card)) !important;
@@ -583,7 +594,7 @@
 
 .wallet-adapter-modal-list-item:hover {
   background: hsl(var(--muted)) !important;
-  border-color: hsl(var(--primary)) !important;
+  border-color: #512da8 !important;
 }
 
 .wallet-adapter-modal-list-item:last-child {
@@ -591,10 +602,50 @@
 }
 
 .wallet-adapter-modal-list-more {
-  color: hsl(var(--primary)) !important;
+  color: #512da8 !important;
   font-weight: 500 !important;
 }
 
 .wallet-adapter-modal-list-more:hover {
-  color: hsl(var(--primary-foreground)) !important;
+  color: #673ab7 !important;
+}
+
+/* TopLoader custom styling */
+.bar-of-progress {
+  position: fixed;
+  z-index: 1500 !important;
+  top: 0;
+  height: 4px !important;
+  background: hsl(var(--primary)) !important;
+  border-radius: 0 !important;
+  box-shadow: 0 0 10px hsl(var(--primary)), 0 0 5px hsl(var(--primary)) !important;
+  image-rendering: pixelated;
+}
+
+.bar-of-progress::after {
+  content: '';
+  display: block;
+  position: absolute;
+  right: 0;
+  width: 100%;
+  height: 100%;
+  box-shadow: 0 0 10px hsl(var(--primary)), 0 0 5px hsl(var(--primary));
+}
+
+/* Pixel dots effect for the loader */
+.bar-of-progress::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image:
+    linear-gradient(90deg,
+      transparent 0%,
+      transparent 50%,
+      rgba(255, 255, 255, 0.5) 50%,
+      rgba(255, 255, 255, 0.5) 100%);
+  background-size: 4px 4px;
+  opacity: 0.3;
 }
