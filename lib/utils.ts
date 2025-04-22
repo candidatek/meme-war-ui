@@ -52,7 +52,6 @@ export const fetchTokenBalance = async (
       publicKey,
       {
         mint: tokenMintAddress,
-        
       }
     );
 

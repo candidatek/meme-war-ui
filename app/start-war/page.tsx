@@ -9,7 +9,7 @@ import { PublicKey } from "@solana/web3.js";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { Input } from "@/components/ui/input"; // Added Input for promo code
 import {
   Card,
   CardContent,
@@ -27,6 +27,7 @@ import { getPDAForMemeSigner, sortPublicKeys } from "../utils";
 import { showErrorToast } from "@/components/toast-utils";
 import { useMintInfo } from "../hooks/useMintInfo";
 import { useGetMemeWarRegistry } from "../hooks/useGetMemeWarRegistry";
+import ToastStyleModal from "@/components/ui/modal";
 
 // Import components from the local components directory
 import { CoinForm } from "./components/CoinForm";
@@ -60,6 +61,7 @@ export default function StartWarPage() {
 
   // Promo code state
   const [promoCode, setPromoCode] = useState<string>("");
+  const [isPromoModalOpen, setIsPromoModalOpen] = useState<boolean>(false);
   const [shouldValidate, setShouldValidate] = useState<boolean>(false);
 
   // Use the hook for promo code validation
@@ -123,6 +125,7 @@ export default function StartWarPage() {
   // Handle promo code validation success
   useEffect(() => {
     if (isPromoCodeValid) {
+      setIsPromoModalOpen(false);
       toast.success("Promo code applied successfully!", {
         duration: 3000,
         position: "bottom-left",
@@ -319,7 +322,7 @@ export default function StartWarPage() {
 
     // Check if promo code is valid
     if (!isPromoCodeValid) {
-      showErrorToast("Please enter and apply a valid promo code first");
+      setIsPromoModalOpen(true);
       return;
     }
 
@@ -566,6 +569,81 @@ export default function StartWarPage() {
 
   return (
     <TooltipProvider>
+      {/* Promo Code Modal */}
+      <ToastStyleModal
+        isOpen={isPromoModalOpen}
+        onClose={() => setIsPromoModalOpen(false)}
+        width={500}
+        height="auto"
+        position="center"
+      >
+        <div style={{ textAlign: "center" }}>
+          <h2 style={{ fontSize: "24px", marginBottom: "20px" }}>
+            Enter Promo Code
+          </h2>
+
+          <p>Please enter a valid promo code to start a war.</p>
+
+          <form onSubmit={handlePromoCodeSubmit} style={{ margin: "20px 0" }}>
+            <Input
+              value={promoCode}
+              onChange={(e) => setPromoCode(e.target.value)}
+              placeholder="Enter your promo code"
+              style={{
+                padding: "10px",
+                fontSize: "16px",
+                width: "100%",
+                marginBottom: "10px",
+                background: "rgba(255, 255, 255, 0.1)",
+                border: "1px solid rgba(255, 255, 255, 0.2)",
+                borderRadius: "4px",
+                color: "white",
+              }}
+            />
+
+            {promoValidationError && shouldValidate && (
+              <p
+                style={{
+                  color: "#ff6b6b",
+                  marginTop: "10px",
+                  fontSize: "14px",
+                }}
+              >
+                Invalid promo code. Please try again.
+              </p>
+            )}
+
+            <div style={{ display: "flex", gap: "10px", marginTop: "20px" }}>
+              <Button
+                type="button"
+                onClick={() => {
+                  setIsPromoModalOpen(false);
+                  setPromoCode("");
+                }}
+                style={{
+                  flex: 1,
+                  padding: "10px 0",
+                }}
+                variant={"outline"}
+              >
+                Cancel
+              </Button>
+
+              <Button
+                type="submit"
+                disabled={isValidatingPromo || !promoCode}
+                style={{
+                  flex: 1,
+                }}
+                variant={"default"}
+              >
+                {isValidatingPromo ? "Validating..." : "Apply Code"}
+              </Button>
+            </div>
+          </form>
+        </div>
+      </ToastStyleModal>
+
       <div className="container mx-auto px-4 py-6 sm:py-8">
         <div className="max-w-4xl mx-auto">
           <h1 className="text-2xl sm:text-3xl font-bold mb-2">
@@ -589,78 +667,20 @@ export default function StartWarPage() {
             )}
           </div>
 
-          {/* Promo Code Field (Inline) */}
-          <div className="mb-6 p-4 bg-black/40 rounded-xl border border-green-500/30 backdrop-blur-sm">
-            <h3 className="text-lg font-medium mb-2 text-white flex items-center">
-              <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                width="20" 
-                height="20" 
-                viewBox="0 0 24 24" 
-                fill="none" 
-                stroke="currentColor" 
-                strokeWidth="2" 
-                strokeLinecap="round" 
-                strokeLinejoin="round" 
-                className="text-green-400 mr-2"
-              >
-                <polyline points="9 11 12 14 22 4"></polyline>
-                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
-              </svg>
-              Promo Code
-            </h3>
-            
+          {/* Promo Code Status */}
+          <div className="mb-4 text-sm">
             {isPromoCodeValid ? (
-              <div className="flex items-center bg-green-500/10 p-3 rounded-lg">
-                <div className="flex-1">
-                  <p className="text-green-400">Code Applied: <span className="font-semibold">{promoCode}</span></p>
-                  <p className="text-xs text-green-300/70">Your promo code has been successfully validated</p>
-                </div>
-                <Button 
-                  variant="outline" 
-                  size="sm"
-                  className="border-green-600/30 hover:bg-green-900/20 text-green-400" 
-                  onClick={() => {
-                    setPromoCode("");
-                    setShouldValidate(false);
-                  }}
-                >
-                  Remove
-                </Button>
-              </div>
+              <p className="text-green-500">Promo code applied: {promoCode}</p>
             ) : (
-              <div>
-                <form onSubmit={handlePromoCodeSubmit} className="flex items-end gap-3">
-                  <div className="flex-1">
-                    <Input
-                      value={promoCode}
-                      onChange={(e) => setPromoCode(e.target.value)}
-                      placeholder="Enter promo code"
-                      className="w-full bg-gray-900/50 border border-gray-800 focus:border-green-500/50 focus:ring-1 focus:ring-green-500/30"
-                    />
-                    {promoValidationError && shouldValidate && (
-                      <p className="text-red-400 text-sm mt-1 animate-in fade-in duration-200">
-                        Invalid promo code. Please try again.
-                      </p>
-                    )}
-                  </div>
-                  <Button 
-                    type="submit"
-                    disabled={isValidatingPromo || !promoCode}
-                    className="bg-gradient-to-r from-green-600 to-emerald-600 hover:from-green-700 hover:to-emerald-700 text-white"
-                  >
-                    {isValidatingPromo ? (
-                      <span className="flex items-center">
-                        <svg className="animate-spin -ml-1 mr-2 h-4 w-4 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                          <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                          <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                        </svg>
-                        Validating
-                      </span>
-                    ) : "Apply Code"}
-                  </Button>
-                </form>
-                <p className="text-xs text-gray-400 mt-2">Enter a valid promo code to start a war</p>
+              <div className="flex items-center gap-2">
+                <p className="text-amber-500">No promo code applied</p>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => setIsPromoModalOpen(true)}
+                >
+                  Enter Code
+                </Button>
               </div>
             )}
           </div>
