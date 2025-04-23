@@ -764,6 +764,16 @@ function WarItem({
             >
               {timeLeft}
             </motion.div>
+            {war.warData?.tx_count !== undefined && (
+              <div className="mt-1 text-center">
+                <span className="text-[10px] sm:text-xs text-muted-foreground">
+                  TXs:
+                </span>
+                <span className="ml-1 text-[10px] sm:text-xs font-medium">
+                  {new Intl.NumberFormat().format(war.warData.tx_count)}
+                </span>
+              </div>
+            )}
           </div>
         </div>
 

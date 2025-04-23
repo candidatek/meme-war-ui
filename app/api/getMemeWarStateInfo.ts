@@ -1,6 +1,6 @@
-import axios from 'axios';
-import { useQuery } from '@tanstack/react-query';
-import { SERVER_URL } from '@/lib/constants';
+import axios from "axios";
+import { useQuery } from "@tanstack/react-query";
+import { SERVER_URL } from "@/lib/constants";
 
 export interface IMemeWarState {
   mint_a_sol_ratio: string;
@@ -45,12 +45,12 @@ export interface IMemeWarState {
   mint_b_holders: string;
   mint_b_depositors: string;
   mint_b_description: string;
-
+  tx_count?: number;
 }
 // Define the async function to fetch the mint info
 const getMemeWarStateInfo = async (mintAddress: string | null) => {
   const response = await axios.get(SERVER_URL + `/getMemeWarState`, {
-    params: { mintAddress }
+    params: { mintAddress },
   });
   return response.data.data as IMemeWarState;
 };
@@ -58,12 +58,12 @@ const getMemeWarStateInfo = async (mintAddress: string | null) => {
 // Custom hook to use the fetchMintInfo query
 export const useMemeWarStateInfo = (memeWarState: string | null) => {
   return useQuery({
-    queryKey: ['memeWarState', memeWarState],
+    queryKey: ["memeWarState", memeWarState],
     queryFn: () => getMemeWarStateInfo(memeWarState),
-    enabled: memeWarState !== '' || !!memeWarState || memeWarState !== undefined,
+    enabled:
+      memeWarState !== "" || !!memeWarState || memeWarState !== undefined,
     staleTime: 1000 * 60 * 5, // 5 minutes
     refetchInterval: 1000 * 60 * 1, // 3 minute
     refetchIntervalInBackground: true,
-  }
-  );
+  });
 };

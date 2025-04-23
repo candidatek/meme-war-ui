@@ -23,7 +23,11 @@ import useWithdrawTokens from "@/app/hooks/useWithdraw";
 import { ChatMessage, TradeData, WarData } from "@/app/Interfaces";
 
 // Utils
-import { showErrorToast, validateSolanaAddress } from "@/lib/utils";
+import {
+  showErrorToast,
+  validateSolanaAddress,
+  formatNumber,
+} from "@/lib/utils";
 
 // Components
 import { TokenCard } from "./components/TokenCard";
@@ -605,6 +609,16 @@ export default function WarPage() {
           />
         </div>
       </div>
+
+      {/* Transaction Count Display */}
+      {memeWarStateInfo?.tx_count !== undefined && (
+        <div className="text-center my-4">
+          <span className="text-muted-foreground">Total Transactions:</span>
+          <span className="font-semibold ml-2">
+            {new Intl.NumberFormat().format(memeWarStateInfo.tx_count)}
+          </span>
+        </div>
+      )}
 
       {/* Live Feed and Chat Section */}
       <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
