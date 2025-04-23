@@ -22,11 +22,14 @@ import { useFirstVisitModal } from "@/app/hooks/useFirstVisitModal";
 import { IMemeWarState } from "@/app/api/getMemeWarStateInfo";
 import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
+import { useSocket } from "@/app/context/socketContext";
+import { ChatMessage } from "@/app/Interfaces";
 
 // Define a combined type for the data from getWarDetails
 interface CombinedWarData extends IMemeWarState {
   meme_war_state: string; // Add missing property
   tx_count?: number; // Add potentially missing property
+  reply_count?: number; // Add reply count property
   // Add any other properties returned by getWarDetails if needed
 }
 
@@ -114,6 +117,8 @@ export function MemeCoinWars() {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState<string>("");
   const router = useRouter();
+
+  const { socket, isConnected } = useSocket();
 
   // Use server-side search API when search term is present
   const {
@@ -255,6 +260,38 @@ export function MemeCoinWars() {
 
     // return () => clearInterval(interval);
   }, [wars, animationsEnabled]);
+
+  useEffect(() => {
+    if (!socket || !isConnected) {
+      return;
+    }
+
+    const handleChatUpdate = (
+      message: ChatMessage & { meme_war_state?: string }
+    ) => {
+      if (!message.meme_war_state) return;
+
+      setWars((prevWars) => {
+        const updatedWars = [...prevWars];
+        const warIndex = updatedWars.findIndex(
+          (war) => war.warId === message.meme_war_state
+        );
+
+        if (warIndex !== -1 && updatedWars[warIndex].warData) {
+          updatedWars[warIndex].warData!.reply_count =
+            (updatedWars[warIndex].warData!.reply_count || 0) + 1;
+        }
+
+        return updatedWars;
+      });
+    };
+
+    socket.on("chatUpdate", handleChatUpdate);
+
+    return () => {
+      socket.off("chatUpdate", handleChatUpdate);
+    };
+  }, [socket, isConnected, wars]);
 
   // Toggle animations handler
   const toggleAnimations = () => {
@@ -771,6 +808,16 @@ function WarItem({
                 </span>
                 <span className="ml-1 text-[10px] sm:text-xs font-medium">
                   {new Intl.NumberFormat().format(war.warData.tx_count)}
+                </span>
+              </div>
+            )}
+            {war.warData?.reply_count !== undefined && (
+              <div className="text-center">
+                <span className="text-[10px] sm:text-xs text-muted-foreground">
+                  Replies:
+                </span>
+                <span className="ml-1 text-[10px] sm:text-xs font-medium">
+                  {new Intl.NumberFormat().format(war.warData.reply_count)}
                 </span>
               </div>
             )}

@@ -13,7 +13,10 @@ interface ChatSectionProps {
   sendStatus: string;
   pubKey: string | null;
   userStateInfo: any;
-  warData: any;
+  warData: {
+    reply_count?: number;
+    [key: string]: any;
+  };
   lastMessageId: string | null;
 }
 
@@ -30,12 +33,24 @@ export function ChatSection({
   warData,
   lastMessageId,
 }: ChatSectionProps) {
+  // Fallback to using the messages array length if reply_count is not available
+  const replyCount =
+    warData?.reply_count !== undefined
+      ? warData.reply_count
+      : displayMessages?.length || 0;
+
   return (
     <div className="bg-card border border-border rounded-lg h-full flex flex-col">
       <div className="p-4 border-b border-border flex justify-between">
         <h2 className="text-lg md:text-xl font-medium">Live Chat</h2>
-        <div onClick={refreshChat} className="cursor-pointer text-sm">
-          Refresh
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">
+            {new Intl.NumberFormat().format(replyCount)}{" "}
+            {replyCount === 1 ? "reply" : "replies"}
+          </span>
+          <div onClick={refreshChat} className="cursor-pointer text-sm">
+            Refresh
+          </div>
         </div>
       </div>
 

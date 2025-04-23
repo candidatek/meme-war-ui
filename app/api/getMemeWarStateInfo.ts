@@ -46,6 +46,7 @@ export interface IMemeWarState {
   mint_b_depositors: string;
   mint_b_description: string;
   tx_count?: number;
+  reply_count?: number;
 }
 // Define the async function to fetch the mint info
 const getMemeWarStateInfo = async (mintAddress: string | null) => {

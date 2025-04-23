@@ -254,37 +254,28 @@ export default function WarPage() {
     const handleChatUpdate = (
       message: ChatMessage & { meme_war_state?: string }
     ) => {
-      // Keep the crucial filtering logic
       if (message.meme_war_state !== memeWarState) {
-        // console.log(
-        //   `[WebSocket] Ignoring chat update for different war: ${message.meme_war_state}, current: ${memeWarState}`
-        // );
         return;
       }
-      // console.log("[WebSocket] Received chat update for current war:", message);
 
-      if (!message || typeof message !== "object") return;
-
-      setLastMessageId(message.id!);
-
-      if (chatAnimationTimeoutId) {
-        clearTimeout(chatAnimationTimeoutId);
-      }
-      chatAnimationTimeoutId = setTimeout(() => {
-        setLastMessageId(null);
-      }, 1000);
-
-      setDisplayMessages((prevMessages) => {
-        if (prevMessages?.some((m) => m.id === message.id)) {
-          return prevMessages;
-        }
-        const updatedMessages = [...(prevMessages || []), message];
-        return updatedMessages.sort(
-          (a, b) =>
-            new Date(b.sender_time).getTime() -
-            new Date(a.sender_time).getTime()
-        );
+      setDisplayMessages((prev) => {
+        if (!prev) return [message];
+        const existing = prev.find((m) => m.id === message.id);
+        if (existing) return prev;
+        return [message, ...prev];
       });
+
+      if (message.id) {
+        setLastMessageId(message.id);
+      }
+
+      if (warData) {
+        warData.reply_count = (warData.reply_count || 0) + 1;
+      }
+
+      setTimeout(() => {
+        setLastMessageId(null);
+      }, 2000);
     };
 
     socket.on("gameUpdate", handleGameUpdate);
@@ -447,18 +438,29 @@ export default function WarPage() {
 
   // Handle chat message sending
   const handleSendMessage = async () => {
-    if (!newMessage.trim() || !memeWarState) return;
+    if (!pubKey || !newMessage.trim() || !memeWarState) return;
 
-    if (!authState.token && wallet.connected) {
-      await handleSignIn();
+    try {
+      await sendMessage({
+        pubKey,
+        newMessage,
+        memeWarState,
+      });
+
+      setNewMessage("");
+
+      // Increment reply count locally
+      if (warData) {
+        warData.reply_count = (warData.reply_count || 0) + 1;
+      }
+    } catch (error) {
+      console.error("Error sending message:", error);
+      if (error instanceof Error) {
+        showErrorToast(error.message);
+      } else {
+        showErrorToast("Failed to send message");
+      }
     }
-
-    sendMessage({
-      pubKey: pubKey!,
-      newMessage,
-      memeWarState,
-    });
-    setNewMessage("");
   };
 
   // Handle Enter key for sending message
@@ -530,6 +532,7 @@ export default function WarPage() {
       totalPledged: mintADeposited + mintBDeposited,
       timeLeft: timeLeft || "00:00:00",
       recentPledges: [],
+      reply_count: memeWarStateInfo.reply_count || 0,
     } as WarData;
   }, [memeWarStateInfo, timeLeft, mintAPrice, mintBPrice]);
 
