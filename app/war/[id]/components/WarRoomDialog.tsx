@@ -1,47 +1,31 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-
-interface TweetTemplate {
-  text: string;
-  hashtags: string[];
-}
+import { TweetTemplate } from "@/app/Interfaces";
 
 interface WarRoomDialogProps {
   isOpen: boolean;
   setIsOpen: (open: boolean) => void;
-  token: {
-    ticker: string;
-    emoji?: string;
-  };
+  token: { ticker: string; emoji?: string };
+  tweetTemplates: TweetTemplate[];
+  isLoading: boolean;
+  error: string | null;
 }
 
 export function WarRoomDialog({
   isOpen,
   setIsOpen,
   token,
+  tweetTemplates,
+  isLoading,
+  error,
 }: WarRoomDialogProps) {
   const [selectedTemplate, setSelectedTemplate] =
     useState<TweetTemplate | null>(null);
-
-  const tweetTemplates: TweetTemplate[] = [
-    {
-      text: `${token.ticker} is crushing it in the meme wars! Join me in supporting the future of memes 🚀`,
-      hashtags: ["MemeCoin", "Crypto", token.ticker],
-    },
-    {
-      text: `The war is on and ${token.ticker} is taking the lead! Don't miss out on the next big thing 💎`,
-      hashtags: ["CryptoWars", "MemeWars", token.ticker],
-    },
-    {
-      text: `${token.ticker} army assemble! We're making history in the meme wars 🔥`,
-      hashtags: ["CryptoGems", "MemeWar", token.ticker],
-    },
-  ];
 
   const generateTwitterIntent = (template: TweetTemplate): string => {
     const text = encodeURIComponent(template.text);
@@ -66,31 +50,42 @@ export function WarRoomDialog({
           </div>
 
           <div className="space-y-2 sm:space-y-3">
-            {tweetTemplates.map((template, index) => (
-              <div
-                key={index}
-                onClick={() => setSelectedTemplate(template)}
-                className={`p-3 rounded-lg border cursor-pointer transition-all ${
-                  selectedTemplate === template
-                    ? "border-primary bg-primary/5"
-                    : "border-border hover:border-primary/50"
-                }`}
-              >
-                <p className="text-xs sm:text-sm mb-2">{template.text}</p>
-                <div className="flex flex-wrap gap-1 sm:gap-2">
-                  {template.hashtags.map((tag) => (
-                    <span
-                      key={tag}
-                      className="text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full bg-muted text-muted-foreground"
-                    >
-                      #{tag}
-                    </span>
-                  ))}
-                </div>
+            {isLoading ? (
+              <div className="text-center py-4 text-muted-foreground">
+                Generating AI-powered tweets...
               </div>
-            ))}
+            ) : error ? (
+              <div className="text-red-500 text-center py-4">{error}</div>
+            ) : tweetTemplates.length === 0 ? (
+              <div className="text-center py-4 text-muted-foreground">
+                No tweets available. Try again later.
+              </div>
+            ) : (
+              tweetTemplates.map((template, index) => (
+                <div
+                  key={index}
+                  onClick={() => setSelectedTemplate(template)}
+                  className={`p-3 rounded-lg border cursor-pointer transition-all ${
+                    selectedTemplate === template
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-primary/50"
+                  }`}
+                >
+                  <p className="text-xs sm:text-sm mb-2">{template.text}</p>
+                  <div className="flex flex-wrap gap-1 sm:gap-2">
+                    {template.hashtags.map((tag: string) => (
+                      <span
+                        key={tag}
+                        className="text-xs px-1.5 sm:px-2 py-0.5 sm:py-1 rounded-full bg-muted text-muted-foreground"
+                      >
+                        #{tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              ))
+            )}
           </div>
-
           <a
             href={
               selectedTemplate ? generateTwitterIntent(selectedTemplate) : "#"

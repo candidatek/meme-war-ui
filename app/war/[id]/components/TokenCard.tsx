@@ -2,7 +2,7 @@ import { useState, useMemo, useEffect } from "react";
 import { Megaphone } from "lucide-react";
 import { motion } from "framer-motion";
 import { formatNumber, formatWalletAddress } from "@/lib/utils";
-import { TokenCardProps } from "@/app/Interfaces";
+import { TokenCardProps, TweetTemplate } from "@/app/Interfaces";
 import { useMemeWarCalculations } from "@/app/hooks/useMemeWarCalculations";
 import { useUserCalculations } from "@/app/hooks/useUserCalculations";
 import { WarRoomDialog } from "./WarRoomDialog";
@@ -23,15 +23,23 @@ export function TokenCard({
   isWarEnded,
   disablePledgeBtn,
   disableUnpledgeBtn,
+  opposingToken,
 }: TokenCardProps) {
-  const [isWarRoomOpen, setIsWarRoomOpen] = useState<boolean>(false);
+  const [isWarRoomOpen, setIsWarRoomOpen] = useState(false);
+  const [aiTemplates, setAiTemplates] = useState<TweetTemplate[]>([]);
+  const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
+  const [templatesError, setTemplatesError] = useState<string | null>(null);
   const [isCopied, setIsCopied] = useState<boolean>(false);
   const [localBtnLoading, setLocalBtnLoading] = useState<boolean>(
     Boolean(btnLoading)
   );
 
-  const { mintADepositedRaw, mintBDepositedRaw, mintADepositedInSol, mintBDepositedInSol } =
-    useMemeWarCalculations(memeWarStateInfo);
+  const {
+    mintADepositedRaw,
+    mintBDepositedRaw,
+    mintADepositedInSol,
+    mintBDepositedInSol,
+  } = useMemeWarCalculations(memeWarStateInfo);
 
   const {
     userMintADeposit,
@@ -45,6 +53,46 @@ export function TokenCard({
     userMintATotalDeposited,
     userMintBTotalDeposited,
   } = useUserCalculations(userState);
+
+  useEffect(() => {
+    const fetchAITemplates = async () => {
+      if (!isWarRoomOpen) return;
+
+      setIsLoadingTemplates(true);
+      setTemplatesError(null);
+
+      try {
+        const params = new URLSearchParams({
+          mintAName: token.name,
+          mintASymbol: token.ticker,
+          mintBName: opposingToken.name,
+          mintBSymbol: opposingToken.ticker,
+        });
+
+        const apiBaseUrl =
+          process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:4000";
+        const response = await fetch(
+          `${apiBaseUrl}/getAITwitterIntent?${params}`
+        );
+        const data = await response.json();
+
+        if (!response.ok)
+          throw new Error(data.message || "Failed to generate tweets");
+
+        const parsedTemplates = data.message as TweetTemplate[];
+        setAiTemplates(parsedTemplates);
+      } catch (err) {
+        const errorMessage =
+          err instanceof Error ? err.message : "Failed to load tweets";
+        setTemplatesError(errorMessage);
+        console.error("AI Template Error:", err);
+      } finally {
+        setIsLoadingTemplates(false);
+      }
+    };
+
+    fetchAITemplates();
+  }, [isWarRoomOpen, token, opposingToken]);
 
   useEffect(() => {
     setLocalBtnLoading(Boolean(btnLoading));
@@ -143,24 +191,26 @@ export function TokenCard({
   const hasMintA = Number(mintADepositedInSol) > 0;
   const hasMintB = Number(mintBDepositedInSol) > 0;
 
-  let borderClass = '';
+  let borderClass = "";
   if (!hasMintA || !hasMintB) {
-    borderClass = 'border-gray-500 border-2';
+    borderClass = "border-gray-500 border-2";
   } else {
-    const isLeading = index === 0
-      ? mintADepositedInSol > mintBDepositedInSol
-      : mintBDepositedInSol > mintADepositedInSol;
-    borderClass = isLeading ? 'border-primary border-[2px]' : 'border-red-500 border-[2px]';
+    const isLeading =
+      index === 0
+        ? mintADepositedInSol > mintBDepositedInSol
+        : mintBDepositedInSol > mintADepositedInSol;
+    borderClass = isLeading
+      ? "border-primary border-[2px]"
+      : "border-red-500 border-[2px]";
   }
   return (
-    <div 
-    className={`bg-card border rounded-lg p-4 sm:p-6 ${borderClass}`}>
+    <div className={`bg-card border rounded-lg p-4 sm:p-6 ${borderClass}`}>
       {/* Token Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-4 sm:mb-6">
         {/* Left Side: Icon, Name, Socials */}
         <div className="flex items-center gap-3 sm:gap-4">
           <div className="w-24 h-24 sm:w-12 sm:h-12 rounded-full bg-muted flex items-center justify-center text-xl sm:text-2xl overflow-hidden shrink-0">
-            {token.image ? (
+            {token.image && token.image !== "" ? (
               <img
                 src={token.image}
                 alt={token.name}
@@ -244,8 +294,9 @@ export function TokenCard({
                   ${(index === 0 ? mintAPrice : mintBPrice).toFixed(8)}
                 </span>
                 <span
-                  className={`text-xs sm:text-sm ${token.priceChange24h >= 0 ? "text-primary" : "text-red-500"
-                    }`}
+                  className={`text-xs sm:text-sm ${
+                    token.priceChange24h >= 0 ? "text-primary" : "text-red-500"
+                  }`}
                 >
                   {token.priceChange24h >= 0 ? "+" : ""}
                   {token.priceChange24h.toFixed(2)}%
@@ -474,11 +525,13 @@ export function TokenCard({
         )}
       </div>
 
-      {/* War Room Modal */}
       <WarRoomDialog
         isOpen={isWarRoomOpen}
         setIsOpen={setIsWarRoomOpen}
         token={token}
+        tweetTemplates={aiTemplates}
+        isLoading={isLoadingTemplates}
+        error={templatesError}
       />
     </div>
   );

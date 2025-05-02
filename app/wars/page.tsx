@@ -88,13 +88,20 @@ const Home: React.FC = () => {
             className="flex w-[45vw] sm:w-[90vw] justify-between mt-5 items-center cursor-pointer"
           >
             <div>
-              <img
-                src={dashboardWar?.mint_a_image!}
-                alt="War 1"
-                width={200}
-                height={200}
-                className="object-cover w-[200px] h-[200px] rounded-lg"
-              />
+              {dashboardWar?.mint_a_image &&
+              dashboardWar.mint_a_image !== "" ? (
+                <img
+                  src={dashboardWar.mint_a_image}
+                  alt="War 1"
+                  width={200}
+                  height={200}
+                  className="object-cover w-[200px] h-[200px] rounded-lg"
+                />
+              ) : (
+                <div className="w-[200px] h-[200px] rounded-lg bg-muted flex items-center justify-center text-4xl">
+                  {dashboardWar?.mint_a_symbol?.charAt(0) || "?"}
+                </div>
+              )}
               <div className="sm:text-sm mt-2 flex items-center gap-2">
                 <span className="text-lg font-bold">
                   ${dashboardWar?.mint_a_symbol}
@@ -112,13 +119,20 @@ const Home: React.FC = () => {
             </div>
             <div className="text-[48px] font-bold">VS</div>
             <div>
-              <img
-                src={dashboardWar?.mint_b_image!}
-                alt="War 1"
-                width={200}
-                height={200}
-                className="object-cover w-[200px] h-[200px] rounded-lg"
-              />
+              {dashboardWar?.mint_b_image &&
+              dashboardWar.mint_b_image !== "" ? (
+                <img
+                  src={dashboardWar.mint_b_image}
+                  alt="War 2"
+                  width={200}
+                  height={200}
+                  className="object-cover w-[200px] h-[200px] rounded-lg"
+                />
+              ) : (
+                <div className="w-[200px] h-[200px] rounded-lg bg-muted flex items-center justify-center text-4xl">
+                  {dashboardWar?.mint_b_symbol?.charAt(0) || "?"}
+                </div>
+              )}
               <div className="sm:text-sm mt-2 flex items-center gap-2">
                 <span className="text-lg font-bold">
                   ${dashboardWar?.mint_b_symbol}

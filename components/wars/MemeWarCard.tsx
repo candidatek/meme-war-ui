@@ -1,8 +1,9 @@
 import useCountdown from "@/app/hooks/useCountdown";
 import { useMemeWarCalculations } from "@/app/hooks/useMemeWarCalculations";
 import { War } from "../user/UserWars";
-
-
+import { Megaphone } from "lucide-react";
+import { useState } from "react";
+import { WarRoomDialog } from "@/app/war/[id]/components/WarRoomDialog";
 
 interface MemeWarListProps {
   warArray: War[];
@@ -16,8 +17,16 @@ export const MemeWarCard = ({
   war: War;
   handleClick: (state: string, war: War) => void;
 }) => {
-  const {rfPlusMintADeposited, rfPlusMintBDeposited} = useMemeWarCalculations(war)
-  const {timeLeft, warEnded, endedTimeAgo} =useCountdown(war.end_time)
+  const { rfPlusMintADeposited, rfPlusMintBDeposited } =
+    useMemeWarCalculations(war);
+  const { timeLeft, warEnded, endedTimeAgo } = useCountdown(war.end_time);
+  const [isWarRoomOpen, setIsWarRoomOpen] = useState(false);
+  const [token, setToken] = useState<{ ticker: string; emoji?: string } | null>(
+    null
+  );
+  const [isLoadingTemplates, setIsLoadingTemplates] = useState(false);
+  const [templatesError, setTemplatesError] = useState("");
+
   return (
     <div
       key={war.meme_war_state}
@@ -31,13 +40,8 @@ export const MemeWarCard = ({
         pledged={rfPlusMintADeposited}
       />
       <div className="text-[18px] flex items-center flex-col sm:text-sm font-bold mx-2 ">
-        
-        <div>
-          VS
-        </div>
-        <div className="text-sm font-semibold text-red-2">
-        {`> time`}
-        </div>
+        <div>VS</div>
+        <div className="text-sm font-semibold text-red-2">{`> time`}</div>
         <div className="text-sm font-semibold text-red-2">
           {warEnded ? endedTimeAgo : timeLeft}
         </div>
@@ -49,9 +53,32 @@ export const MemeWarCard = ({
         pledged={rfPlusMintBDeposited}
       />
 
+      {/* Right Side: Support Button */}
+      <div className="sm:ml-4 shrink-0">
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            setIsWarRoomOpen(true);
+          }}
+          className="p-2 hover:bg-muted rounded-full transition-colors group"
+        >
+          <Megaphone className="w-5 h-5 sm:w-6 sm:h-6 text-muted-foreground group-hover:text-primary transition-colors" />
+        </button>
+      </div>
+
+      {isWarRoomOpen && (
+        <WarRoomDialog
+          isOpen={isWarRoomOpen}
+          setIsOpen={setIsWarRoomOpen}
+          token={token ?? { ticker: war.mint_a_symbol }}
+          tweetTemplates={[]}
+          isLoading={isLoadingTemplates}
+          error={templatesError}
+        />
+      )}
     </div>
   );
-}
+};
 
 const MintDetails = ({
   image,
@@ -66,33 +93,32 @@ const MintDetails = ({
 }) => (
   <div className="flex flex-col  justify-center">
     <div className="flex">
-      <img src={image} alt={name} className="object-cover w-12 h-12" />
+      {image && image !== "" ? (
+        <img src={image} alt={name} className="object-cover w-12 h-12" />
+      ) : (
+        <div className="w-12 h-12 bg-muted flex items-center justify-center text-lg">
+          {symbol.charAt(0)}
+        </div>
+      )}
       <div className="ml-2 flex flex-col justify-center">
-        <div className="text-blue-1 text-sm">{'> '} {pledged} ${symbol} Pledged</div>
-        <div className="text-green-2 text-sm">{'> '} Risk free bonded</div>
+        <div className="text-blue-1 text-sm">
+          {"> "} {pledged} ${symbol} Pledged
+        </div>
+        <div className="text-green-2 text-sm">{"> "} Risk free bonded</div>
       </div>
-
     </div>
 
     <div className="text-sm mt-1">${name}</div>
   </div>
 );
 
-export const MemeWarList = ({
-  warArray,
-  handleClick,
-}: MemeWarListProps) => {
+export const MemeWarList = ({ warArray, handleClick }: MemeWarListProps) => {
   return (
     <div className="h-[80vh] w-full bg-black justify-center px-[15vw] sm:px-[4vw] overflow-y-auto">
       <div className="w-full grid grid-cols-2 sm:grid-cols-1 gap-4">
-        {
-            warArray.map((war, index) => (
-              <MemeWarCard
-                key={index}
-                war={war}
-                handleClick={handleClick}
-              />
-            ))}
+        {warArray.map((war, index) => (
+          <MemeWarCard key={index} war={war} handleClick={handleClick} />
+        ))}
       </div>
     </div>
   );

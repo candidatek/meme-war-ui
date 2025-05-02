@@ -57,6 +57,10 @@ export function LiveFeed({
       : memeWarStateInfo?.mint_b_decimals;
     const amount = Number(animatingTrade.amount) / 10 ** (decimals || 9);
 
+    const tokenImage = isMintA
+      ? memeWarStateInfo?.mint_a_image
+      : memeWarStateInfo?.mint_b_image;
+
     const animation = (
       <motion.div
         key={`animation-${animateTrade.tradeId}`}
@@ -89,15 +93,17 @@ export function LiveFeed({
           className="flex items-center gap-2"
           style={{ textShadow: "0 2px 4px rgba(0,0,0,0.5)" }}
         >
-          <img
-            src={
-              isMintA
-                ? memeWarStateInfo?.mint_a_image
-                : memeWarStateInfo?.mint_b_image
-            }
-            alt={coin.ticker}
-            className="w-8 h-8 object-cover rounded-full shadow-lg"
-          />
+          {tokenImage && tokenImage !== "" ? (
+            <img
+              src={tokenImage}
+              alt={coin.ticker}
+              className="w-8 h-8 object-cover rounded-full shadow-lg"
+            />
+          ) : (
+            <div className="w-8 h-8 bg-muted flex items-center justify-center rounded-full shadow-lg">
+              {coin.ticker.charAt(0)}
+            </div>
+          )}
           <div className="flex flex-col">
             <div
               className="text-lg font-bold text-primary"
@@ -192,20 +198,31 @@ export function LiveFeed({
                         {/* Left Side: Token Image, Amount, Event Type */}
                         <div className="flex items-center gap-2.5">
                           <div className="w-8 h-8 rounded-md bg-muted/80 flex items-center justify-center overflow-hidden">
-                            <img
-                              src={
-                                isMintA
-                                  ? memeWarStateInfo?.mint_a_image
-                                  : memeWarStateInfo?.mint_b_image
-                              }
-                              alt={coin.ticker}
-                              className="w-6 h-6 object-cover"
-                              onError={(e) => {
-                                e.currentTarget.src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><text x="50%" y="50%" font-family="Arial" font-size="12" text-anchor="middle" dominant-baseline="middle">${coin.ticker.charAt(
-                                  0
-                                )}</text></svg>`;
-                              }}
-                            />
+                            {(isMintA
+                              ? memeWarStateInfo?.mint_a_image
+                              : memeWarStateInfo?.mint_b_image) &&
+                            (isMintA
+                              ? memeWarStateInfo?.mint_a_image
+                              : memeWarStateInfo?.mint_b_image) !== "" ? (
+                              <img
+                                src={
+                                  isMintA
+                                    ? memeWarStateInfo?.mint_a_image
+                                    : memeWarStateInfo?.mint_b_image
+                                }
+                                alt={coin.ticker}
+                                className="w-6 h-6 object-cover"
+                                onError={(e) => {
+                                  e.currentTarget.src = `data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="currentColor"><text x="50%" y="50%" font-family="Arial" font-size="12" text-anchor="middle" dominant-baseline="middle">${coin.ticker.charAt(
+                                    0
+                                  )}</text></svg>`;
+                                }}
+                              />
+                            ) : (
+                              <div className="w-6 h-6 flex items-center justify-center text-xs">
+                                {coin.ticker.charAt(0)}
+                              </div>
+                            )}
                           </div>
 
                           <div className="flex flex-col">

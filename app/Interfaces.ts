@@ -1,6 +1,11 @@
 import { PublicKey } from "@solana/web3.js";
 import { IMemeWarState } from "./api/getMemeWarStateInfo";
 
+export interface TweetTemplate {
+  text: string;
+  hashtags: string[];
+}
+
 export interface TokenData {
   ticker: string;
   name: string;
@@ -115,6 +120,10 @@ export interface TokenCardProps {
   isWarEnded: boolean | undefined;
   disablePledgeBtn?: boolean;
   disableUnpledgeBtn: boolean;
+  opposingToken: {
+    name: string;
+    ticker: string;
+  };
 }
 
 // Interface for the stat component props

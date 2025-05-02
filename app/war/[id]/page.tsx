@@ -572,6 +572,7 @@ export default function WarPage() {
               !!memeWarStateInfo?.war_ended ||
               !userStateInfo?.mint_a_deposit
             }
+            opposingToken={warData.coin2}
           />
         </div>
 
@@ -609,6 +610,7 @@ export default function WarPage() {
               !!memeWarStateInfo?.war_ended ||
               !userStateInfo?.mint_b_deposit
             }
+            opposingToken={warData.coin1}
           />
         </div>
       </div>
