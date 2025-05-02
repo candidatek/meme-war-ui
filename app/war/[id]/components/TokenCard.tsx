@@ -372,7 +372,7 @@ export function TokenCard({
       <div className="bg-background/50 rounded-lg p-3 sm:p-4 space-y-3 sm:space-y-4">
         <div className="flex justify-between text-xs sm:text-sm">
           <span className="text-muted-foreground">Amount Pledged</span>
-          <span className="font-medium retro-text">
+          <span className="font-medium">
             {formatNumber(index === 0 ? mintADepositedRaw : mintBDepositedRaw)}{" "}
             {token.ticker}{" "}
             <span className="text-xs text-gray-400">
@@ -429,7 +429,7 @@ export function TokenCard({
               Expected Payout if {token.ticker} Wins
             </div>
             <div className="flex flex-wrap items-baseline gap-1 sm:gap-2">
-              <span className="text-base sm:text-lg font-mono retro-text">
+              <span className="text-base sm:text-lg font-mono">
                 {formatNumber(
                   calculateExpectedPayout(
                     Number(userAmountPledged + Number(pledgeAmount)),
@@ -437,17 +437,17 @@ export function TokenCard({
                   )
                 )}{" "}
               </span>
-              <span className="text-xs text-primary">
+              <span className="text-xs">
                 (+{payoutPercent && payoutPercent.toFixed(2)}% ROI)
               </span>
-              <span className="text-base sm:text-lg font-mono retro-text">
+              <span className="text-base sm:text-lg font-mono">
                 $
                 {expectedPayoutDollar ? expectedPayoutDollar?.toFixed(2) : null}{" "}
               </span>
             </div>
             <div className="text-xs text-muted-foreground">
               Your share:{" "}
-              <span className="text-primary">
+              <span className="">
                 {usersWarShare}
                 {"% "}
               </span>

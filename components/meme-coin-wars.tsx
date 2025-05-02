@@ -781,11 +781,9 @@ function WarItem({
           <div className="flex flex-col items-center ">
             <VsComponent />
 
-            <div className="mt-[-10px] retro-text text-[10px] sm:text-xs">
-              Time left
-            </div>
+            <div className="mt-[-10px] text-[10px] sm:text-xs">Time left</div>
             <motion.div
-              className="retro-text text-[30px] animated sm:text-sm"
+              className="text-[30px] animated sm:text-sm"
               animate={{
                 scale: isShaking ? 1.2 : 1,
                 rotate: isShaking ? [0, -5, 5, -5, 0] : 0,
@@ -1030,7 +1028,7 @@ function CoinCard({ coin, isTopWar, align, onClick }: CoinCardProps) {
             <span className="text-muted-foreground text-[10px] sm:text-xs">
               Tokens Pledged
             </span>
-            <span className="stat-value text-primary truncate">
+            <span className="stat-value truncate">
               <span className="text-white">
                 {" "}
                 {formatNumber(coin.amountPledged)}
