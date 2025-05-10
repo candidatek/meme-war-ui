@@ -1,5 +1,5 @@
 import { motion, AnimatePresence } from "framer-motion";
-import { formatNumber, formatWalletAddress } from "@/lib/utils";
+import { checkIsDevnet, formatNumber, formatWalletAddress } from "@/lib/utils";
 import { TradeData, WarData } from "@/app/Interfaces";
 import { TransactionBadge } from "@/components/ui/transactionBadge";
 import { formatTimeAgo } from "../utils/formatTimeAgo";
@@ -125,6 +125,7 @@ export function LiveFeed({
     return createPortal(animation, document.body);
   };
 
+  const isDevnet = checkIsDevnet()
   return (
     <div className="bg-card border border-border rounded-lg relative">
       {renderAnimation()}
@@ -134,6 +135,7 @@ export function LiveFeed({
           Refresh
         </div>
       </div>
+
 
       <div className="p-4">
         <div className="space-y-2 max-h-[300px] md:max-h-[400px] overflow-y-auto overflow-x-hidden">
@@ -190,7 +192,7 @@ export function LiveFeed({
                   }`}
                     >
                       <a
-                        href={`https://solscan.io/tx/${trade.tx_signature}?cluster=devnet`}
+                        href={`https://solscan.io/tx/${trade.tx_signature}${isDevnet && `?cluster=devnet`}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center justify-between w-full hover:no-underline"
