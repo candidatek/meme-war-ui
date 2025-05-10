@@ -135,10 +135,7 @@ const useDepositTokens = (mintAKey: string | null, mintBKey: string | null) => {
         });
 
         const signature = await sendTransaction(tx, connection);
-        console.log(
-          `Explorer URL: https://explorer.solana.com/tx/${signature}?cluster=devnet`
-        );
-
+        
         checkStatus({
           signature,
           action: `Deposit ${amount} tokens.`,

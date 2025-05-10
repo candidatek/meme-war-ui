@@ -67,7 +67,9 @@ export const fetchTokenBalance = async (
     return 0;
   }
 };
-export const checkIsDevnet = () => process.env.NEXT_PUBLIC_SOLANA_CLUSTER_URL!.includes('devnet');
+export const checkIsDevnet = () =>  {
+  return process.env.NEXT_PUBLIC_SOLANA_CLUSTER_URL!.includes('devnet') ? `?cluster=devnet` : ``
+}
 
 export function formatNumber(num: number): string {
   const absNum = Math.abs(num);

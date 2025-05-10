@@ -192,7 +192,7 @@ export function LiveFeed({
                   }`}
                     >
                       <a
-                        href={`https://solscan.io/tx/${trade.tx_signature}${isDevnet && `?cluster=devnet`}`}
+                        href={`https://solscan.io/tx/${trade.tx_signature}${isDevnet}`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="flex items-center justify-between w-full hover:no-underline"

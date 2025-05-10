@@ -8,7 +8,7 @@ import useWalletInfo from "./useWalletInfo";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { useTransactionStatus } from "./useTransactionStatus";
 import useProgramDetails from "./useProgramDetails";
-import { findAssociatedTokenAddress } from "@/lib/utils";
+import { checkIsDevnet, findAssociatedTokenAddress } from "@/lib/utils";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import { toast } from "sonner";
 import { useMintInfo } from './useMintInfo';
@@ -79,9 +79,9 @@ const useWithdrawTokens = (mintAKey: string | null, mintBKey: string | null) => 
       tx.add(withdrawIx);
       toast.dismiss();
       toast.message("Approve Transaction from Wallet", { duration: 20000 });
-
+      const devStr = checkIsDevnet()
       const signature = await sendTransaction(tx, connection);
-      console.log(`https://explorer.solana.com/tx/${signature}?cluster=devnet`);
+      console.log(`https://explorer.solana.com/tx/${signature}${devStr}`);
 
       checkStatus({ signature, action: `Withdraw tokens`, setIsLoading, stopLoadingWithInteger: true, refresh });
 
