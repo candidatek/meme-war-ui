@@ -21,25 +21,24 @@ const fetchMintInfo = async (mintAddress: string | null) => {
 
     // const heliusData = await heliusResponse.json();
     // optimize later
-    console.log(mintAddress, 'mint Address *')
-    if(!mintAddress) {
+     if(!mintAddress) {
         console.log('no mint fount')
         return
     }
     const response = await axios.get(SERVER_URL + `/getMintInfoV2`, {
         params: { mintAddress }
     });
-    console.log(response.data.data, 'mint info response')
-    return response.data.data;
+     return response.data.data;
 };
 
 // Custom hook to use the fetchMintInfo query
 export const useMintInfo = (mintAddress: string| null) => {
     return useQuery({
         queryKey: ['mintInfo', mintAddress],
+        enabled: !!mintAddress,
         queryFn: () => fetchMintInfo(mintAddress),
         staleTime: 1000 * 20, // 5 minutes
         refetchInterval: 1000 * 60 * 3, // 3 minute
-        refetchIntervalInBackground: true,
+        refetchIntervalInBackground: true
     });
 };

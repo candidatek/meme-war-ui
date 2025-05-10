@@ -719,8 +719,6 @@ export default function StartWarPage() {
                   !publicKey ||
                     isCreateWarLoading ||
                     Boolean(disableCreateWarBtn) ||
-                    !mintAInfo ||
-                    !mintBInfo ||
                     !isPromoCodeValid || // Disable if no valid promo code
                     activeExistingWarId !== null // Updated condition: disable if active war exists
                 )}

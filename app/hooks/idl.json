@@ -301,6 +301,11 @@
           "isSigner": false
         },
         {
+          "name": "feeReceiver",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
@@ -464,6 +469,11 @@
           "isSigner": false
         },
         {
+          "name": "wsolMint",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
           "name": "mintB",
           "isMut": true,
           "isSigner": false
@@ -494,12 +504,28 @@
           "isSigner": false
         },
         {
-          "name": "tokenProgram",
-          "isMut": false,
+          "name": "wsolAta",
+          "isMut": true,
           "isSigner": false
         },
         {
-          "name": "jupiterProgram",
+          "name": "mintAPool",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "CHECK : No Check Needed"
+          ]
+        },
+        {
+          "name": "mintBPool",
+          "isMut": true,
+          "isSigner": false,
+          "docs": [
+            "CHECK : No Check Needed"
+          ]
+        },
+        {
+          "name": "tokenProgram",
           "isMut": false,
           "isSigner": false
         },
@@ -514,35 +540,82 @@
           "isSigner": false
         },
         {
-          "name": "mintABaseVault",
+          "name": "pumpGlobalConfig",
           "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "CHECK : No Check Needed"
+          ]
+        },
+        {
+          "name": "mintABaseVault",
+          "isMut": true,
           "isSigner": false
         },
         {
           "name": "mintAQuoteVault",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
           "name": "mintBBaseVault",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
           "name": "mintBQuoteVault",
-          "isMut": false,
+          "isMut": true,
           "isSigner": false
         },
         {
           "name": "systemProgram",
           "isMut": false,
           "isSigner": false
+        },
+        {
+          "name": "eventAuthority",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "CHECK : No Check Needed"
+          ]
+        },
+        {
+          "name": "protocolFeeRecipientMintA",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "CHECK : No Check Needed"
+          ]
+        },
+        {
+          "name": "protocolFeeRecipientMintB",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "CHECK : No Check Needed"
+          ]
+        },
+        {
+          "name": "protocolFeeRecipientTokenAccountMintA",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "protocolFeeRecipientTokenAccountMintB",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "pumpProgram",
+          "isMut": false,
+          "isSigner": false
         }
       ],
       "args": [
         {
-          "name": "data",
-          "type": "bytes"
+          "name": "slippage",
+          "type": "u8"
         }
       ]
     },

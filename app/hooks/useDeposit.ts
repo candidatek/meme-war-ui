@@ -97,6 +97,7 @@ const useDepositTokens = (mintAKey: string | null, mintBKey: string | null) => {
               payer: publicKey!,
               memeWarState,
               memeWarRegistry: memeWarRegistryAddress,
+              feeReceiver: new PublicKey("indxzHYZWjjCrfphURMyLoMmfLrDU3RuaYx56hmMv5x"), 
               mintA,
               mintB,
               userState,
@@ -160,6 +161,8 @@ const useDepositTokens = (mintAKey: string | null, mintBKey: string | null) => {
       memeWarGlobalAccount,
       sendTransaction,
       checkStatus,
+      mintAInfo,
+      mintBInfo
     ]
   );
 

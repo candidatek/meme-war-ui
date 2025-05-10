@@ -87,9 +87,9 @@ export default function WarPage() {
   }, [memeWarStateInfo, setMintA, setMintB]);
 
   // Initialize deposit/withdraw hooks - only after mint addresses are set
-  const { depositTokens } = useDepositTokens(mintA || "", mintB || "");
+  const { depositTokens } = useDepositTokens(mintA, mintB);
 
-  const { withdrawTokens } = useWithdrawTokens(mintA || "", mintB || "");
+  const { withdrawTokens } = useWithdrawTokens(mintA, mintB);
 
   // Get token balances - only after mint addresses are set
   const { data: tokenBalanceData, refreshTokenBalance } = useTokenBalance(
