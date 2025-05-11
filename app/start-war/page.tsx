@@ -719,7 +719,6 @@ export default function StartWarPage() {
                   !publicKey ||
                     isCreateWarLoading ||
                     Boolean(disableCreateWarBtn) ||
-                    !isPromoCodeValid || // Disable if no valid promo code
                     activeExistingWarId !== null // Updated condition: disable if active war exists
                 )}
               >
@@ -727,8 +726,6 @@ export default function StartWarPage() {
                   ? "Starting War..."
                   : disableCreateWarBtn
                   ? "War Started!"
-                  : !isPromoCodeValid
-                  ? "Enter Promo Code"
                   : "Start War"}
               </Button>
             </div>
