@@ -318,10 +318,10 @@ export default function StartWarPage() {
     }
 
     // Check if promo code is valid
-    if (!isPromoCodeValid) {
-      showErrorToast("Please enter and apply a valid promo code first");
-      return;
-    }
+    // if (!isPromoCodeValid) {
+    //   showErrorToast("Please enter and apply a valid promo code first");
+    //   return;
+    // }
 
     try {
       const createdMemeStateString = await createMemeRegistry(
