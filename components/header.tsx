@@ -29,7 +29,7 @@ export function Header() {
           <div className="flex items-center gap-2 sm:gap-8 flex-1">
             {/* Logo */}
             <Link href="/" className="flex items-center gap-1 sm:gap-2">
-              <div className="relative w-6 h-6 sm:w-8 sm:h-8">
+              <div className="relative w-12 h-12 sm:w-12 sm:h-12 bg-transparent">
                 <Image
                   src="/logo.png"
                   alt="Meme Coin Wars"
