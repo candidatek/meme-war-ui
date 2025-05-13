@@ -1019,12 +1019,12 @@ function CoinCard({ coin, isTopWar, align, onClick }: CoinCardProps) {
             </span>
           </div>
           <div className="flex flex-col">
-            <span className="text-muted-foreground text-[10px] sm:text-xs">
+            {/* <span className="text-muted-foreground text-[10px] sm:text-xs">
               Total Pledgers
             </span>
             <span className="stat-value truncate">
               {formatNumber(coin.pledgers)}
-            </span>
+            </span> */}
           </div>
           <div className="flex flex-col">
             <span className="text-muted-foreground text-[10px] sm:text-xs">
