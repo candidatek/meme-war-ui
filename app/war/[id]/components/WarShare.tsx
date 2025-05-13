@@ -139,18 +139,19 @@ export function WarShare({
                 {(() => {
                   const winnerAddress = memeWarStateInfo.winner_declared;
                   if (winnerAddress === "11111111111111111111111111111111") {
-                    return "No Clear Winner";
+                    return <span className="text-yellow-300">{"Match Abandon"}</span> ;
                   } else if (winnerAddress === warData.coin1.address) {
                     return (
-                      <>
+                      <span className="text-green-500">
                         {warData.coin1.name} ({formatPublicKey(winnerAddress)})
-                      </>
+                      </span>
+                      
                     );
                   } else if (winnerAddress === warData.coin2.address) {
                     return (
-                      <>
+                      <span className="text-green-500">
                         {warData.coin2.name} ({formatPublicKey(winnerAddress)})
-                      </>
+                      </span>
                     );
                   } else {
                     return formatPublicKey(winnerAddress);
