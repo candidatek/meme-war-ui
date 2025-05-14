@@ -12,9 +12,9 @@ const formatTimestamp = (timestamp: string) => {
 
 const TradeRow = ({ trade }: { trade: TradeEvent }) => {
   const formattedAmount = useMemo(() => {
-    if (!trade.amount || !trade.mint_decimals) return '';
-    return formatToDollar(parseInt(trade.amount) / Math.pow(10, trade.mint_decimals));
-  }, [trade.amount, trade.mint_decimals]);
+    if (!trade.amount) return '';
+    return formatToDollar(parseInt(trade.amount) / Math.pow(10, 6));
+  }, [trade.amount]);
   
   let eventTypeLabel = 'Unknown';
   let eventTypeColor = 'bg-gray-500/20 text-gray-400';
@@ -46,7 +46,7 @@ const TradeRow = ({ trade }: { trade: TradeEvent }) => {
       <td className="py-4 px-4">
         <div className="flex flex-col">
           <span className="font-medium text-foreground">
-            {formattedAmount} USDC
+            {formattedAmount} {trade.mint_symbol}
           </span>
           <span className="text-xs text-muted-foreground mt-1">
             ≈ {parseInt(trade.amount_in_sol!) / 10000} SOL

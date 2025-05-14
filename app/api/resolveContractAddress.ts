@@ -3,27 +3,26 @@ import { useQuery } from '@tanstack/react-query';
 import { SERVER_URL } from '@/lib/constants';
 import { useAuth } from '../hooks/useAuth';
 
-interface ApplyPromoCodeResponse {
+interface ResolveContractResponse {
     message: string;
-    success: boolean;
+    data?: {
+        contract_address: string;
+    };
+    error?: string;
 }
 
-const applyPromoCode = async (code: string, walletAddress: string, token: string): Promise<ApplyPromoCodeResponse> => {
-    const response = await axios.get<ApplyPromoCodeResponse>(
-        `${SERVER_URL}/applyCode?code=${code}&walletAddress=${walletAddress}`, {
-            headers: {
-                Authorization: `Bearer ${token}`,
-            },
-        }
+const resolveContractAddress = async (stringName: string, token: string): Promise<ResolveContractResponse> => {
+    const response = await axios.get<ResolveContractResponse>(
+        `${SERVER_URL}/resolve?string_name=${stringName}`
     );
     return response.data;
 };
 
-export const useApplyPromoCode = (code: string, walletAddress: string, enabled = false) => {
+export const useResolveContract = (stringName: string, enabled = false) => {
     const { handleSignIn } = useAuth();
 
     const query = useQuery({
-        queryKey: ['promoCode', code, walletAddress],
+        queryKey: ['contractAddress', stringName],
         queryFn: async () => {
             let token = localStorage.getItem('jwt_token');
             if (!token) {
@@ -38,15 +37,16 @@ export const useApplyPromoCode = (code: string, walletAddress: string, enabled =
                 }
             }
 
-            return applyPromoCode(code, walletAddress, token);
+            return resolveContractAddress(stringName, token);
         },
-        enabled: enabled && !!code && !!walletAddress,
+        enabled: enabled && !!stringName,
         staleTime: Infinity,
         retry: 1,
     });
 
     return {
         ...query,
-        isPromoCodeValid: query.isSuccess && query.data?.success === true,
+        contractAddress: query.data?.data?.contract_address,
+        isResolved: query.isSuccess && !!query.data?.data?.contract_address,
     };
 };

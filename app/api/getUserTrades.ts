@@ -14,7 +14,8 @@ export interface TradeEvent {
   event_time?: string;
   meme_war_state?: string;
   wallet_address?: string;
-  mint_decimals?: number
+  // mint_decimals?: number;
+  mint_symbol?: string;
 }
 
 interface TradeResponse {
