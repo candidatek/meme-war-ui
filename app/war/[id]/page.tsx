@@ -36,6 +36,7 @@ import { ChatSection } from "./components/ChatSection";
 import { WarShare } from "./components/WarShare";
 import { Billion } from "@/app/utils";
 import { useMemeWarCalculations } from "@/app/hooks/useMemeWarCalculations";
+import { useResolveContract } from "@/app/api/resolveContractAddress";
 
 const REFRESH_DELAY = 5000;
 
@@ -55,16 +56,18 @@ export default function WarPage() {
 
   const { startProgress, endProgress } = useRouteProgress();
 
+  const { contractAddress, isResolved, isLoading, error } = useResolveContract(params?.id as string, !!params?.id);
+
   // Set memeWarState from URL parameters
-  useEffect(() => {
-    if (params?.id) {
-      startProgress();
-      setMemeWarState(params.id as string);
-      setTimeout(() => {
-        endProgress();
-      }, 300);
-    }
-  }, [params, setMemeWarState, startProgress, endProgress]);
+  // useEffect(() => {
+  //   if (params?.id) {
+  //     startProgress();
+  //     setMemeWarState(params.id as string);
+  //     setTimeout(() => {
+  //       endProgress();
+  //     }, 300);
+  //   }
+  // }, [params, setMemeWarState, startProgress, endProgress]);
 
   // Get meme war state data
   const { data: memeWarStateInfo, isLoading: isLoadingWarState } =
@@ -77,6 +80,19 @@ export default function WarPage() {
       endProgress();
     }
   }, [isLoadingWarState, startProgress, endProgress]);
+
+  useEffect(() => {
+    if (isResolved && contractAddress) {
+      startProgress();
+      setMemeWarState(contractAddress);
+      setTimeout(() => {
+        endProgress();
+      }, 300);
+    } else if (error) {
+      console.error("Error resolving contract address:", error);
+      // Handle error case here if needed
+    }
+  }, [contractAddress, isResolved, error, setMemeWarState, startProgress, endProgress]);
 
   // Make sure mint addresses are set before initializing hooks
   useEffect(() => {
