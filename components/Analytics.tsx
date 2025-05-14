@@ -7,7 +7,7 @@ export function Analytics() {
   const searchParams = useSearchParams()
   
   useEffect(() => {
-    const GA_MEASUREMENT_ID = process.env.NEXT_PUBLIC_GA_ID
+    const GA_MEASUREMENT_ID = "G-P2ZFKY4WCV"
     
     if (GA_MEASUREMENT_ID) {
       ReactGA.initialize(GA_MEASUREMENT_ID)
