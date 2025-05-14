@@ -10,9 +10,21 @@ const transactionTypes = {
     label: "Deposit",
     className: "bg-emerald-50 text-emerald-700", // Light green background with dark green text
   },
+  winning: {
+    label: "Winnings",
+    className: "bg-primary text-primary-foreground",
+  },
   rfdeposit: {
-    label: "Risk-Free",
+    label: "Rfdeposit",
     className: "bg-emerald-50 text-emerald-700", // Same color as regular deposit
+  },
+  riskfree: {
+    label: "Riskfree",
+    className: "bg-emerald-50 text-emerald-700",
+  },
+  endwar: {
+    label: "Endwar",
+    className: "bg-muted text-muted-foreground",
   },
   
   // Withdraw transaction types
@@ -52,6 +64,18 @@ export function TransactionBadge({ type, className = "", label }: TransactionBad
     
     if (normalizedType.includes('withdraw')) {
       return transactionTypes.withdraw;
+    }
+
+    if(normalizedType.includes('riskfree')) {
+      return transactionTypes.riskfree;
+    }
+
+    if(normalizedType.includes('endwar')) {
+      return transactionTypes.endwar;
+    }
+
+    if(normalizedType.includes('winnings')) {
+      return transactionTypes.winning;
     }
     
     return transactionTypes.default;
