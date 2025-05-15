@@ -15,11 +15,11 @@ const transactionTypes = {
     className: "bg-primary text-primary-foreground",
   },
   rfdeposit: {
-    label: "Rfdeposit",
+    label: "Risk free deposit",
     className: "bg-emerald-50 text-emerald-700", // Same color as regular deposit
   },
   riskfree: {
-    label: "Riskfree",
+    label: "Risk free distribution",
     className: "bg-emerald-50 text-emerald-700",
   },
   endwar: {
