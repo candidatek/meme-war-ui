@@ -2,7 +2,7 @@ import axios from 'axios';
 import { useQuery } from '@tanstack/react-query';
 import { SERVER_URL } from '@/lib/constants';
 // Define the async function to fetch the mint info
-const getRecentTrades = async (memeWarState: string | null) => {
+const getRecentTrades = async (memeWarState: string | undefined) => {
   const response = await axios.get(SERVER_URL + `/getTrades`, {
     params: { memeWarState }
   });
@@ -10,7 +10,7 @@ const getRecentTrades = async (memeWarState: string | null) => {
 };
 
 // Custom hook to use the fetchMintInfo query
-export const useRecentTrades = (memeWarState: string | null) => {
+export const useRecentTrades = (memeWarState: string | undefined) => {
   return useQuery({
     queryKey: ['trades', memeWarState],
     queryFn: () => getRecentTrades(memeWarState),

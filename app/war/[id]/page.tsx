@@ -164,7 +164,7 @@ export default function WarPage() {
     useGetUserStateInfo(userState, memeWarState);
 
   // Recent trades data
-  const { data: tradesData } = useRecentTrades(memeWarState);
+  const { data: tradesData } = useRecentTrades(memeWarStateInfo?.meme_war_state);
   const [displayTradesData, setDisplayTradesData] = useState<{
     mintA: TradeData[];
     mintB: TradeData[];
