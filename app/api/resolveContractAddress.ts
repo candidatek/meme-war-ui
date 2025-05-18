@@ -41,7 +41,7 @@ export const useResolveContract = (stringName: string, enabled = false) => {
         },
         enabled: enabled && !!stringName,
         staleTime: Infinity,
-        retry: 1,
+        retry: false,
     });
 
     return {

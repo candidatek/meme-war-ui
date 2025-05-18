@@ -19,6 +19,7 @@ export interface IMemeWarState {
   risk_free_sol: string;
   end_time: string;
   meme_war_registry: string;
+  meme_war_state: string;
   mint_a_image: string;
   mint_b_image: string;
   mint_a_name: string;

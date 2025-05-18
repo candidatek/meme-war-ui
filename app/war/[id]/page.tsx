@@ -81,18 +81,7 @@ export default function WarPage() {
     }
   }, [isLoadingWarState, startProgress, endProgress]);
 
-  useEffect(() => {
-    if (isResolved && contractAddress) {
-      startProgress();
-      setMemeWarState(contractAddress);
-      setTimeout(() => {
-        endProgress();
-      }, 300);
-    } else if (error) {
-      console.error("Error resolving contract address:", error);
-      // Handle error case here if needed
-    }
-  }, [contractAddress, isResolved, error, setMemeWarState, startProgress, endProgress]);
+
 
   // Make sure mint addresses are set before initializing hooks
   useEffect(() => {
@@ -127,7 +116,7 @@ export default function WarPage() {
     useGetUserStateInfo(userState, memeWarState);
 
   // Recent trades data
-  const { data: tradesData } = useRecentTrades(memeWarState);
+  const { data: tradesData } = useRecentTrades(memeWarStateInfo?.meme_war_state);
   const [displayTradesData, setDisplayTradesData] = useState<{
     mintA: TradeData[];
     mintB: TradeData[];
@@ -400,9 +389,9 @@ export default function WarPage() {
         depositAmount =
           index === 0
             ? parseFloat(userStateInfo.mint_a_deposit) -
-              parseFloat(userStateInfo.mint_a_withdrawn)
+            parseFloat(userStateInfo.mint_a_withdrawn)
             : parseFloat(userStateInfo.mint_b_deposit) -
-              parseFloat(userStateInfo.mint_b_withdrawn);
+            parseFloat(userStateInfo.mint_b_withdrawn);
       }
 
       if (depositAmount <= 0) {
