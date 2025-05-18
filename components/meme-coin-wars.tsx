@@ -382,8 +382,7 @@ export function MemeCoinWars() {
 
   if (
     (isError && !searchTerm) ||
-    (isSearchError && searchTerm) ||
-    !wars.length
+    (isSearchError && searchTerm)
   ) {
     return (
       <div className="container mx-auto px-4 h-full flex flex-col items-center justify-center">
