@@ -54,20 +54,13 @@ export default function WarPage() {
   } = useMemeWarContext();
   const { socket, isConnected } = useSocket();
 
+  useEffect(() => {
+    if (params?.id) {
+      setMemeWarState(params.id as string);
+    }
+  },[params.id])
+
   const { startProgress, endProgress } = useRouteProgress();
-
-  const { contractAddress, isResolved, isLoading, error } = useResolveContract(params?.id as string, !!params?.id);
-
-  // Set memeWarState from URL parameters
-  // useEffect(() => {
-  //   if (params?.id) {
-  //     startProgress();
-  //     setMemeWarState(params.id as string);
-  //     setTimeout(() => {
-  //       endProgress();
-  //     }, 300);
-  //   }
-  // }, [params, setMemeWarState, startProgress, endProgress]);
 
   // Get meme war state data
   const { data: memeWarStateInfo, isLoading: isLoadingWarState } =
@@ -424,13 +417,6 @@ export default function WarPage() {
       )
     ) {
       return;
-    }
-
-    if (!memeWarStateInfo) {
-      const timer = setTimeout(() => {
-        window.location.reload();
-      }, REFRESH_DELAY);
-      return () => clearTimeout(timer);
     }
   }, [memeWarStateInfo, params.id]);
 

@@ -912,7 +912,6 @@ interface CoinCardProps {
 function CoinCard({ coin, isTopWar, align, onClick }: CoinCardProps) {
   const percentChange = Math.random() * 200 - 100;
   const isPositive = percentChange > 0;
-  console.log(coin);
   return (
     <div
       className={`coin-card p-2 sm:p-3 md:p-4 ${
