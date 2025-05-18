@@ -81,18 +81,55 @@ export default function WarPage() {
     }
   }, [isLoadingWarState, startProgress, endProgress]);
 
+  // 1. First useEffect: Handle resolving the contract address or using direct memeWarState
   useEffect(() => {
+    if (!params?.id) return;
+
+    // Case 1: We have a resolved contract address
     if (isResolved && contractAddress) {
-      startProgress();
       setMemeWarState(contractAddress);
-      setTimeout(() => {
+    }
+    // Case 2: We tried to resolve but got an error
+    else if (!isLoading && error) {
+      console.error("Error resolving contract address:", error);
+      // Fallback to direct use of params.id
+      setMemeWarState(params.id as string);
+    }
+    // Case 3: Direct use without resolution needed (or while waiting for resolution)
+    else if (!isLoading && !isResolved) {
+      setMemeWarState(params.id as string);
+    }
+    // In the loading case, we wait for resolution to complete
+  }, [params?.id, isResolved, contractAddress, isLoading, error, setMemeWarState]);
+
+  // 2. Second useEffect: Handle loading indicators separately from data flow
+  useEffect(() => {
+    // Start progress when any loading occurs
+    if (isLoading || isLoadingWarState) {
+      startProgress();
+    }
+    // End progress when loading is done (with small delay for UI smoothness)
+    else {
+      const timer = setTimeout(() => {
         endProgress();
       }, 300);
-    } else if (error) {
-      console.error("Error resolving contract address:", error);
-      // Handle error case here if needed
+
+      return () => clearTimeout(timer);
     }
-  }, [contractAddress, isResolved, error, setMemeWarState, startProgress, endProgress]);
+  }, [isLoading, isLoadingWarState, startProgress, endProgress]);
+
+  // useEffect(() => {
+  //   if (isResolved && contractAddress) {
+  //     startProgress();
+  //     setMemeWarState(contractAddress);
+  //     setTimeout(() => {
+  //       endProgress();
+  //     }, 300);
+  //   } else if (error) {
+  //     console.error("Error resolving contract address:", error);
+  //     // Handle error case here if needed
+  //   }
+  // }, [contractAddress, isResolved, error, setMemeWarState, startProgress, endProgress]);
 
   // Make sure mint addresses are set before initializing hooks
   useEffect(() => {
@@ -400,9 +437,9 @@ export default function WarPage() {
         depositAmount =
           index === 0
             ? parseFloat(userStateInfo.mint_a_deposit) -
-              parseFloat(userStateInfo.mint_a_withdrawn)
+            parseFloat(userStateInfo.mint_a_withdrawn)
             : parseFloat(userStateInfo.mint_b_deposit) -
-              parseFloat(userStateInfo.mint_b_withdrawn);
+            parseFloat(userStateInfo.mint_b_withdrawn);
       }
 
       if (depositAmount <= 0) {

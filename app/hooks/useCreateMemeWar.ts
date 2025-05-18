@@ -176,7 +176,7 @@ export function useCreateMemeWarRegistry(mint_a: string, mint_b: string) {
 
         // Send transaction to wallet for approval
         const signature = await sendTransaction(tx, connection);
-
+        toast.dismiss();
         toast.message("Creating and Validating Meme War", { duration: 20000 });
 
         await sleep(5 * 1000);
