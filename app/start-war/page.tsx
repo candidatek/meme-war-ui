@@ -49,7 +49,7 @@ export default function StartWarPage() {
     null
   );
   const [disableCreateWarBtn, setDisableCreateWarBtn] =
-    useState<boolean>(false);
+    useState<boolean>(true);
   const [isCreatingTokens, setIsCreatingTokens] = useState<number | boolean>(
     false
   );
@@ -128,6 +128,7 @@ export default function StartWarPage() {
         position: "bottom-left",
       });
     }
+    setDisableCreateWarBtn(false);
   }, [isPromoCodeValid]);
 
   // Show error if promo validation fails
@@ -318,10 +319,10 @@ export default function StartWarPage() {
     }
 
     // Check if promo code is valid
-    // if (!isPromoCodeValid) {
-    //   showErrorToast("Please enter and apply a valid promo code first");
-    //   return;
-    // }
+    if (!isPromoCodeValid) {
+      showErrorToast("Please enter and apply a valid promo code first");
+      return;
+    }
 
     try {
       const createdMemeStateString = await createMemeRegistry(
@@ -335,7 +336,7 @@ export default function StartWarPage() {
         createdMemeStateString.length > 0
       ) {
         const createdMemeStatePublicKey = new PublicKey(createdMemeStateString);
-
+        toast.dismiss();
         toast.success("Meme war started successfully!", {
           duration: 3000,
           position: "bottom-left",
@@ -623,6 +624,7 @@ export default function StartWarPage() {
                   onClick={() => {
                     setPromoCode("");
                     setShouldValidate(false);
+                    setDisableCreateWarBtn(true);
                   }}
                 >
                   Remove
@@ -720,12 +722,13 @@ export default function StartWarPage() {
                     isCreateWarLoading ||
                     Boolean(disableCreateWarBtn) ||
                     activeExistingWarId !== null // Updated condition: disable if active war exists
+                    || !isPromoCodeValid
                 )}
               >
                 {isCreateWarLoading
                   ? "Starting War..."
-                  : disableCreateWarBtn
-                  ? "War Started!"
+                  // : disableCreateWarBtn
+                  // ? "War Started!"
                   : "Start War"}
               </Button>
             </div>
