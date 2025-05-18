@@ -54,20 +54,13 @@ export default function WarPage() {
   } = useMemeWarContext();
   const { socket, isConnected } = useSocket();
 
+  useEffect(() => {
+    if (params?.id) {
+      setMemeWarState(params.id as string);
+    }
+  },[params.id])
+
   const { startProgress, endProgress } = useRouteProgress();
-
-  const { contractAddress, isResolved, isLoading, error } = useResolveContract(params?.id as string, !!params?.id);
-
-  // Set memeWarState from URL parameters
-  // useEffect(() => {
-  //   if (params?.id) {
-  //     startProgress();
-  //     setMemeWarState(params.id as string);
-  //     setTimeout(() => {
-  //       endProgress();
-  //     }, 300);
-  //   }
-  // }, [params, setMemeWarState, startProgress, endProgress]);
 
   // Get meme war state data
   const { data: memeWarStateInfo, isLoading: isLoadingWarState } =
@@ -81,55 +74,7 @@ export default function WarPage() {
     }
   }, [isLoadingWarState, startProgress, endProgress]);
 
-  // 1. First useEffect: Handle resolving the contract address or using direct memeWarState
-  useEffect(() => {
-    if (!params?.id) return;
 
-    // Case 1: We have a resolved contract address
-    if (isResolved && contractAddress) {
-      setMemeWarState(contractAddress);
-    }
-    // Case 2: We tried to resolve but got an error
-    else if (!isLoading && error) {
-      console.error("Error resolving contract address:", error);
-      // Fallback to direct use of params.id
-      setMemeWarState(params.id as string);
-    }
-    // Case 3: Direct use without resolution needed (or while waiting for resolution)
-    else if (!isLoading && !isResolved) {
-      setMemeWarState(params.id as string);
-    }
-    // In the loading case, we wait for resolution to complete
-  }, [params?.id, isResolved, contractAddress, isLoading, error, setMemeWarState]);
-
-  // 2. Second useEffect: Handle loading indicators separately from data flow
-  useEffect(() => {
-    // Start progress when any loading occurs
-    if (isLoading || isLoadingWarState) {
-      startProgress();
-    }
-    // End progress when loading is done (with small delay for UI smoothness)
-    else {
-      const timer = setTimeout(() => {
-        endProgress();
-      }, 300);
-
-      return () => clearTimeout(timer);
-    }
-  }, [isLoading, isLoadingWarState, startProgress, endProgress]);
-
-  // useEffect(() => {
-  //   if (isResolved && contractAddress) {
-  //     startProgress();
-  //     setMemeWarState(contractAddress);
-  //     setTimeout(() => {
-  //       endProgress();
-  //     }, 300);
-  //   } else if (error) {
-  //     console.error("Error resolving contract address:", error);
-  //     // Handle error case here if needed
-  //   }
-  // }, [contractAddress, isResolved, error, setMemeWarState, startProgress, endProgress]);
 
   // Make sure mint addresses are set before initializing hooks
   useEffect(() => {
@@ -472,13 +417,6 @@ export default function WarPage() {
       )
     ) {
       return;
-    }
-
-    if (!memeWarStateInfo) {
-      const timer = setTimeout(() => {
-        window.location.reload();
-      }, REFRESH_DELAY);
-      return () => clearTimeout(timer);
     }
   }, [memeWarStateInfo, params.id]);
 
