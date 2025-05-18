@@ -1,14 +1,23 @@
 "use client";
 
-import Link from "next/link";
-import { Button } from "@/components/ui/button";
-import { Swords, Wallet, Menu, User } from "lucide-react";
-import Image from "next/image";
-import { useState } from "react";
-import { useWallet } from "@solana/wallet-adapter-react";
-import { WalletMultiButton } from "@solana/wallet-adapter-react-ui";
-import { motion, AnimatePresence } from "framer-motion";
-import { useRouter } from "next/navigation";
+import { useState } from 'react';
+
+import {
+  AnimatePresence,
+  motion,
+} from 'framer-motion';
+import {
+  Menu,
+  Swords,
+  User,
+} from 'lucide-react';
+import Image from 'next/image';
+import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+
+import { Button } from '@/components/ui/button';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
 
 export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -32,13 +41,13 @@ export function Header() {
               <div className="relative w-12 h-12 sm:w-12 sm:h-12 bg-transparent">
                 <Image
                   src="/logo.png"
-                  alt="Meme Coin Wars"
+                  alt="Token Wars"
                   fill
                   className="object-contain"
                 />
               </div>
               <span className="font-bold text-xs sm:text-sm md:text-lg hidden xs:inline">
-                Meme Coin Wars
+                Token Wars
               </span>
             </Link>
           </div>

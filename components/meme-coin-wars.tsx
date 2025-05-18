@@ -87,7 +87,7 @@ const coinEmojis: Record<string, string> = {
 };
 
 export function MemeCoinWars() {
-  const [sortBy, setSortBy] = useState<string>("volume");
+  const [sortBy, setSortBy] = useState<string>("currently_live");
   const [filterBy, setFilterBy] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState<number>(1);
   const itemsPerPage = 10;
@@ -128,10 +128,10 @@ export function MemeCoinWars() {
   } = useSearchMemeWars(searchTerm);
 
   const sortOptions = [
+    { value: "currently_live", label: "currently live" },
     { value: "volume", label: "volume" },
     { value: "last_traded", label: "last trade" },
     { value: "last_reply", label: "last reply" },
-    { value: "currently_live", label: "currently live" },
     { value: "last_created", label: "last created" },
   ];
 
