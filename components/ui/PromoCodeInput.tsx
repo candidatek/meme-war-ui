@@ -64,7 +64,7 @@ const PromoCodeInput: React.FC<PromoCodeInputProps> = ({
               </svg>
             </div>
             <h2 className="text-xl font-bold text-white">Enter Promo Code</h2>
-            <p className="text-gray-400 text-sm mt-1">Please enter a valid promo code to start a war</p>
+            <p className="text-gray-400 text-sm mt-1">Please enter a valid access code to start a war</p>
           </div>
 
           <form onSubmit={onSubmit} className="space-y-4">
@@ -72,14 +72,14 @@ const PromoCodeInput: React.FC<PromoCodeInputProps> = ({
               <Input
                 value={promoCode}
                 onChange={(e) => setPromoCode(e.target.value)}
-                placeholder="Enter your promo code"
+                placeholder="Enter your access code"
                 className="w-full px-4 py-3 bg-gray-900/50 border border-gray-800 rounded-lg text-white focus:ring-2 focus:ring-green-500/50 focus:border-green-500/50"
                 autoFocus
               />
               
               {validationError && (
                 <p className="text-red-400 text-sm mt-2 animate-in fade-in duration-300">
-                  Invalid promo code. Please try again.
+                  Invalid access code. Please try again.
                 </p>
               )}
             </div>
@@ -117,7 +117,7 @@ const PromoCodeInput: React.FC<PromoCodeInputProps> = ({
 
           <div className="pt-4 mt-6 border-t border-gray-800">
             <p className="text-center text-xs text-gray-500">
-              Need a promo code? Contact our support team for assistance.
+              Need an access code? Contact our support team for assistance.
             </p>
           </div>
         </div>
