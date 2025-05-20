@@ -18,6 +18,8 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
+import { FaXTwitter } from "react-icons/fa6";
+import { FaTelegramPlane } from "react-icons/fa";
 
 export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
@@ -64,6 +66,30 @@ export function Header() {
 
           {/* Right Section - Wallet */}
           <div className="flex items-center gap-1 sm:gap-4 flex-1 justify-end">
+            {/* X Button here */}
+            <div className=''>
+              <a
+                href="https://x.com/tokenwarsfun"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ cursor: 'pointer' }}
+              >
+                <FaXTwitter size={20} />
+              </a>
+            </div>
+
+            {/* Telegram Button here */}
+            <div>
+              <a
+                href="https://t.me/tokenwarsfun"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{ cursor: 'pointer' }}
+              >
+                <FaTelegramPlane size={20} />
+              </a>
+            </div>
+
             {/* Profile Button */}
             <Button
               variant="outline"
