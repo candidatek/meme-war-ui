@@ -725,6 +725,7 @@ function WarItem({
   const { timeLeft } = useCountdown(war?.warData?.end_time);
   const updatedCoin2 = {
     ...war.coin2,
+ 
     amountPledged: mintBDepositedRaw,
     amountPledgedInSol: mintBDepositedRawInDollar,
   };
@@ -800,7 +801,7 @@ function WarItem({
             >
               {timeLeft}
             </motion.div>
-            {war.warData?.tx_count !== undefined && (
+            {/* {war.warData?.tx_count !== undefined && (
               <div className="mt-1 text-center">
                 <span className="text-[10px] sm:text-xs text-muted-foreground">
                   TXs:
@@ -812,14 +813,14 @@ function WarItem({
             )}
             {war.warData?.reply_count !== undefined && (
               <div className="text-center">
-                <span className="text-[10px] sm:text-xs text-muted-foreground">
+                <span className=" text-xs text-muted-foreground">
                   Replies:
                 </span>
                 <span className="ml-1 text-[10px] sm:text-xs font-medium">
                   {new Intl.NumberFormat().format(war.warData.reply_count)}
                 </span>
               </div>
-            )}
+            )} */}
           </div>
         </div>
 
@@ -948,13 +949,13 @@ function CoinCard({ coin, isTopWar, align, onClick }: CoinCardProps) {
                 <span className="ticker font-semibold text-xs sm:text-sm">
                   {coin.ticker}
                 </span>
-                <span
+                {/* <span
                   className={`text-xs ${isPositive ? "positive" : "negative"
                     } hidden xs:inline`}
                 >
                   {isPositive ? "+" : ""}
                   {percentChange.toFixed(2)}%
-                </span>
+                </span> */}
               </div>
               <div className="text-xs text-muted-foreground truncate max-w-[80px] sm:max-w-none">
                 {coin.name}
@@ -1007,12 +1008,12 @@ function CoinCard({ coin, isTopWar, align, onClick }: CoinCardProps) {
         {/* Stats Grid */}
         <div className="grid grid-cols-2 gap-1 sm:gap-2 text-xs sm:text-sm">
           <div className="flex flex-col">
-            <span className="text-muted-foreground text-[10px] sm:text-xs">
+            {/* <span className="text-muted-foreground text-[10px] sm:text-xs">
               Market Cap
             </span>
             <span className="stat-value truncate">
               ${formatNumber(coin.marketCap)}
-            </span>
+            </span> */}
           </div>
           <div className="flex flex-col">
             {/* <span className="text-muted-foreground text-[10px] sm:text-xs">
