@@ -54,7 +54,7 @@ export const WarDetailsForm: React.FC<WarDetailsFormProps> = ({
           </div>
         </div>
 
-        <div className="space-y-2">
+        {/* <div className="space-y-2">
           <div className="flex items-center gap-2">
             <Label htmlFor="risk-free-sol">
               Risk Free SOL: {riskFreeSol} SOL
@@ -79,7 +79,7 @@ export const WarDetailsForm: React.FC<WarDetailsFormProps> = ({
             onValueChange={(value: number[]) => setRiskFreeSol(value[0])}
             className="h-3"
           />
-        </div>
+        </div> */}
 
         <div className="space-y-2">
           <Label htmlFor="war-description">Description</Label>

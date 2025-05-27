@@ -1,3 +1,4 @@
+"use client";
 // src/hooks/useAuth.ts
 import { useState, useEffect } from 'react';
 import { useWallet, WalletContextState } from '@solana/wallet-adapter-react';

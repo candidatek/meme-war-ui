@@ -1,8 +1,6 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Info } from "lucide-react";
 import { toast } from "sonner";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
@@ -30,7 +28,6 @@ import { useGetMemeWarRegistry } from "../hooks/useGetMemeWarRegistry";
 
 // Import components from the local components directory
 import { CoinForm } from "./components/CoinForm";
-import { LaunchCoinForm } from "./components/LaunchCoinForm";
 import { WarDetailsForm } from "./components/WarDetailsForm";
 import {
   CoinData,
@@ -123,7 +120,7 @@ export default function StartWarPage() {
   // Handle promo code validation success
   useEffect(() => {
     if (isPromoCodeValid) {
-      toast.success("Promo code applied successfully!", {
+      toast.success("Access code applied successfully!", {
         duration: 3000,
         position: "bottom-left",
       });
@@ -134,7 +131,7 @@ export default function StartWarPage() {
   // Show error if promo validation fails
   useEffect(() => {
     if (promoValidationError && shouldValidate) {
-      showErrorToast("Invalid promo code. Please try again.", {
+      showErrorToast("Invalid access code. Please try again.", {
         duration: 3000,
         position: "bottom-left",
       });
@@ -320,7 +317,7 @@ export default function StartWarPage() {
 
     // Check if promo code is valid
     if (!isPromoCodeValid) {
-      showErrorToast("Please enter and apply a valid promo code first");
+      showErrorToast("Please enter and apply a valid access code first");
       return;
     }
 
@@ -608,14 +605,14 @@ export default function StartWarPage() {
                 <polyline points="9 11 12 14 22 4"></polyline>
                 <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"></path>
               </svg>
-              Promo Code
+              Access Code
             </h3>
             
             {isPromoCodeValid ? (
               <div className="flex items-center bg-green-500/10 p-3 rounded-lg">
                 <div className="flex-1">
                   <p className="text-green-400">Code Applied: <span className="font-semibold">{promoCode}</span></p>
-                  <p className="text-xs text-green-300/70">Your promo code has been successfully validated</p>
+                  <p className="text-xs text-green-300/70">Your access code has been successfully validated</p>
                 </div>
                 <Button 
                   variant="outline" 
@@ -637,12 +634,12 @@ export default function StartWarPage() {
                     <Input
                       value={promoCode}
                       onChange={(e) => setPromoCode(e.target.value)}
-                      placeholder="Enter promo code"
+                      placeholder="Enter access code"
                       className="w-full bg-gray-900/50 border border-gray-800 focus:border-green-500/50 focus:ring-1 focus:ring-green-500/30"
                     />
                     {promoValidationError && shouldValidate && (
                       <p className="text-red-400 text-sm mt-1 animate-in fade-in duration-200">
-                        Invalid promo code. Please try again.
+                        Invalid access code. Please try again.
                       </p>
                     )}
                   </div>
@@ -662,7 +659,7 @@ export default function StartWarPage() {
                     ) : "Apply Code"}
                   </Button>
                 </form>
-                <p className="text-xs text-gray-400 mt-2">Enter a valid promo code to start a war</p>
+                <p className="text-xs text-gray-400 mt-2">Enter a valid access code to start a war</p>
               </div>
             )}
           </div>
