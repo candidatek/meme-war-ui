@@ -12,7 +12,7 @@ import {
 // A minimal wrapper component to use the hook properly
 import { useMemeWarCalculations } from "@/app/hooks/useMemeWarCalculations";
 import { SearchInput } from "@/components/common/SearchInput";
-import { formatNumber } from "@/lib/utils";
+import { calculateMintADeposit, calculateMintBDeposit, formatNumber } from "@/lib/utils";
 import useCountdown from "@/app/hooks/useCountdown";
 import VsComponent from "./VsComponent";
 import SimpleCustomizableModal from "./ui/modal";
@@ -24,6 +24,7 @@ import { Button } from "@/components/ui/button";
 import { ChevronDown } from "lucide-react";
 import { useSocket } from "@/app/context/socketContext";
 import { ChatMessage } from "@/app/Interfaces";
+import { StartAWarButton } from "./header";
 
 // Define a combined type for the data from getWarDetails
 interface CombinedWarData extends IMemeWarState {
@@ -489,9 +490,8 @@ export function MemeCoinWars() {
                     sortBy}
                 </span>
                 <svg
-                  className={`w-4 h-4 transition-transform ${
-                    isDropdownOpen ? "rotate-180" : ""
-                  }`}
+                  className={`w-4 h-4 transition-transform ${isDropdownOpen ? "rotate-180" : ""
+                    }`}
                   fill="none"
                   stroke="currentColor"
                   viewBox="0 0 24 24"
@@ -515,9 +515,8 @@ export function MemeCoinWars() {
                           setCurrentPage(1); // Reset to first page when sorting changes
                           setIsDropdownOpen(false);
                         }}
-                        className={`w-full text-left px-4 py-2 text-sm hover:bg-primary/10 ${
-                          sortBy === option.value ? "bg-primary/20" : ""
-                        }`}
+                        className={`w-full text-left px-4 py-2 text-sm hover:bg-primary/10 ${sortBy === option.value ? "bg-primary/20" : ""
+                          }`}
                       >
                         {option.label}
                       </button>
@@ -623,11 +622,11 @@ export function MemeCoinWars() {
                     animate={
                       animationsEnabled
                         ? {
-                            scale: [0, 1, 0],
-                            opacity: [0, 0.8, 0],
-                            x: [(i - 2) * 10, (i - 2) * 30],
-                            y: [0, i % 2 === 0 ? -20 : 20],
-                          }
+                          scale: [0, 1, 0],
+                          opacity: [0, 0.8, 0],
+                          x: [(i - 2) * 10, (i - 2) * 30],
+                          y: [0, i % 2 === 0 ? -20 : 20],
+                        }
                         : { scale: 0, opacity: 0 }
                     }
                     transition={{
@@ -645,10 +644,10 @@ export function MemeCoinWars() {
                   animate={
                     animationsEnabled
                       ? {
-                          width: ["0%", "150%"],
-                          height: ["0%", "150%"],
-                          opacity: [0, 0.5, 0],
-                        }
+                        width: ["0%", "150%"],
+                        height: ["0%", "150%"],
+                        opacity: [0, 0.5, 0],
+                      }
                       : { width: 0, height: 0, opacity: 0 }
                   }
                   transition={{
@@ -663,6 +662,10 @@ export function MemeCoinWars() {
         </div>
         <div className="flex-1 overflow-y-auto space-y-2 pr-1">
           <AnimatePresence>
+            {wars.length === 0 && !isLoading && <div className="retro-text text-center text-muted-foreground py-8"> 
+             ⚔️ Conquer the tokens. Conquer the world. ⚔️<br />
+             <br />
+              <StartAWarButton /> </div>}
             {wars.map((war, index) => (
               <motion.div
                 key={war.warId}
@@ -708,25 +711,22 @@ function WarItem({
   animationsEnabled,
 }: WarItemProps) {
   // Now we can safely use the hook at the top level of this component
-  const {
-    mintADepositedRaw,
-    mintADepositedInDollar,
-    mintBDepositedInDollar,
-    mintBDepositedRaw,
-  } = useMemeWarCalculations(war.warData);
 
-  // Update the amountPledged values with the calculated ones
+
+  const {mintADepositedRaw, mintADepositedRawInDollar} = calculateMintADeposit(war.warData)
+  const {mintBDepositedRaw, mintBDepositedRawInDollar} = calculateMintBDeposit(war.warData)
+   // Update the amountPledged values with the calculated ones
   const updatedCoin1 = {
     ...war.coin1,
     amountPledged: mintADepositedRaw,
-    amountPledgedInSol: mintADepositedInDollar,
+    amountPledgedInSol: mintADepositedRawInDollar,
   };
 
   const { timeLeft } = useCountdown(war?.warData?.end_time);
   const updatedCoin2 = {
     ...war.coin2,
     amountPledged: mintBDepositedRaw,
-    amountPledgedInSol: mintBDepositedInDollar,
+    amountPledgedInSol: mintBDepositedRawInDollar,
   };
 
   const WarItemContent = () => (
@@ -913,9 +913,8 @@ function CoinCard({ coin, isTopWar, align, onClick }: CoinCardProps) {
   const isPositive = percentChange > 0;
   return (
     <div
-      className={`coin-card p-2 sm:p-3 md:p-4 ${
-        isTopWar ? "top-war" : ""
-      } cursor-pointer`}
+      className={`coin-card p-2 sm:p-3 md:p-4 ${isTopWar ? "top-war" : ""
+        } cursor-pointer`}
       onClick={onClick}
     >
       <div className="flex flex-col gap-2 sm:gap-3">
@@ -950,9 +949,8 @@ function CoinCard({ coin, isTopWar, align, onClick }: CoinCardProps) {
                   {coin.ticker}
                 </span>
                 <span
-                  className={`text-xs ${
-                    isPositive ? "positive" : "negative"
-                  } hidden xs:inline`}
+                  className={`text-xs ${isPositive ? "positive" : "negative"
+                    } hidden xs:inline`}
                 >
                   {isPositive ? "+" : ""}
                   {percentChange.toFixed(2)}%

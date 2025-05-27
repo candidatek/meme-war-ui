@@ -1,4 +1,5 @@
-import { useCallback, useState, Dispatch, SetStateAction } from "react";
+"use client";
+import { useCallback, useState } from "react";
 
 import * as anchor from "@project-serum/anchor";
 import { useWallet } from "@solana/wallet-adapter-react";

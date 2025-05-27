@@ -32,7 +32,7 @@ export const useMemeWarCalculations = (
   memeWarState: IMemeWarState | undefined
 ): MemeWarCalculations => {
   // This useMemeWarCalculations is being used w 3 types: IDashboardWar, War, IMemeWarState.
-  const { data: { price = 130 } = {} } = useSolPrice();
+  const { data: { price = 170 } = {} } = useSolPrice();
 
   const { data: mintAInfo } = useMintInfo(memeWarState?.mint_a || null);
   const { data: mintBInfo } = useMintInfo(memeWarState?.mint_b || null);

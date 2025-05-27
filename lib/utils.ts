@@ -67,7 +67,7 @@ export const fetchTokenBalance = async (
     return 0;
   }
 };
-export const checkIsDevnet = () =>  {
+export const checkIsDevnet = () => {
   return process.env.NEXT_PUBLIC_SOLANA_CLUSTER_URL!.includes('devnet') ? `?cluster=devnet` : ``
 }
 
@@ -184,3 +184,55 @@ export async function getAssetFromMint(assetId: string) {
   console.log(data);
   return data;
 }
+
+export const calculateMintADeposit = (
+  memeWarState: {
+    mint_a_deposit?: string | number | null;
+    mint_a_risk_free_deposit?: string | number | null;
+    mint_a_withdrawn?: string | number | null;
+    mint_a_penalty?: string | number | null;
+    mint_a_sol_ratio?: string | number | null;
+  } | null | undefined,
+  decimalPlaces: number = 6
+): { mintADepositedRaw: number, mintADepositedRawInDollar: number | undefined } => {
+  if (!memeWarState) return { mintADepositedRaw: 0, mintADepositedRawInDollar: 0 };
+
+  const safeConvert = (value: string | number | null | undefined): number => {
+    if (value === null || value === undefined) return 0;
+    return Number(value);
+  };
+
+  const netDeposit =
+    safeConvert(memeWarState.mint_a_deposit) +
+    safeConvert(memeWarState.mint_a_risk_free_deposit) -
+    safeConvert(memeWarState.mint_a_withdrawn) -
+    safeConvert(memeWarState.mint_a_penalty);
+  const mintADepositedRaw = netDeposit / (10 ** decimalPlaces);
+  const mintADepositedRawInDollar = memeWarState.mint_a_sol_ratio ? (mintADepositedRaw / (safeConvert(memeWarState.mint_a_sol_ratio))) : undefined
+  return { mintADepositedRaw, mintADepositedRawInDollar };
+};
+export const calculateMintBDeposit = (
+  memeWarState: {
+    mint_b_deposit?: string | number | null;
+    mint_b_risk_free_deposit?: string | number | null;
+    mint_b_withdrawn?: string | number | null;
+    mint_b_penalty?: string | number | null;
+    mint_b_sol_ratio?: string | number | null;
+  } | null | undefined,
+  decimalPlaces: number = 6
+): { mintBDepositedRaw: number, mintBDepositedRawInDollar: number }  => {
+  if (!memeWarState) return { mintBDepositedRaw: 0, mintBDepositedRawInDollar: 0 };
+
+  const safeConvert = (value: string | number | null | undefined): number => {
+    if (value === null || value === undefined) return 0;
+    return Number(value);
+  };
+
+  const netDeposit =
+    safeConvert(memeWarState.mint_b_deposit) +
+    safeConvert(memeWarState.mint_b_risk_free_deposit) -
+    safeConvert(memeWarState.mint_b_withdrawn) -
+    safeConvert(memeWarState.mint_b_penalty);
+  const mintBDepositedRaw = netDeposit / (10 ** decimalPlaces);
+  return { mintBDepositedRaw, mintBDepositedRawInDollar: (mintBDepositedRaw / (safeConvert(memeWarState.mint_b_sol_ratio))) };
+};

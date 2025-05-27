@@ -1,8 +1,6 @@
 "use client";
-
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Info } from "lucide-react";
 import { toast } from "sonner";
 import { useWallet } from "@solana/wallet-adapter-react";
 import { PublicKey } from "@solana/web3.js";
@@ -30,7 +28,6 @@ import { useGetMemeWarRegistry } from "../hooks/useGetMemeWarRegistry";
 
 // Import components from the local components directory
 import { CoinForm } from "./components/CoinForm";
-import { LaunchCoinForm } from "./components/LaunchCoinForm";
 import { WarDetailsForm } from "./components/WarDetailsForm";
 import {
   CoinData,
