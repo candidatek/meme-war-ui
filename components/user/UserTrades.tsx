@@ -1,9 +1,20 @@
 'use client';
 
-import { useState, useMemo } from 'react';
-import { formatToDollar, formatPublicKey } from '@/lib/utils';
-import { TradeEvent, useGetUserTrades } from '@/app/api/getUserTrades';
-import { motion, AnimatePresence } from 'framer-motion';
+import { useMemo } from 'react';
+
+import {
+  AnimatePresence,
+  motion,
+} from 'framer-motion';
+
+import {
+  TradeEvent,
+  useGetUserTrades,
+} from '@/app/api/getUserTrades';
+import {
+  formatPublicKey,
+  formatToDollar,
+} from '@/lib/utils';
 
 const formatTimestamp = (timestamp: string) => {
   const date = new Date(parseInt(timestamp));
@@ -15,10 +26,10 @@ const TradeRow = ({ trade }: { trade: TradeEvent }) => {
     if (!trade.amount) return '';
     return formatToDollar(parseInt(trade.amount) / Math.pow(10, 6));
   }, [trade.amount]);
-  
+
   let eventTypeLabel = 'Unknown';
   let eventTypeColor = 'bg-gray-500/20 text-gray-400';
-  
+
   if (trade.event_type === 'RFDeposit') {
     eventTypeLabel = 'Risk Free Deposit';
     eventTypeColor = 'bg-blue-500/20 text-blue-400';
@@ -31,9 +42,9 @@ const TradeRow = ({ trade }: { trade: TradeEvent }) => {
   } else if (trade.event_type) {
     eventTypeLabel = trade.event_type.charAt(0).toUpperCase() + trade.event_type.slice(1);
   }
-  
+
   return (
-    <motion.tr 
+    <motion.tr
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       className="border-b border-border last:border-0 hover:bg-accent/50 transition-colors"
@@ -58,7 +69,7 @@ const TradeRow = ({ trade }: { trade: TradeEvent }) => {
           <span className="text-sm text-muted-foreground">
             {formatTimestamp(trade.event_time!)}
           </span>
-          <a 
+          <a
             href={`/meme-wars/${trade.meme_war_state}`}
             onClick={(e) => e.stopPropagation()}
             className="text-xs text-primary hover:text-primary/80 font-mono mt-1 transition-colors"

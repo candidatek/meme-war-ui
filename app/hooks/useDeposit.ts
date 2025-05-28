@@ -1,23 +1,32 @@
-import { BN } from "bn.js";
+import {
+  Dispatch,
+  useCallback,
+  useState,
+} from 'react';
 
-import { useState, useCallback, Dispatch } from "react";
-import * as anchor from "@project-serum/anchor";
-import { PublicKey, Transaction } from "@solana/web3.js";
+import { BN } from 'bn.js';
+import { SetStateAction } from 'jotai';
+import { toast } from 'sonner';
+
+import { findAssociatedTokenAddress } from '@/lib/utils';
+import * as anchor from '@project-serum/anchor';
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { useWallet } from '@solana/wallet-adapter-react';
+import {
+  PublicKey,
+  Transaction,
+} from '@solana/web3.js';
+
 import {
   getConnection,
   getMemeWarGlobalAccount,
   getPDAForMemeSigner,
   getProgramDerivedAddressForPair,
-} from "../utils";
-import useWalletInfo from "./useWalletInfo";
-import { useWallet } from "@solana/wallet-adapter-react";
-import { useTransactionStatus } from "./useTransactionStatus";
-import useProgramDetails from "./useProgramDetails";
-import { findAssociatedTokenAddress } from "@/lib/utils";
-import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { toast } from "sonner";
-import { SetStateAction } from "jotai";
-import { useMintInfo } from "./useMintInfo";
+} from '../utils';
+import { useMintInfo } from './useMintInfo';
+import useProgramDetails from './useProgramDetails';
+import { useTransactionStatus } from './useTransactionStatus';
+import useWalletInfo from './useWalletInfo';
 
 const useDepositTokens = (mintAKey: string | null, mintBKey: string | null) => {
   const [error, setError] = useState(null);
@@ -97,7 +106,7 @@ const useDepositTokens = (mintAKey: string | null, mintBKey: string | null) => {
               payer: publicKey!,
               memeWarState,
               memeWarRegistry: memeWarRegistryAddress,
-              feeReceiver: new PublicKey("indxzHYZWjjCrfphURMyLoMmfLrDU3RuaYx56hmMv5x"), 
+              feeReceiver: new PublicKey("indxzHYZWjjCrfphURMyLoMmfLrDU3RuaYx56hmMv5x"),
               mintA,
               mintB,
               userState,
@@ -135,7 +144,7 @@ const useDepositTokens = (mintAKey: string | null, mintBKey: string | null) => {
         });
 
         const signature = await sendTransaction(tx, connection);
-        
+
         checkStatus({
           signature,
           action: `Deposit ${amount} tokens.`,

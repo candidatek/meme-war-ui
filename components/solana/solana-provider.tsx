@@ -1,17 +1,22 @@
 "use client";
 
-import dynamic from "next/dynamic";
+import {
+  ReactNode,
+  useCallback,
+  useMemo,
+} from 'react';
 
-import { WalletError } from "@solana/wallet-adapter-base";
+import dynamic from 'next/dynamic';
+import { Toaster } from 'sonner';
+
+import { WalletError } from '@solana/wallet-adapter-base';
 import {
   ConnectionProvider,
   WalletProvider,
-} from "@solana/wallet-adapter-react";
-import { WalletModalProvider } from "@solana/wallet-adapter-react-ui";
-import { ReactNode, useCallback, useEffect, useMemo } from "react";
+} from '@solana/wallet-adapter-react';
+import { WalletModalProvider } from '@solana/wallet-adapter-react-ui';
 
-import { toast, Toaster } from "sonner";
-import { useCluster } from "../cluster/cluster-data-access";
+import { useCluster } from '../cluster/cluster-data-access';
 
 // require('@solana/wallet-adapter-react-ui/styles.css');
 

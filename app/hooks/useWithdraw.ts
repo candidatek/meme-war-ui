@@ -1,18 +1,36 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
-"use client";
-import { useState, useCallback, Dispatch, SetStateAction } from 'react';
-import * as anchor from '@project-serum/anchor';
-import { PublicKey, Transaction } from '@solana/web3.js';
-import { getConnection, getMemeWarGlobalAccount, getPDAForMemeSigner, getProgramDerivedAddressForPair } from "../utils";
-import useWalletInfo from "./useWalletInfo";
-import { useWallet } from "@solana/wallet-adapter-react";
-import { useTransactionStatus } from "./useTransactionStatus";
-import useProgramDetails from "./useProgramDetails";
-import { checkIsDevnet, findAssociatedTokenAddress } from "@/lib/utils";
-import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import { toast } from "sonner";
-import { useMintInfo } from './useMintInfo';
 
+"use client";
+import {
+  Dispatch,
+  SetStateAction,
+  useCallback,
+  useState,
+} from 'react';
+
+import { toast } from 'sonner';
+
+import {
+  checkIsDevnet,
+  findAssociatedTokenAddress,
+} from '@/lib/utils';
+import * as anchor from '@project-serum/anchor';
+import { TOKEN_PROGRAM_ID } from '@solana/spl-token';
+import { useWallet } from '@solana/wallet-adapter-react';
+import {
+  PublicKey,
+  Transaction,
+} from '@solana/web3.js';
+
+import {
+  getConnection,
+  getMemeWarGlobalAccount,
+  getPDAForMemeSigner,
+  getProgramDerivedAddressForPair,
+} from '../utils';
+import { useMintInfo } from './useMintInfo';
+import useProgramDetails from './useProgramDetails';
+import { useTransactionStatus } from './useTransactionStatus';
+import useWalletInfo from './useWalletInfo';
 
 const useWithdrawTokens = (mintAKey: string | null, mintBKey: string | null) => {
   const [error, setError] = useState(null);

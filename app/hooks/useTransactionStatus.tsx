@@ -1,8 +1,16 @@
-import { useState, useEffect, Dispatch, SetStateAction } from "react";
-import { toast } from "sonner";
-import { type TransactionSignature } from "@solana/web3.js";
-import { showErrorToast } from "@/components/toast-utils";
-import useConnection from "./useConnection";
+import {
+  Dispatch,
+  SetStateAction,
+  useEffect,
+  useState,
+} from 'react';
+
+import { toast } from 'sonner';
+
+import { showErrorToast } from '@/components/toast-utils';
+import { type TransactionSignature } from '@solana/web3.js';
+
+import useConnection from './useConnection';
 
 type TransactionDetails = {
   signature: TransactionSignature;
@@ -39,9 +47,8 @@ export const useTransactionStatus = () => {
             <div>
               <div>{action}</div>
               <a
-                href={`https://solscan.io/tx/${signature}${
-                  process.env.NEXT_PUBLIC_ENVIRONMENT ? "?cluster=devnet" : ""
-                }`}
+                href={`https://solscan.io/tx/${signature}${process.env.NEXT_PUBLIC_ENVIRONMENT ? "?cluster=devnet" : ""
+                  }`}
               >
                 Txn link
               </a>

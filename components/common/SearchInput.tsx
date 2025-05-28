@@ -1,7 +1,12 @@
 "use client";
 
-import React, { InputHTMLAttributes } from "react";
-import { Loader2, Search, X } from "lucide-react";
+import React, { InputHTMLAttributes } from 'react';
+
+import {
+  Loader2,
+  Search,
+  X,
+} from 'lucide-react';
 
 interface SearchInputProps extends InputHTMLAttributes<HTMLInputElement> {
   onSearchChange: (value: string) => void;

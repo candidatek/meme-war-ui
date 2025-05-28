@@ -1,6 +1,7 @@
 import axios from 'axios';
-import { useQuery } from '@tanstack/react-query';
+
 import { SERVER_URL } from '@/lib/constants';
+import { useQuery } from '@tanstack/react-query';
 
 // Define the async function to fetch the mint info
 const fetchMintInfo = async (mintAddress: string | null) => {
@@ -21,18 +22,18 @@ const fetchMintInfo = async (mintAddress: string | null) => {
 
     // const heliusData = await heliusResponse.json();
     // optimize later
-     if(!mintAddress) {
+    if (!mintAddress) {
         console.log('no mint fount')
         return
     }
     const response = await axios.get(SERVER_URL + `/getMintInfoV2`, {
         params: { mintAddress }
     });
-     return response.data.data;
+    return response.data.data;
 };
 
 // Custom hook to use the fetchMintInfo query
-export const useMintInfo = (mintAddress: string| null) => {
+export const useMintInfo = (mintAddress: string | null) => {
     return useQuery({
         queryKey: ['mintInfo', mintAddress],
         enabled: !!mintAddress,

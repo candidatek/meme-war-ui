@@ -1,7 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
-import { useWallet } from "@solana/wallet-adapter-react";
-import { useMemo } from "react";
-import useConnection from "./useConnection";
+import { useMemo } from 'react';
+
+import { useWallet } from '@solana/wallet-adapter-react';
+import { useQuery } from '@tanstack/react-query';
+
+import useConnection from './useConnection';
 
 const useWalletInfo = () => {
   const { wallet, sendTransaction } = useWallet();

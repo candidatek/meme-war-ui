@@ -1,4 +1,7 @@
-import { useState, useEffect } from 'react';
+import {
+  useEffect,
+  useState,
+} from 'react';
 
 /**
  * Hook to manage a modal that should only be shown on the first visit
@@ -21,7 +24,7 @@ export const useFirstVisitModal = (
 
     // Check if this is the first visit
     const hasSeenModal = localStorage.getItem(storageKey) === 'true';
-    
+
     // Only open the modal if this is the first visit and initiallyOpen is true
     setIsOpen(initiallyOpen && !hasSeenModal);
     setIsInitialized(true);
@@ -30,7 +33,7 @@ export const useFirstVisitModal = (
   // Close the modal and remember that user has seen it
   const closeModalPermanently = () => {
     setIsOpen(false);
-    
+
     // Remember that user has seen the modal
     if (typeof window !== 'undefined') {
       localStorage.setItem(storageKey, 'true');

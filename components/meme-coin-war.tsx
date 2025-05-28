@@ -1,5 +1,8 @@
-import { Card, CardContent } from "@/components/ui/card";
-import { formatNumber } from "@/lib/utils";
+import {
+  Card,
+  CardContent,
+} from '@/components/ui/card';
+import { formatNumber } from '@/lib/utils';
 
 interface CoinData {
   ticker: string;
@@ -25,10 +28,9 @@ export function MemeCoinWar({ war, isTopWar }: MemeCoinWarProps) {
     <Card
       className={`
         overflow-hidden transition-all duration-200 relative
-        ${
-          isTopWar
-            ? "border-4 border-primary shadow-lg scale-102 bg-accent/5"
-            : ""
+        ${isTopWar
+          ? "border-4 border-primary shadow-lg scale-102 bg-accent/5"
+          : ""
         }
       `}
     >

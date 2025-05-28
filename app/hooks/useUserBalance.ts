@@ -1,8 +1,9 @@
-import { useQuery } from "@tanstack/react-query";
-import { useWallet } from "@solana/wallet-adapter-react";
-import { fetchTokenBalance } from "@/lib/utils";
-import { PublicKey } from "@solana/web3.js";
-import useConnection from "./useConnection";
+import { fetchTokenBalance } from '@/lib/utils';
+import { useWallet } from '@solana/wallet-adapter-react';
+import { PublicKey } from '@solana/web3.js';
+import { useQuery } from '@tanstack/react-query';
+
+import useConnection from './useConnection';
 
 export const useTokenBalance = (mintA: string | null, mintB: string | null) => {
   const { publicKey } = useWallet();

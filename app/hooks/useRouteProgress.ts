@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback } from "react";
+import { useCallback } from 'react';
 
 const listeners: Set<() => void> = new Set();
 

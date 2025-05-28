@@ -1,8 +1,18 @@
 "use client";
 // src/hooks/useAuth.ts
-import { useState, useEffect } from 'react';
-import { useWallet, WalletContextState } from '@solana/wallet-adapter-react';
-import { auth, TokenPayload } from '@/app/api/auth';
+import {
+  useEffect,
+  useState,
+} from 'react';
+
+import {
+  auth,
+  TokenPayload,
+} from '@/app/api/auth';
+import {
+  useWallet,
+  WalletContextState,
+} from '@solana/wallet-adapter-react';
 
 interface AuthState {
   token: string | null;

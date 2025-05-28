@@ -1,11 +1,12 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import React from "react";
-import useCountdown from "@/app/hooks/useCountdown";
-import { formatPublicKey } from "@/lib/utils";
-import { useParams } from "next/navigation";
-import { motion } from "framer-motion";
+import React from 'react';
+
+import { motion } from 'framer-motion';
+import { useRouter } from 'next/navigation';
+
+import useCountdown from '@/app/hooks/useCountdown';
+import { formatPublicKey } from '@/lib/utils';
 
 export interface War {
   meme_war_state: string;
@@ -82,11 +83,10 @@ const MemeWarCard: React.FC<MemeWarCardProps> = ({ war, onClick }) => {
           {formatPublicKey(war.meme_war_state)}
         </div>
         <div
-          className={`text-sm px-2 py-1 rounded-full ${
-            war.war_ended
-              ? "bg-red-500/10 text-red-500"
-              : "bg-green-500/10 text-green-500"
-          }`}
+          className={`text-sm px-2 py-1 rounded-full ${war.war_ended
+            ? "bg-red-500/10 text-red-500"
+            : "bg-green-500/10 text-green-500"
+            }`}
         >
           {!war.war_ended ? "Active" : `Ended ${endedTimeAgo}`}
         </div>

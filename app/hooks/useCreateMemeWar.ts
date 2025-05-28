@@ -1,9 +1,24 @@
 "use client";
-import { useCallback, useState } from "react";
+import {
+  useCallback,
+  useState,
+} from 'react';
 
-import * as anchor from "@project-serum/anchor";
-import { useWallet } from "@solana/wallet-adapter-react";
-import { PublicKey, SystemProgram, Transaction } from "@solana/web3.js";
+import { toast } from 'sonner';
+
+import { PROGRAM_ID } from '@/lib/constants';
+import { findAssociatedTokenAddress } from '@/lib/utils';
+import * as anchor from '@project-serum/anchor';
+import {
+  ASSOCIATED_TOKEN_PROGRAM_ID,
+  TOKEN_PROGRAM_ID,
+} from '@solana/spl-token';
+import { useWallet } from '@solana/wallet-adapter-react';
+import {
+  PublicKey,
+  SystemProgram,
+  Transaction,
+} from '@solana/web3.js';
 
 import {
   getConnection,
@@ -12,17 +27,10 @@ import {
   getProgramDerivedAddressForPair,
   sleep,
   sortTokensAddresses,
-} from "../utils";
-import useProgramDetails from "./useProgramDetails";
-import { useTransactionStatus } from "./useTransactionStatus";
-import useWalletInfo from "./useWalletInfo";
-import { PROGRAM_ID } from "@/lib/constants";
-import { findAssociatedTokenAddress } from "@/lib/utils";
-import {
-  ASSOCIATED_TOKEN_PROGRAM_ID,
-  TOKEN_PROGRAM_ID,
-} from "@solana/spl-token";
-import { toast } from "sonner";
+} from '../utils';
+import useProgramDetails from './useProgramDetails';
+import { useTransactionStatus } from './useTransactionStatus';
+import useWalletInfo from './useWalletInfo';
 
 export function useCreateMemeWarRegistry(mint_a: string, mint_b: string) {
   const [isCreateWarLoading, setIsCreateWarLoading] = useState<
@@ -170,7 +178,7 @@ export function useCreateMemeWarRegistry(mint_a: string, mint_b: string) {
           .instruction();
         tx.add(validateIx);
 
-        toast.message("Creating Meme war", { 
+        toast.message("Creating Meme war", {
           duration: 20000,
           id: "meme-war-creation"
         });

@@ -1,8 +1,16 @@
 "use client"
 
-import { motion, AnimatePresence } from "framer-motion"
-import { formatNumber } from "@/lib/utils"
-import { useEffect, useState } from "react"
+import {
+  useEffect,
+  useState,
+} from 'react';
+
+import {
+  AnimatePresence,
+  motion,
+} from 'framer-motion';
+
+import { formatNumber } from '@/lib/utils';
 
 interface PledgeNotification {
   id: string
