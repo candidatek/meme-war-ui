@@ -1,5 +1,6 @@
-import { useMemo } from "react";
-import { UserState } from "@/app/Interfaces";
+import { useMemo } from 'react';
+
+import { UserState } from '@/app/Interfaces';
 
 export function useUserCalculations(userState: UserState | null | undefined) {
   return useMemo(() => {

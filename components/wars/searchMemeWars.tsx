@@ -1,9 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, {
+  useEffect,
+  useState,
+} from 'react';
 
-import { useQueryClient } from '@tanstack/react-query';
-import useIsMobile from '@/app/hooks/useIsMobile';
-import { MemeWarList } from './MemeWarCard';
 import { useSearchMemeWarState } from '@/app/api/searchMemeWarState';
+import useIsMobile from '@/app/hooks/useIsMobile';
+import { useQueryClient } from '@tanstack/react-query';
+
+import { MemeWarList } from './MemeWarCard';
 
 //@ts-expect-error
 const SearchMemeWars = ({ warArray, handleClick }) => {
@@ -104,10 +108,10 @@ const SearchMemeWars = ({ warArray, handleClick }) => {
       {error && <div>{error?.message}</div>}
 
       {!isLoading && !isError && !searchResult &&
-       <MemeWarList
-        warArray={[...warArray,...warArray]}
-        handleClick={handleClick}
-      />}
+        <MemeWarList
+          warArray={[...warArray, ...warArray]}
+          handleClick={handleClick}
+        />}
     </>
 
   );

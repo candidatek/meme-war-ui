@@ -1,30 +1,35 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import {
+  useEffect,
+  useState,
+} from 'react';
 
-import { AnimatePresence, motion } from "framer-motion";
-import { useRouter } from "next/navigation";
+import {
+  AnimatePresence,
+  motion,
+} from 'framer-motion';
+import { useRouter } from 'next/navigation';
 
 import {
   useGetWarDetails,
   useSearchMemeWars,
-} from "@/app/api/getHomePageDetails";
-// A minimal wrapper component to use the hook properly
-import { useMemeWarCalculations } from "@/app/hooks/useMemeWarCalculations";
-import { SearchInput } from "@/components/common/SearchInput";
-import { calculateMintADeposit, calculateMintBDeposit, formatNumber } from "@/lib/utils";
-import useCountdown from "@/app/hooks/useCountdown";
-import VsComponent from "./VsComponent";
-import SimpleCustomizableModal from "./ui/modal";
-import CryptoStyleModal from "./ui/modal";
-import ToastStyleModal from "./ui/modal";
-import { useFirstVisitModal } from "@/app/hooks/useFirstVisitModal";
-import { IMemeWarState } from "@/app/api/getMemeWarStateInfo";
-import { Button } from "@/components/ui/button";
-import { ChevronDown } from "lucide-react";
-import { useSocket } from "@/app/context/socketContext";
-import { ChatMessage } from "@/app/Interfaces";
-import { StartAWarButton } from "./header";
+} from '@/app/api/getHomePageDetails';
+import { IMemeWarState } from '@/app/api/getMemeWarStateInfo';
+import { useSocket } from '@/app/context/socketContext';
+import useCountdown from '@/app/hooks/useCountdown';
+import { useFirstVisitModal } from '@/app/hooks/useFirstVisitModal';
+import { ChatMessage } from '@/app/Interfaces';
+import { SearchInput } from '@/components/common/SearchInput';
+import {
+  calculateMintADeposit,
+  calculateMintBDeposit,
+  formatNumber,
+} from '@/lib/utils';
+
+import { StartAWarButton } from './header';
+import ToastStyleModal from './ui/modal';
+import VsComponent from './VsComponent';
 
 // Define a combined type for the data from getWarDetails
 interface CombinedWarData extends IMemeWarState {
@@ -662,9 +667,9 @@ export function MemeCoinWars() {
         </div>
         <div className="flex-1 overflow-y-auto space-y-2 pr-1">
           <AnimatePresence>
-            {wars.length === 0 && !isLoading && <div className="retro-text text-center text-muted-foreground py-8"> 
-             ⚔️ Conquer the tokens. Conquer the world. ⚔️<br />
-             <br />
+            {wars.length === 0 && !isLoading && <div className="retro-text text-center text-muted-foreground py-8">
+              ⚔️ Conquer the tokens. Conquer the world. ⚔️<br />
+              <br />
               <StartAWarButton /> </div>}
             {wars.map((war, index) => (
               <motion.div
@@ -713,9 +718,9 @@ function WarItem({
   // Now we can safely use the hook at the top level of this component
 
 
-  const {mintADepositedRaw, mintADepositedRawInDollar} = calculateMintADeposit(war.warData)
-  const {mintBDepositedRaw, mintBDepositedRawInDollar} = calculateMintBDeposit(war.warData)
-   // Update the amountPledged values with the calculated ones
+  const { mintADepositedRaw, mintADepositedRawInDollar } = calculateMintADeposit(war.warData)
+  const { mintBDepositedRaw, mintBDepositedRawInDollar } = calculateMintBDeposit(war.warData)
+  // Update the amountPledged values with the calculated ones
   const updatedCoin1 = {
     ...war.coin1,
     amountPledged: mintADepositedRaw,
@@ -725,7 +730,7 @@ function WarItem({
   const { timeLeft } = useCountdown(war?.warData?.end_time);
   const updatedCoin2 = {
     ...war.coin2,
- 
+
     amountPledged: mintBDepositedRaw,
     amountPledgedInSol: mintBDepositedRawInDollar,
   };

@@ -1,12 +1,20 @@
 "use client";
 
-import { useState } from "react";
-import UserTrades from "./UserTrades";
-import UserWars from "./UserWars";
-import UserEarnings from "./UserEarnings";
-import { motion, AnimatePresence } from "framer-motion";
-import { Coins, Trophy, ArrowDownUp } from "lucide-react";
-import { War } from "./UserWars";
+import { useState } from 'react';
+
+import {
+  AnimatePresence,
+  motion,
+} from 'framer-motion';
+import {
+  ArrowDownUp,
+  Coins,
+  Trophy,
+} from 'lucide-react';
+
+import UserEarnings from './UserEarnings';
+import UserTrades from './UserTrades';
+import UserWars, { War } from './UserWars';
 
 type ViewConfig = {
   id: string;
@@ -53,11 +61,10 @@ const UserTabPanel: React.FC<UserTabPanelProps> = ({ userWars = [] }) => {
               onClick={() => setSelectedView(view.id)}
               className={`
                                 px-6 py-3 font-medium text-sm transition-colors relative flex items-center
-                                ${
-                                  selectedView === view.id
-                                    ? "text-primary"
-                                    : "text-muted-foreground hover:text-foreground"
-                                }
+                                ${selectedView === view.id
+                  ? "text-primary"
+                  : "text-muted-foreground hover:text-foreground"
+                }
                             `}
             >
               {view.icon}

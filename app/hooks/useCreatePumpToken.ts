@@ -8,6 +8,7 @@ import {
 
 import { toast } from 'react-hot-toast';
 
+import { bs58 } from '@coral-xyz/anchor/dist/cjs/utils/bytes';
 import {
   ASSOCIATED_TOKEN_PROGRAM_ID,
   getAssociatedTokenAddress,
@@ -27,6 +28,10 @@ import {
   VersionedTransaction,
 } from '@solana/web3.js';
 
+import { getConnection } from '../utils';
+import useProgramDetails from './useProgramDetails';
+import { useTransactionStatus } from './useTransactionStatus';
+
 export const buildVersionedTx = async (
   connection: Connection,
   payer: PublicKey,
@@ -43,10 +48,6 @@ export const buildVersionedTx = async (
 
   return new VersionedTransaction(messageV0);
 };
-import { getConnection } from '../utils';
-import useProgramDetails from './useProgramDetails';
-import { useTransactionStatus } from './useTransactionStatus';
-import { bs58 } from '@coral-xyz/anchor/dist/cjs/utils/bytes';
 
 // Constants
 const PUMP_FUN_PROGRAM_ID = new PublicKey("6EF8rrecthR5Dkzon8Nwu78hRvfCKubJ14M5uBEwF6P");
@@ -60,7 +61,7 @@ const METADATA_SEED = "metadata";
 
 const useCreatePumpToken = () => {
   const [error, setError] = useState<Error | null>(null);
-  const {  signTransaction, wallet } = useWallet();
+  const { signTransaction, wallet } = useWallet();
   const { checkStatus } = useTransactionStatus();
   const { memeProgram } = useProgramDetails();
   const connection = getConnection();
@@ -168,7 +169,7 @@ const useCreatePumpToken = () => {
       const heapFrameIx = ComputeBudgetProgram.requestHeapFrame({
         bytes: 256 * 1024 // Request 256KB of heap
       });
-      
+
       // Add compute budget instructions FIRST
       transaction.add(computeBudgetIx);
       transaction.add(heapFrameIx);
@@ -210,33 +211,33 @@ const useCreatePumpToken = () => {
         .instruction();
       transaction.add(ix);
 
-      
-      
-      
+
+
+
       const sis = await sendAndConfirmTransaction(connection, transaction, [signer, mintA, mintB])
       console.log(sis)
-       
+
       // const user = publicKey;
       // Sign with the keypairs first
-     
-
-     
-
-      
 
 
-      
-  //      // Then send the fully signed transaction
-  // // const signature = await connection.sendRawTransaction(
-  // //   signedTransaction.serialize(),
-  // //   { 
-  // //     skipPreflight: true, // Same as in your test
-  // //     preflightCommitment: 'confirmed'
-  // //   }
-  // // );
-  //     console.log("Transaction sent with signature:", signature);
-  //     await connection.confirmTransaction(signature, "confirmed");
-    
+
+
+
+
+
+
+      //      // Then send the fully signed transaction
+      // // const signature = await connection.sendRawTransaction(
+      // //   signedTransaction.serialize(),
+      // //   { 
+      // //     skipPreflight: true, // Same as in your test
+      // //     preflightCommitment: 'confirmed'
+      // //   }
+      // // );
+      //     console.log("Transaction sent with signature:", signature);
+      //     await connection.confirmTransaction(signature, "confirmed");
+
 
 
     } catch (err) {

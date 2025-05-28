@@ -1,4 +1,7 @@
-import { useState, useEffect } from 'react';
+import {
+  useEffect,
+  useState,
+} from 'react';
 
 function useCountdown(targetTimestamp: string | undefined) {
     const targetTime = Number(targetTimestamp);

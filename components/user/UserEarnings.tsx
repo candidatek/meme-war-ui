@@ -1,9 +1,17 @@
 "use client";
 
-import { TradeEvent, useGetUserTrades } from "@/app/api/getUserTrades";
-import React, { useMemo } from "react";
-import { formatTimeAgo, formatToDollar } from "@/lib/utils";
-import { motion } from "framer-motion";
+import React, { useMemo } from 'react';
+
+import { motion } from 'framer-motion';
+
+import {
+  TradeEvent,
+  useGetUserTrades,
+} from '@/app/api/getUserTrades';
+import {
+  formatTimeAgo,
+  formatToDollar,
+} from '@/lib/utils';
 
 const UserEarnings: React.FC = () => {
   const { data: trades = [], isLoading } = useGetUserTrades(50, 0);
@@ -68,16 +76,14 @@ const UserEarnings: React.FC = () => {
       case "RFDeposit":
         return `${mintSymbol} Risk-Free Deposit`;
       case "withdraw":
-        return `${mintSymbol} vs ${
-          trade.meme_war_state?.substring(0, 4) || ""
-        } War Win`;
+        return `${mintSymbol} vs ${trade.meme_war_state?.substring(0, 4) || ""
+          } War Win`;
       case "penalty":
         return `${mintSymbol} War Penalty`;
       default:
         if (parseFloat(trade.fee || "0") > 0) {
-          return `${mintSymbol} vs ${
-            trade.meme_war_state?.substring(0, 4) || ""
-          } Creator Fee`;
+          return `${mintSymbol} vs ${trade.meme_war_state?.substring(0, 4) || ""
+            } Creator Fee`;
         }
         return "Transaction";
     }
@@ -151,7 +157,7 @@ const UserEarnings: React.FC = () => {
                   +$
                   {formatToDollar(
                     parseFloat(trade.amount_in_sol || "0") +
-                      parseFloat(trade.fee || "0")
+                    parseFloat(trade.fee || "0")
                   )}
                 </div>
               </motion.div>

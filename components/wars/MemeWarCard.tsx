@@ -1,9 +1,12 @@
-import useCountdown from "@/app/hooks/useCountdown";
-import { useMemeWarCalculations } from "@/app/hooks/useMemeWarCalculations";
-import { War } from "../user/UserWars";
-import { Megaphone } from "lucide-react";
-import { useState } from "react";
-import { WarRoomDialog } from "@/app/war/[id]/components/WarRoomDialog";
+import { useState } from 'react';
+
+import { Megaphone } from 'lucide-react';
+
+import useCountdown from '@/app/hooks/useCountdown';
+import { useMemeWarCalculations } from '@/app/hooks/useMemeWarCalculations';
+import { WarRoomDialog } from '@/app/war/[id]/components/WarRoomDialog';
+
+import { War } from '../user/UserWars';
 
 interface MemeWarListProps {
   warArray: War[];

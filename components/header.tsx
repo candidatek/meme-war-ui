@@ -1,6 +1,9 @@
 "use client";
 
-import { ReactElement, useState } from 'react';
+import {
+  ReactElement,
+  useState,
+} from 'react';
 
 import {
   AnimatePresence,
@@ -14,12 +17,12 @@ import {
 import Image from 'next/image';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { FaTelegramPlane } from 'react-icons/fa';
+import { FaXTwitter } from 'react-icons/fa6';
 
 import { Button } from '@/components/ui/button';
 import { useWallet } from '@solana/wallet-adapter-react';
 import { WalletMultiButton } from '@solana/wallet-adapter-react-ui';
-import { FaXTwitter } from "react-icons/fa6";
-import { FaTelegramPlane } from "react-icons/fa";
 
 export function Header() {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);

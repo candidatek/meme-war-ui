@@ -1,11 +1,18 @@
-import { formatNumber } from "@/lib/utils";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { useSolPrice } from "../api/getSolPrice";
-import { IMemeWarState } from "../api/getMemeWarStateInfo";
-import { useMintInfo } from "./useMintInfo";
-import { PublicKey } from "@solana/web3.js";
-import { getTokenRatio } from "../utils";
-import useConnection from "./useConnection";
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useState,
+} from 'react';
+
+import { formatNumber } from '@/lib/utils';
+import { PublicKey } from '@solana/web3.js';
+
+import { IMemeWarState } from '../api/getMemeWarStateInfo';
+import { useSolPrice } from '../api/getSolPrice';
+import { getTokenRatio } from '../utils';
+import useConnection from './useConnection';
+import { useMintInfo } from './useMintInfo';
 
 interface MemeWarCalculations {
   rfPlusMintADeposited: string;
@@ -141,7 +148,7 @@ export const useMemeWarCalculations = (
           Number(memeWarState?.mint_a_risk_free_deposit) -
           Number(memeWarState.mint_a_withdrawn) -
           Number(memeWarState?.mint_a_penalty)) /
-          10 ** memeWarState.mint_a_decimals
+        10 ** memeWarState.mint_a_decimals
       );
     }
     return "Loading...";
@@ -154,7 +161,7 @@ export const useMemeWarCalculations = (
           Number(memeWarState?.mint_b_risk_free_deposit) -
           Number(memeWarState.mint_b_withdrawn) -
           Number(memeWarState?.mint_b_penalty)) /
-          10 ** memeWarState.mint_b_decimals
+        10 ** memeWarState.mint_b_decimals
       );
     }
     return "Loading...";
@@ -167,8 +174,8 @@ export const useMemeWarCalculations = (
           Number(memeWarState?.mint_b_risk_free_deposit) -
           Number(memeWarState?.mint_b_withdrawn) +
           Number(memeWarState?.mint_b_penalty)) /
-          mintBRatio /
-          10 ** 6
+        mintBRatio /
+        10 ** 6
       );
     }
     return "0";
@@ -181,8 +188,8 @@ export const useMemeWarCalculations = (
           Number(memeWarState?.mint_a_risk_free_deposit) -
           Number(memeWarState?.mint_a_withdrawn) +
           Number(memeWarState?.mint_a_penalty)) /
-          mintARatio /
-          10 ** 6
+        mintARatio /
+        10 ** 6
       );
     }
     return "0";
