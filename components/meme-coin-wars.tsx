@@ -9,22 +9,15 @@ import {
   useGetWarDetails,
   useSearchMemeWars,
 } from "@/app/api/getHomePageDetails";
-// A minimal wrapper component to use the hook properly
-import { useMemeWarCalculations } from "@/app/hooks/useMemeWarCalculations";
 import { SearchInput } from "@/components/common/SearchInput";
 import { calculateMintADeposit, calculateMintBDeposit, formatNumber } from "@/lib/utils";
 import useCountdown from "@/app/hooks/useCountdown";
 import VsComponent from "./VsComponent";
-import SimpleCustomizableModal from "./ui/modal";
-import CryptoStyleModal from "./ui/modal";
-import ToastStyleModal from "./ui/modal";
-import { useFirstVisitModal } from "@/app/hooks/useFirstVisitModal";
-import { IMemeWarState } from "@/app/api/getMemeWarStateInfo";
-import { Button } from "@/components/ui/button";
-import { ChevronDown } from "lucide-react";
-import { useSocket } from "@/app/context/socketContext";
+ import { IMemeWarState } from "@/app/api/getMemeWarStateInfo";
+ import { useSocket } from "@/app/context/socketContext";
 import { ChatMessage } from "@/app/Interfaces";
 import { StartAWarButton } from "./header";
+import TermsOfServiceModal from "./termsOfService";
 
 // Define a combined type for the data from getWarDetails
 interface CombinedWarData extends IMemeWarState {
@@ -87,7 +80,7 @@ const coinEmojis: Record<string, string> = {
   ETH: "Ξ",
 };
 
-export function MemeCoinWars() {
+export function HomePage() {
   const [sortBy, setSortBy] = useState<string>("currently_live");
   const [filterBy, setFilterBy] = useState<string>("all");
   const [currentPage, setCurrentPage] = useState<number>(1);
@@ -95,11 +88,7 @@ export function MemeCoinWars() {
   const [totalItems, setTotalItems] = useState<number>(0);
   const [totalPages, setTotalPages] = useState<number>(1);
 
-  const {
-    isOpen: isModalOpen,
-    closeModalPermanently,
-    isInitialized,
-  } = useFirstVisitModal("has-seen-pump-intro-modal", true);
+
 
   const {
     data: warArray,
@@ -199,68 +188,7 @@ export function MemeCoinWars() {
     }
   }, [warArray, searchResults, searchTerm]);
 
-  // Simulate real-time pledge updates (in a production app, this would use WebSockets)
-  useEffect(() => {
-    if (wars.length === 0) return;
 
-    const simulatePledge = () => {
-      // Randomly select 2-3 wars to receive pledges
-      const numPledges = Math.floor(Math.random() * 2) + 2; // 2-3 pledges
-      const pledgedWars = new Set<number>();
-
-      while (pledgedWars.size < numPledges && pledgedWars.size < wars.length) {
-        pledgedWars.add(Math.floor(Math.random() * wars.length));
-      }
-
-      pledgedWars.forEach((warIndex) => {
-        const randomCoinSide = Math.random() > 0.5 ? "coin1" : "coin2";
-        const pledgeAmount = Math.floor(Math.random() * 50000) + 1000;
-
-        const newPledge: Pledge = {
-          id: Math.random().toString(),
-          amount: pledgeAmount,
-          timestamp: new Date(),
-          pledger: `Whale${Math.floor(Math.random() * 1000)}`,
-          coinTicker: wars[warIndex][randomCoinSide].ticker,
-        };
-
-        setWars((currentWars) => {
-          const newWars = [...currentWars];
-          const war = { ...newWars[warIndex] };
-          const coin = { ...war[randomCoinSide] };
-
-          coin.amountPledged += pledgeAmount;
-          coin.pledgers += 1;
-          coin.recentPledges = [newPledge];
-
-          war[randomCoinSide] = coin;
-          newWars[warIndex] = war;
-
-          if (animationsEnabled) {
-            setShakingWarId(warIndex);
-            setTimeout(() => setShakingWarId(null), 300);
-          }
-
-          if (animationsEnabled) {
-            return [...newWars].sort(
-              (a, b) =>
-                b.coin1.amountPledged +
-                b.coin2.amountPledged -
-                (a.coin1.amountPledged + a.coin2.amountPledged)
-            );
-          }
-          return newWars;
-        });
-      });
-    };
-
-    // // Simulate pledges every 400-500ms (2-2.5 pledges per second)
-    // const interval = setInterval(() => {
-    //   simulatePledge();
-    // }, Math.random() * 100 + 400);
-
-    // return () => clearInterval(interval);
-  }, [wars, animationsEnabled]);
 
   useEffect(() => {
     if (!socket || !isConnected) {
@@ -306,60 +234,9 @@ export function MemeCoinWars() {
     }
   };
 
-  const goToPage = (page: number) => {
-    if (page >= 1 && page <= totalPages) {
-      setCurrentPage(page);
-      window.scrollTo({ top: 0, behavior: "smooth" });
-    }
-  };
 
-  const goToNextPage = () => {
-    goToPage(currentPage + 1);
-  };
 
-  const goToPrevPage = () => {
-    goToPage(currentPage - 1);
-  };
 
-  const getVisiblePageNumbers = () => {
-    const pageNumbers = [];
-    const maxVisiblePages = 5;
-
-    if (totalPages <= maxVisiblePages) {
-      for (let i = 1; i <= totalPages; i++) {
-        pageNumbers.push(i);
-      }
-    } else {
-      pageNumbers.push(1);
-
-      let start = Math.max(2, currentPage - 1);
-      let end = Math.min(totalPages - 1, currentPage + 1);
-
-      if (end - start + 1 < maxVisiblePages - 2) {
-        if (currentPage < totalPages / 2) {
-          end = Math.min(totalPages - 1, start + maxVisiblePages - 3);
-        } else {
-          start = Math.max(2, end - (maxVisiblePages - 3));
-        }
-      }
-
-      if (start > 2) {
-        pageNumbers.push("...");
-      }
-
-      for (let i = start; i <= end; i++) {
-        pageNumbers.push(i);
-      }
-
-      if (end < totalPages - 1) {
-        pageNumbers.push("...");
-      }
-
-      pageNumbers.push(totalPages);
-    }
-
-    return pageNumbers;
-  };
 
   // Update search handler to use backend search API
   const handleSearch = (value: string) => {
@@ -395,83 +272,8 @@ export function MemeCoinWars() {
   return (
     <>
       {/* Only render the modal after client-side initialization */}
-      {isInitialized && (
-        <ToastStyleModal
-          isOpen={isModalOpen}
-          onClose={closeModalPermanently}
-          width={500}
-          height="auto"
-          position="center"
-        >
-          <div style={{ textAlign: "center" }}>
-            <h2 style={{ fontSize: "24px", marginBottom: "20px" }}>
-              how it works
-            </h2>
 
-            <p>
-              pump allows <span style={{ color: "#4CAF50" }}>anyone</span> to
-              create coins. all coins created on Pump are
-              <br />
-              <span style={{ color: "#4CAF50" }}>fair-launch</span>, meaning
-              everyone has equal access to buy and sell
-              <br />
-              when the coin is first created.
-            </p>
-
-            <div style={{ margin: "20px 0" }}>
-              <p>
-                <strong>step 1:</strong> pick a coin that you like
-              </p>
-              <p>
-                <strong>step 2:</strong> buy the coin on the bonding curve
-              </p>
-              <p>
-                <strong>step 3:</strong> sell at any time to lock in your
-                profits or losses
-              </p>
-            </div>
-
-            <p>
-              by clicking this button you agree to the terms and conditions and
-              <br />
-              certify that you are over 18 years old
-            </p>
-
-            <button
-              onClick={closeModalPermanently}
-              style={{
-                marginTop: "20px",
-                marginBottom: "20px",
-                padding: "10px 0",
-                width: "100%",
-                backgroundColor: "#8EEFC0",
-                color: "black",
-                border: "none",
-                borderRadius: "4px",
-                cursor: "pointer",
-                fontWeight: "bold",
-                fontSize: "16px",
-              }}
-            >
-              I'm ready to pump
-            </button>
-
-            <div style={{ fontSize: "14px", color: "#aaa" }}>
-              <a href="#" style={{ color: "#aaa", marginRight: "10px" }}>
-                privacy policy
-              </a>{" "}
-              |
-              <a href="#" style={{ color: "#aaa", margin: "0 10px" }}>
-                terms of service
-              </a>{" "}
-              |
-              <a href="#" style={{ color: "#aaa", marginLeft: "10px" }}>
-                fees
-              </a>
-            </div>
-          </div>
-        </ToastStyleModal>
-      )}
+      <TermsOfServiceModal />
 
       <div className="container mx-auto px-2 sm:px-4 h-full flex flex-col">
         <div className="flex flex-col sm:flex-row items-center justify-between gap-4 mb-6">
@@ -662,9 +464,9 @@ export function MemeCoinWars() {
         </div>
         <div className="flex-1 overflow-y-auto space-y-2 pr-1">
           <AnimatePresence>
-            {wars.length === 0 && !isLoading && <div className="retro-text text-center text-muted-foreground py-8"> 
-             ⚔️ Conquer the tokens. Conquer the world. ⚔️<br />
-             <br />
+            {wars.length === 0 && !isLoading && <div className="retro-text text-center text-muted-foreground py-8">
+              ⚔️ Conquer the tokens. Conquer the world. ⚔️<br />
+              <br />
               <StartAWarButton /> </div>}
             {wars.map((war, index) => (
               <motion.div
@@ -686,7 +488,7 @@ export function MemeCoinWars() {
           </AnimatePresence>
           {searchTerm && wars.length === 0 && !isSearchLoading && (
             <div className="text-center text-muted-foreground py-8">
-              No wars found matching "{searchTerm}".
+              No wars found matching &quot;{searchTerm}&quot;.
             </div>
           )}
         </div>
@@ -713,9 +515,9 @@ function WarItem({
   // Now we can safely use the hook at the top level of this component
 
 
-  const {mintADepositedRaw, mintADepositedRawInDollar} = calculateMintADeposit(war.warData)
-  const {mintBDepositedRaw, mintBDepositedRawInDollar} = calculateMintBDeposit(war.warData)
-   // Update the amountPledged values with the calculated ones
+  const { mintADepositedRaw, mintADepositedRawInDollar } = calculateMintADeposit(war.warData)
+  const { mintBDepositedRaw, mintBDepositedRawInDollar } = calculateMintBDeposit(war.warData)
+  // Update the amountPledged values with the calculated ones
   const updatedCoin1 = {
     ...war.coin1,
     amountPledged: mintADepositedRaw,
@@ -725,7 +527,7 @@ function WarItem({
   const { timeLeft } = useCountdown(war?.warData?.end_time);
   const updatedCoin2 = {
     ...war.coin2,
- 
+
     amountPledged: mintBDepositedRaw,
     amountPledgedInSol: mintBDepositedRawInDollar,
   };

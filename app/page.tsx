@@ -1,20 +1,10 @@
-'use client'
+// import { getHomePageWarsDetails } from "@/app/api/getWarDetailsServer";
+import { HomePage } from "@/components/meme-coin-wars"
 
-import { MemeCoinWars } from "@/components/meme-coin-wars"
-import { Suspense } from 'react'
-import { Analytics } from "@/components/Analytics"
-
-export default function Home() {
-  console.log('Home is loading for GA');
-
-
+export default async function Home() {
+  // const warArray = await getHomePageWarsDetails("currently_live", "all", 10, 0);
   return (
-    <div className="flex-1">
-      <Suspense fallback={null}>
-        <Analytics />
-      </Suspense>
-      <MemeCoinWars />
-    </div>
+    <HomePage />
   )
 }
 
