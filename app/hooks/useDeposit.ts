@@ -123,6 +123,8 @@ const useDepositTokens = (mintAKey: string | null, mintBKey: string | null) => {
             mintBBaseVault: new PublicKey(mintBInfo.pool_base_token_account),
             mintAQuoteVault: new PublicKey(mintAInfo.pool_quote_token_account),
             mintBQuoteVault: new PublicKey(mintBInfo.pool_quote_token_account),
+            mintAPoolId: new PublicKey(mintAInfo.poolId),
+            mintBPoolId: new PublicKey(mintBInfo.poolId),
             tokenProgram: TOKEN_PROGRAM_ID,
             systemProgram: anchor.web3.SystemProgram.programId,
           })

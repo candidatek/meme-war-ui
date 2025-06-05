@@ -57,31 +57,35 @@ const useWithdrawTokens = (mintAKey: string | null, mintBKey: string | null) => 
 
       const userState = await getProgramDerivedAddressForPair(memeWarState, publicKey!);
 
-      const withdrawIx = await memeProgram!.methods.withdrawToken(mintIdentifier)
-        .accounts({
-          payer: publicKey!,
-          memeWarGlobalAccount: memeWarGlobalAccount,
-          mintA: mintA,
-          mintB: mintB,
-          userAta: userAta,
-          mintAAta: mintAATA,
-          mintBAta: mintBATA,
-          mintABaseVault: new PublicKey(mintAInfo.pool_base_token_account),
-          mintBBaseVault: new PublicKey(mintBInfo.pool_base_token_account),
-          mintAQuoteVault: new PublicKey(mintAInfo.pool_quote_token_account),
-          mintBQuoteVault: new PublicKey(mintBInfo.pool_quote_token_account),
-          memeWarRegistry: memeWarRegistryAddress,
-          memeWarState: memeWarState,
-          userState: userState,
-          tokenProgram: TOKEN_PROGRAM_ID,
-          systemProgram: anchor.web3.SystemProgram.programId,
-        }).instruction();
-      tx.add(withdrawIx);
-      toast.dismiss();
-      toast.message("Approve Transaction from Wallet", { duration: 20000 });
-      const devStr = checkIsDevnet()
-      const signature = await sendTransaction(tx, connection);
-      console.log(`https://explorer.solana.com/tx/${signature}${devStr}`);
+        const withdrawIx = await memeProgram!.methods
+          .withdrawToken(mintIdentifier)
+          .accounts({
+            payer: publicKey!,
+            memeWarGlobalAccount: memeWarGlobalAccount,
+            mintA: mintA,
+            mintB: mintB,
+            userAta: userAta,
+            mintAAta: mintAATA,
+            mintBAta: mintBATA,
+            mintABaseVault: new PublicKey(mintAInfo.pool_base_token_account),
+            mintBBaseVault: new PublicKey(mintBInfo.pool_base_token_account),
+            mintAQuoteVault: new PublicKey(mintAInfo.pool_quote_token_account),
+            mintBQuoteVault: new PublicKey(mintBInfo.pool_quote_token_account),
+            mintAPoolId: new PublicKey(mintAInfo.poolId),
+            mintBPoolId: new PublicKey(mintBInfo.poolId),
+            memeWarRegistry: memeWarRegistryAddress,
+            memeWarState: memeWarState,
+            userState: userState,
+            tokenProgram: TOKEN_PROGRAM_ID,
+            systemProgram: anchor.web3.SystemProgram.programId,
+          })
+          .instruction();
+        tx.add(withdrawIx);
+        toast.dismiss();
+        toast.message("Approve Transaction from Wallet", { duration: 20000 });
+        const devStr = checkIsDevnet();
+        const signature = await sendTransaction(tx, connection);
+        console.log(`https://explorer.solana.com/tx/${signature}${devStr}`);
 
       checkStatus({ signature, action: `Withdraw tokens`, setIsLoading, stopLoadingWithInteger: true, refresh });
 
