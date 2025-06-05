@@ -245,6 +245,16 @@
           "isSigner": false
         },
         {
+          "name": "mintAPoolId",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "mintBPoolId",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "tokenProgram",
           "isMut": false,
           "isSigner": false
@@ -438,6 +448,16 @@
           "isSigner": false
         },
         {
+          "name": "mintAPoolId",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
+          "name": "mintBPoolId",
+          "isMut": false,
+          "isSigner": false
+        },
+        {
           "name": "tokenProgram",
           "isMut": false,
           "isSigner": false
@@ -484,11 +504,6 @@
           "isSigner": false
         },
         {
-          "name": "memeWarRegistry",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
           "name": "memeWarState",
           "isMut": true,
           "isSigner": false
@@ -531,11 +546,6 @@
         },
         {
           "name": "associatedTokenProgram",
-          "isMut": false,
-          "isSigner": false
-        },
-        {
-          "name": "clock",
           "isMut": false,
           "isSigner": false
         },
@@ -589,20 +599,7 @@
           ]
         },
         {
-          "name": "protocolFeeRecipientMintB",
-          "isMut": false,
-          "isSigner": false,
-          "docs": [
-            "CHECK : No Check Needed"
-          ]
-        },
-        {
           "name": "protocolFeeRecipientTokenAccountMintA",
-          "isMut": true,
-          "isSigner": false
-        },
-        {
-          "name": "protocolFeeRecipientTokenAccountMintB",
           "isMut": true,
           "isSigner": false
         },
@@ -610,11 +607,41 @@
           "name": "pumpProgram",
           "isMut": false,
           "isSigner": false
+        },
+        {
+          "name": "mintACreatorVaultAta",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "mintBCreatorVaultAta",
+          "isMut": true,
+          "isSigner": false
+        },
+        {
+          "name": "mintACoinCreatorAuthority",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "CHECK : No Check Needed"
+          ]
+        },
+        {
+          "name": "mintBCoinCreatorAuthority",
+          "isMut": false,
+          "isSigner": false,
+          "docs": [
+            "CHECK : No Check Needed"
+          ]
         }
       ],
       "args": [
         {
           "name": "slippage",
+          "type": "u8"
+        },
+        {
+          "name": "lastValidated",
           "type": "u8"
         }
       ]
@@ -1973,6 +2000,11 @@
       "code": 6023,
       "name": "InvalidPoolId",
       "msg": "Invalid Pool id - does not belong to pump amm"
+    },
+    {
+      "code": 6024,
+      "name": "SlippageTooHigh",
+      "msg": "Slippage should be between 0 and 10_000"
     }
   ],
   "metadata": {
