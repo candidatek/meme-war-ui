@@ -1,3 +1,4 @@
+/* eslint-disable @next/next/no-img-element */
 import { useState, useMemo, useEffect } from "react";
 import { Megaphone } from "lucide-react";
 import { motion } from "framer-motion";
@@ -39,7 +40,7 @@ export function TokenCard({
     mintBDepositedRaw,
     mintADepositedInSol,
     mintBDepositedInSol,
-     mintAPrice, mintBPrice, mintAExpectedPayout, mintBExpectedPayout 
+    mintAPrice, mintBPrice, mintAExpectedPayout, mintBExpectedPayout
   } = useMemeWarCalculations(memeWarStateInfo);
 
   const {
@@ -173,10 +174,11 @@ export function TokenCard({
     setPledgeAmount((tokenBalance / 2).toString());
   };
 
- 
+  const warStarted = memeWarStateInfo?.is_verified;
+
   const userAmountPledged =
     index === 0 ? userMintATotalDeposited : userMintBTotalDeposited;
-   const payoutPercent =
+  const payoutPercent =
     index === 0
       ? mintAExpectedPayout(Number(pledgeAmount ?? 0))
       : mintBExpectedPayout(Number(pledgeAmount ?? 0));
@@ -226,7 +228,7 @@ export function TokenCard({
                 ${token.ticker.toUpperCase()}
               </span>
               <div className="flex items-center gap-2">
-                {token.socialLinks.twitter && (
+                {/* {token.socialLinks.twitter && (
                   <a
                     href={token.socialLinks.twitter}
                     target="_blank"
@@ -282,7 +284,16 @@ export function TokenCard({
                       />
                     </svg>
                   </a>
-                )}
+                )} */}
+                <img
+                  src="/pump-logo.png"
+                  alt="Solana Logo"
+                  className="w-6 h-6 cursor-pointer"
+                  onClick={() => {
+                    const mintId = `${token.address}`; // Ensure MintIDI is defined in scope
+                    window.open(`https://pump.fun/advanced/coin?mintId=${mintId}`, "_blank");
+                  }}
+                />
               </div>
             </div>
 
@@ -293,9 +304,8 @@ export function TokenCard({
                   ${(index === 0 ? mintAPrice : mintBPrice).toFixed(8)}
                 </span>
                 <span
-                  className={`text-xs sm:text-sm ${
-                    token.priceChange24h >= 0 ? "text-primary" : "text-red-500"
-                  }`}
+                  className={`text-xs sm:text-sm ${token.priceChange24h >= 0 ? "text-primary" : "text-red-500"
+                    }`}
                 >
                   {token.priceChange24h >= 0 ? "+" : ""}
                   {token.priceChange24h.toFixed(2)}%
@@ -455,24 +465,40 @@ export function TokenCard({
           </div>
         )}
 
+
         {/* Action Buttons */}
         {publicKey ? (
-          <div className="grid grid-cols-2 gap-2">
-            <button
-              onClick={handleDeposit}
-              disabled={localBtnLoading || isWarEnded || disablePledgeBtn}
-              className="bg-primary hover:bg-primary/90 text-primary-foreground py-2 rounded text-xs sm:text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {localBtnLoading ? "Processing..." : `Pledge ${token.ticker}`}
-            </button>
-            <button
-              onClick={handleWithdraw}
-              disabled={localBtnLoading || isWarEnded || disableUnpledgeBtn}
-              className="bg-muted hover:bg-muted/90 text-foreground py-2 rounded text-xs sm:text-sm font-medium border border-border disabled:opacity-50 disabled:cursor-not-allowed"
-            >
-              {localBtnLoading ? "Processing..." : "Unpledge"}
-            </button>
-          </div>
+          <>
+            {warStarted ? (
+              <div className="grid grid-cols-2 gap-2">
+
+                <button
+                  onClick={handleDeposit}
+                  disabled={localBtnLoading || isWarEnded || disablePledgeBtn}
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground py-2 rounded text-xs sm:text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {localBtnLoading ? "Processing..." : `Pledge ${token.ticker}`}
+                </button>
+                <button
+                  onClick={handleWithdraw}
+                  disabled={localBtnLoading || isWarEnded || disableUnpledgeBtn}
+                  className="bg-muted hover:bg-muted/90 text-foreground py-2 rounded text-xs sm:text-sm font-medium border border-border disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {localBtnLoading ? "Processing..." : "Unpledge"}
+                </button>
+
+
+              </div>
+            ) : (
+              <button
+                onClick={() => alert("War has not started yet!")}
+                disabled={true}
+                className="w-full bg-muted text-muted-foreground py-2 rounded text-xs sm:text-sm font-medium cursor-not-allowed"
+              >
+                War will start after both tokens are migrated
+              </button>
+            )}
+          </>
         ) : (
           <button className="w-full bg-primary hover:bg-primary/90 text-primary-foreground py-2 rounded text-xs sm:text-sm font-medium">
             Connect Wallet

@@ -48,6 +48,7 @@ export interface IMemeWarState {
   mint_b_description: string;
   tx_count?: number;
   reply_count?: number;
+  is_verified: boolean;
 }
 // Define the async function to fetch the mint info
 const getMemeWarStateInfo = async (mintAddress: string | null) => {
