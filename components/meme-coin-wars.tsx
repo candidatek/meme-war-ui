@@ -408,26 +408,25 @@ export function MemeCoinWars() {
               how it works
             </h2>
 
-            <p>
-              pump allows <span style={{ color: "#4CAF50" }}>anyone</span> to
-              create coins. all coins created on Pump are
-              <br />
-              <span style={{ color: "#4CAF50" }}>fair-launch</span>, meaning
-              everyone has equal access to buy and sell
-              <br />
-              when the coin is first created.
-            </p>
+
 
             <div style={{ margin: "20px 0" }}>
               <p>
-                <strong>step 1:</strong> pick a coin that you like
+                <strong>step 1:</strong> Click “Start War” to launch a battle between any two tokens
+
               </p>
               <p>
-                <strong>step 2:</strong> buy the coin on the bonding curve
+                <strong>step 2:</strong>Pick a side and “Pledge” your tokens to join the fight
+
               </p>
               <p>
-                <strong>step 3:</strong> sell at any time to lock in your
-                profits or losses
+                <strong>step 3:</strong>  ⁠When the timer ends, the side with the most liquidity wins the war
+
+              </p>
+              <p>
+                <strong>step 4:</strong>  Losing tokens are swapped, and rewards go to winners proportional to your share in the pool
+
+
               </p>
             </div>
 
@@ -453,10 +452,10 @@ export function MemeCoinWars() {
                 fontSize: "16px",
               }}
             >
-              I'm ready to pump
+              I'm ready to Fight
             </button>
 
-            <div style={{ fontSize: "14px", color: "#aaa" }}>
+            {/* <div style={{ fontSize: "14px", color: "#aaa" }}>
               <a href="#" style={{ color: "#aaa", marginRight: "10px" }}>
                 privacy policy
               </a>{" "}
@@ -468,7 +467,7 @@ export function MemeCoinWars() {
               <a href="#" style={{ color: "#aaa", marginLeft: "10px" }}>
                 fees
               </a>
-            </div>
+            </div> */}
           </div>
         </ToastStyleModal>
       )}
@@ -662,9 +661,9 @@ export function MemeCoinWars() {
         </div>
         <div className="flex-1 overflow-y-auto space-y-2 pr-1">
           <AnimatePresence>
-            {wars.length === 0 && !isLoading && <div className="retro-text text-center text-muted-foreground py-8"> 
-             ⚔️ Conquer the tokens. Conquer the world. ⚔️<br />
-             <br />
+            {wars.length === 0 && !isLoading && <div className="retro-text text-center text-muted-foreground py-8">
+              ⚔️ Conquer the tokens. Conquer the world. ⚔️<br />
+              <br />
               <StartAWarButton /> </div>}
             {wars.map((war, index) => (
               <motion.div
@@ -713,9 +712,9 @@ function WarItem({
   // Now we can safely use the hook at the top level of this component
 
 
-  const {mintADepositedRaw, mintADepositedRawInDollar} = calculateMintADeposit(war.warData)
-  const {mintBDepositedRaw, mintBDepositedRawInDollar} = calculateMintBDeposit(war.warData)
-   // Update the amountPledged values with the calculated ones
+  const { mintADepositedRaw, mintADepositedRawInDollar } = calculateMintADeposit(war.warData)
+  const { mintBDepositedRaw, mintBDepositedRawInDollar } = calculateMintBDeposit(war.warData)
+  // Update the amountPledged values with the calculated ones
   const updatedCoin1 = {
     ...war.coin1,
     amountPledged: mintADepositedRaw,
@@ -725,7 +724,7 @@ function WarItem({
   const { timeLeft } = useCountdown(war?.warData?.end_time);
   const updatedCoin2 = {
     ...war.coin2,
- 
+
     amountPledged: mintBDepositedRaw,
     amountPledgedInSol: mintBDepositedRawInDollar,
   };
