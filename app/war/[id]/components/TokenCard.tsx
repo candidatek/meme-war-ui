@@ -1,5 +1,6 @@
 /* eslint-disable @next/next/no-img-element */
 import { useState, useMemo, useEffect } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Megaphone } from "lucide-react";
 import { motion } from "framer-motion";
 import { formatNumber, formatWalletAddress } from "@/lib/utils";
@@ -56,75 +57,48 @@ export function TokenCard({
     userMintBTotalDeposited,
   } = useUserCalculations(userState);
 
-  useEffect(() => {
-    const fetchAITemplates = async () => {
-      if (!isWarRoomOpen) return;
+  const {
+    data: aiTemplatesData,
+    isLoading: isLoadingTemplatesQuery,
+    error: templatesErrorQuery,
+  } = useQuery({
+    queryKey: ['ai-templates', token.name, token.ticker, opposingToken.name, opposingToken.ticker],
+    queryFn: async () => {
+      const params = new URLSearchParams({
+        mintAName: token.name,
+        mintASymbol: token.ticker,
+        mintBName: opposingToken.name,
+        mintBSymbol: opposingToken.ticker,
+      });
 
-      setIsLoadingTemplates(true);
+      const apiBaseUrl = process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:4000";
+      const response = await fetch(`${apiBaseUrl}/getAITwitterIntent?${params}`);
+      const data = await response.json();
+
+      if (!response.ok) throw new Error(data.message || "Failed to generate tweets");
+      return data.message as TweetTemplate[];
+    },
+    enabled: isWarRoomOpen,
+  });
+
+  useEffect(() => {
+    if (aiTemplatesData) {
+      setAiTemplates(aiTemplatesData);
+    }
+  }, [aiTemplatesData]);
+
+  // Set loading and error states from react-query
+  useEffect(() => {
+    setIsLoadingTemplates(isLoadingTemplatesQuery);
+    // Error from react-query is an Error object or undefined
+    if (templatesErrorQuery instanceof Error) {
+      setTemplatesError(templatesErrorQuery.message);
+    } else {
       setTemplatesError(null);
-
-      try {
-        const params = new URLSearchParams({
-          mintAName: token.name,
-          mintASymbol: token.ticker,
-          mintBName: opposingToken.name,
-          mintBSymbol: opposingToken.ticker,
-        });
-
-        const apiBaseUrl =
-          process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:4000";
-        const response = await fetch(
-          `${apiBaseUrl}/getAITwitterIntent?${params}`
-        );
-        const data = await response.json();
-
-        if (!response.ok)
-          throw new Error(data.message || "Failed to generate tweets");
-
-        const parsedTemplates = data.message as TweetTemplate[];
-        setAiTemplates(parsedTemplates);
-      } catch (err) {
-        const errorMessage =
-          err instanceof Error ? err.message : "Failed to load tweets";
-        setTemplatesError(errorMessage);
-        console.error("AI Template Error:", err);
-      } finally {
-        setIsLoadingTemplates(false);
-      }
-    };
-
-    fetchAITemplates();
-  }, [isWarRoomOpen, token, opposingToken]);
-
-  useEffect(() => {
-    setLocalBtnLoading(Boolean(btnLoading));
-
-    let timeoutId: NodeJS.Timeout | null = null;
-
-    if (btnLoading) {
-      timeoutId = setTimeout(() => {
-        setLocalBtnLoading(false);
-      }, 15000);
     }
+  }, [isLoadingTemplatesQuery, templatesErrorQuery]);
 
-    return () => {
-      if (timeoutId) clearTimeout(timeoutId);
-    };
-  }, [btnLoading]);
-
-  useEffect(() => {
-    let timeoutId: NodeJS.Timeout | null = null;
-
-    if (localBtnLoading && !btnLoading) {
-      timeoutId = setTimeout(() => {
-        setLocalBtnLoading(false);
-      }, 15000);
-    }
-
-    return () => {
-      if (timeoutId) clearTimeout(timeoutId);
-    };
-  }, [localBtnLoading, btnLoading]);
+ 
 
   const calculateExpectedPayout = (amount: number, percent: number): number => {
     if (!amount || !percent) return 0;
