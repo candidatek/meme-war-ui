@@ -103,11 +103,7 @@ const SearchMemeWars = ({ warArray, handleClick }) => {
         />}
       {error && <div>{error?.message}</div>}
 
-      {!isLoading && !isError && !searchResult &&
-       <MemeWarList
-        warArray={[...warArray,...warArray]}
-        handleClick={handleClick}
-      />}
+      
     </>
 
   );

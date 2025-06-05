@@ -410,27 +410,27 @@ export function MemeCoinWars() {
 
 
 
-            <div style={{ margin: "20px 0" }}>
+            <div  className="!text-[18px]" style={{ margin: "10px 0" }}>
               <p>
-                <strong>step 1:</strong> Click “Start War” to launch a battle between any two tokens
+                <span>step 1:</span> Click “Start War” to launch a battle between any two tokens
 
               </p>
               <p>
-                <strong>step 2:</strong>Pick a side and “Pledge” your tokens to join the fight
+                <span>step 2:</span>Pick a side and “Pledge” your tokens to join the fight
 
               </p>
               <p>
-                <strong>step 3:</strong>  ⁠When the timer ends, the side with the most liquidity wins the war
+                <span>step 3:</span>  ⁠When the timer ends, the side with the most liquidity wins the war
 
               </p>
               <p>
-                <strong>step 4:</strong>  Losing tokens are swapped, and rewards go to winners proportional to your share in the pool
+                <span>step 4:</span>  Losing tokens are swapped, and rewards go to winners proportional to your share in the pool
 
 
               </p>
             </div>
 
-            <p>
+            <p className="text-xs mt-4" style={{ color: "#888" }}>
               by clicking this button you agree to the terms and conditions and
               <br />
               certify that you are over 18 years old

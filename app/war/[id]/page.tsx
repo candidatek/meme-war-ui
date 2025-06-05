@@ -1,8 +1,8 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 "use client";
 
 import { useEffect, useState, useCallback, useMemo } from "react";
 import { useParams } from "next/navigation";
-import { useWallet } from "@solana/wallet-adapter-react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useRouteProgress } from "@/app/hooks/useRouteProgress";
 
@@ -14,7 +14,6 @@ import { useGetUserStateInfo } from "@/app/api/getUserState";
 import { useSendChatMessage } from "@/app/api/sendChatMessage";
 import { useMemeWarContext } from "@/app/context/memeWarStateContext";
 import { useSocket } from "@/app/context/socketContext";
-import { useAuth } from "@/app/hooks/useAuth";
 import useCountdown from "@/app/hooks/useCountdown";
 import useDepositTokens from "@/app/hooks/useDeposit";
 import { useTokenBalance } from "@/app/hooks/useUserBalance";
@@ -26,7 +25,7 @@ import { ChatMessage, TradeData, WarData } from "@/app/Interfaces";
 import {
   showErrorToast,
   validateSolanaAddress,
-  formatNumber,
+
 } from "@/lib/utils";
 
 // Components
@@ -36,9 +35,7 @@ import { ChatSection } from "./components/ChatSection";
 import { WarShare } from "./components/WarShare";
 import { Billion } from "@/app/utils";
 import { useMemeWarCalculations } from "@/app/hooks/useMemeWarCalculations";
-import { useResolveContract } from "@/app/api/resolveContractAddress";
 
-const REFRESH_DELAY = 5000;
 
 export default function WarPage() {
   // Get params and context
@@ -58,7 +55,7 @@ export default function WarPage() {
     if (params?.id) {
       setMemeWarState(params.id as string);
     }
-  },[params.id])
+  }, [params.id])
 
   const { startProgress, endProgress } = useRouteProgress();
 
@@ -139,8 +136,7 @@ export default function WarPage() {
 
   // Get wallet info
   const { publicKey, pubKey } = useWalletInfo();
-  const { authState, handleSignIn } = useAuth();
-  const wallet = useWallet();
+
 
   // Loading state
   const [btnLoading, setBtnLoading] = useState<boolean | number>(-1);
