@@ -39,6 +39,7 @@ export function TokenCard({
     mintBDepositedRaw,
     mintADepositedInSol,
     mintBDepositedInSol,
+     mintAPrice, mintBPrice, mintAExpectedPayout, mintBExpectedPayout 
   } = useMemeWarCalculations(memeWarStateInfo);
 
   const {
@@ -172,12 +173,10 @@ export function TokenCard({
     setPledgeAmount((tokenBalance / 2).toString());
   };
 
-  const { mintAPrice, mintBPrice, mintAExpectedPayout, mintBExpectedPayout } =
-    useMemeWarCalculations(memeWarStateInfo);
+ 
   const userAmountPledged =
     index === 0 ? userMintATotalDeposited : userMintBTotalDeposited;
-  const poolAmountPledged = index === 0 ? mintADepositedRaw : mintBDepositedRaw;
-  const payoutPercent =
+   const payoutPercent =
     index === 0
       ? mintAExpectedPayout(Number(pledgeAmount ?? 0))
       : mintBExpectedPayout(Number(pledgeAmount ?? 0));

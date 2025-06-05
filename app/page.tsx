@@ -5,8 +5,7 @@ import { Suspense } from 'react'
 import { Analytics } from "@/components/Analytics"
 
 export default function Home() {
-  console.log('Home is loading for GA');
-
+ 
 
   return (
     <div className="flex-1">

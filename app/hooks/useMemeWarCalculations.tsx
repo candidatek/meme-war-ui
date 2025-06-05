@@ -1,5 +1,6 @@
 import { formatNumber } from "@/lib/utils";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useMemo } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { useSolPrice } from "../api/getSolPrice";
 import { IMemeWarState } from "../api/getMemeWarStateInfo";
 import { useMintInfo } from "./useMintInfo";
@@ -31,288 +32,192 @@ interface MemeWarCalculations {
 export const useMemeWarCalculations = (
   memeWarState: IMemeWarState | undefined
 ): MemeWarCalculations => {
-  // This useMemeWarCalculations is being used w 3 types: IDashboardWar, War, IMemeWarState.
   const { data: { price = 170 } = {} } = useSolPrice();
-
   const { data: mintAInfo } = useMintInfo(memeWarState?.mint_a || null);
   const { data: mintBInfo } = useMintInfo(memeWarState?.mint_b || null);
   const connection = useConnection();
 
-  const [mintARatio, setMintARatio] = useState<number | null>(null);
-  const [mintBRatio, setMintBRatio] = useState<number | null>(null);
+  const { data: mintARatio = Number(memeWarState?.mint_a_sol_ratio) } = useQuery({
+    queryKey: ["mintARatio", mintAInfo?.pool_base_token_account, mintAInfo?.pool_quote_token_account],
+    queryFn: async () => {
+      if (!mintAInfo || !connection) return Number(memeWarState?.mint_a_sol_ratio);
 
-  useEffect(() => {
-    const fetchMintARatio = async () => {
-      if (mintAInfo && connection) {
-        try {
-          const mintABaseVault = new PublicKey(
-            mintAInfo.pool_base_token_account
-          );
-          const mintAQuoteVault = new PublicKey(
-            mintAInfo.pool_quote_token_account
-          );
+      const mintABaseVault = new PublicKey(mintAInfo.pool_base_token_account);
+      const mintAQuoteVault = new PublicKey(mintAInfo.pool_quote_token_account);
+      const [baseBalance, quoteBalance] = await Promise.all([
+        connection.getTokenAccountBalance(mintABaseVault),
+        connection.getTokenAccountBalance(mintAQuoteVault),
+      ]);
 
-          const baseBalance = await connection.getTokenAccountBalance(
-            mintABaseVault
-          );
-          const quoteBalance = await connection.getTokenAccountBalance(
-            mintAQuoteVault
-          );
+      return getTokenRatio(
+        Number(baseBalance.value.amount),
+        Number(quoteBalance.value.amount)
+      );
+    },
+    enabled: !!mintAInfo && !!connection,
+    staleTime: 120_000,
+  });
 
-          const ratio = getTokenRatio(
-            Number(baseBalance.value.amount),
-            Number(quoteBalance.value.amount)
-          );
-          setMintARatio(ratio);
-        } catch (error) {
-          console.error("Error fetching mint A ratio:", error);
-          setMintARatio(Number(memeWarState?.mint_a_sol_ratio));
-        }
-      }
-    };
+  const { data: mintBRatio = Number(memeWarState?.mint_b_sol_ratio) } = useQuery({
+    queryKey: ["mintBRatio", mintBInfo?.pool_base_token_account, mintBInfo?.pool_quote_token_account],
+    queryFn: async () => {
+      if (!mintBInfo || !connection) return Number(memeWarState?.mint_b_sol_ratio);
 
-    fetchMintARatio();
-  }, [mintAInfo, connection]);
+      const mintBBaseVault = new PublicKey(mintBInfo.pool_base_token_account);
+      const mintBQuoteVault = new PublicKey(mintBInfo.pool_quote_token_account);
+      const [baseBalance, quoteBalance] = await Promise.all([
+        connection.getTokenAccountBalance(mintBBaseVault),
+        connection.getTokenAccountBalance(mintBQuoteVault),
+      ]);
 
-  useEffect(() => {
-    const fetchMintBRatio = async () => {
-      if (mintBInfo && connection) {
-        try {
-          const mintABaseVault = new PublicKey(
-            mintBInfo.pool_base_token_account
-          );
-          const mintAQuoteVault = new PublicKey(
-            mintBInfo.pool_quote_token_account
-          );
-
-          const baseBalance = await connection.getTokenAccountBalance(
-            mintABaseVault
-          );
-          const quoteBalance = await connection.getTokenAccountBalance(
-            mintAQuoteVault
-          );
-
-          const ratio = getTokenRatio(
-            Number(baseBalance.value.amount),
-            Number(quoteBalance.value.amount)
-          );
-          setMintBRatio(ratio);
-        } catch (error) {
-          console.error("Error fetching mint A ratio:", error);
-          setMintBRatio(Number(memeWarState?.mint_b_sol_ratio));
-        }
-      }
-    };
-
-    fetchMintBRatio();
-  }, [mintBInfo, connection]);
+      return getTokenRatio(
+        Number(baseBalance.value.amount),
+        Number(quoteBalance.value.amount)
+      );
+    },
+    enabled: !!mintBInfo && !!connection,
+    staleTime: 120_000,
+  });
 
   const mintADepositedRaw = useMemo(() => {
-    // Would need to make all the types same in order to use it for this. If they are all the same, I will refactor to use one for all.
-    if (memeWarState) {
-      return (
-        (Number(memeWarState.mint_a_deposit) +
-          Number(memeWarState?.mint_a_risk_free_deposit) -
-          Number(memeWarState?.mint_a_withdrawn) -
-          Number(memeWarState?.mint_a_penalty)) /
-        10 ** 6
-      );
-    }
-    return 0;
+    if (!memeWarState) return 0;
+    return (
+      (Number(memeWarState.mint_a_deposit) +
+        Number(memeWarState?.mint_a_risk_free_deposit) -
+        Number(memeWarState?.mint_a_withdrawn) -
+        Number(memeWarState?.mint_a_penalty)) /
+      10 ** 6
+    );
   }, [memeWarState]);
 
   const mintBDepositedRaw = useMemo(() => {
-    if (memeWarState) {
-      return (
-        (Number(memeWarState.mint_b_deposit) +
-          Number(memeWarState?.mint_b_risk_free_deposit) -
-          Number(memeWarState.mint_b_withdrawn) -
-          Number(memeWarState?.mint_b_penalty)) /
-        10 ** 6
-      );
-    }
-    return 0;
+    if (!memeWarState) return 0;
+    return (
+      (Number(memeWarState.mint_b_deposit) +
+        Number(memeWarState?.mint_b_risk_free_deposit) -
+        Number(memeWarState.mint_b_withdrawn) -
+        Number(memeWarState?.mint_b_penalty)) /
+      10 ** 6
+    );
   }, [memeWarState]);
 
   const rfPlusMintADeposited = useMemo(() => {
-    if (memeWarState) {
-      return formatNumber(
-        (Number(memeWarState.mint_a_deposit) +
-          Number(memeWarState?.mint_a_risk_free_deposit) -
-          Number(memeWarState.mint_a_withdrawn) -
-          Number(memeWarState?.mint_a_penalty)) /
-          10 ** memeWarState.mint_a_decimals
-      );
-    }
-    return "Loading...";
+    if (!memeWarState) return "Loading...";
+    return formatNumber(
+      (Number(memeWarState.mint_a_deposit) +
+        Number(memeWarState?.mint_a_risk_free_deposit) -
+        Number(memeWarState.mint_a_withdrawn) -
+        Number(memeWarState?.mint_a_penalty)) /
+      10 ** memeWarState.mint_a_decimals
+    );
   }, [memeWarState]);
 
   const rfPlusMintBDeposited = useMemo(() => {
-    if (memeWarState) {
-      return formatNumber(
-        (Number(memeWarState.mint_b_deposit) +
-          Number(memeWarState?.mint_b_risk_free_deposit) -
-          Number(memeWarState.mint_b_withdrawn) -
-          Number(memeWarState?.mint_b_penalty)) /
-          10 ** memeWarState.mint_b_decimals
-      );
-    }
-    return "Loading...";
+    if (!memeWarState) return "Loading...";
+    return formatNumber(
+      (Number(memeWarState.mint_b_deposit) +
+        Number(memeWarState?.mint_b_risk_free_deposit) -
+        Number(memeWarState.mint_b_withdrawn) -
+        Number(memeWarState?.mint_b_penalty)) /
+      10 ** memeWarState.mint_b_decimals
+    );
   }, [memeWarState]);
-
-  const mintBDepositedInSol = useMemo(() => {
-    if (memeWarState && mintBRatio) {
-      return formatNumber(
-        (Number(memeWarState.mint_b_deposit) +
-          Number(memeWarState?.mint_b_risk_free_deposit) -
-          Number(memeWarState?.mint_b_withdrawn) +
-          Number(memeWarState?.mint_b_penalty)) /
-          mintBRatio /
-          10 ** 6
-      );
-    }
-    return "0";
-  }, [memeWarState, mintBRatio]);
 
   const mintADepositedInSol = useMemo(() => {
-    if (memeWarState && mintARatio) {
-      return formatNumber(
-        (Number(memeWarState.mint_a_deposit) +
-          Number(memeWarState?.mint_a_risk_free_deposit) -
-          Number(memeWarState?.mint_a_withdrawn) +
-          Number(memeWarState?.mint_a_penalty)) /
-          mintARatio /
-          10 ** 6
-      );
-    }
-    return "0";
+    if (!memeWarState || !mintARatio) return "0";
+    return formatNumber(
+      (Number(memeWarState.mint_a_deposit) +
+        Number(memeWarState?.mint_a_risk_free_deposit) -
+        Number(memeWarState?.mint_a_withdrawn) +
+        Number(memeWarState?.mint_a_penalty)) /
+      mintARatio /
+      10 ** 6
+    );
   }, [memeWarState, mintARatio]);
 
-  const mintBDepositedInDollar = useMemo(() => {
-    if (memeWarState && mintBRatio) {
-      return (
-        ((Number(memeWarState.mint_b_deposit) +
-          Number(memeWarState?.mint_b_risk_free_deposit)) /
-          mintBRatio /
-          10 ** 6) *
-        Number(price)
-      );
-    }
-    return 0;
-  }, [memeWarState, price, mintBRatio]);
+  const mintBDepositedInSol = useMemo(() => {
+    if (!memeWarState || !mintBRatio) return "0";
+    return formatNumber(
+      (Number(memeWarState.mint_b_deposit) +
+        Number(memeWarState?.mint_b_risk_free_deposit) -
+        Number(memeWarState?.mint_b_withdrawn) +
+        Number(memeWarState?.mint_b_penalty)) /
+      mintBRatio /
+      10 ** 6
+    );
+  }, [memeWarState, mintBRatio]);
 
   const mintADepositedInDollar = useMemo(() => {
-    if (memeWarState && mintARatio) {
-      return (
-        ((Number(memeWarState.mint_a_deposit) +
-          Number(memeWarState?.mint_a_risk_free_deposit)) /
-          mintARatio /
-          10 ** 6) *
-        Number(price)
-      );
-    }
-    return 0;
+    if (!memeWarState || !mintARatio) return 0;
+    return (
+      ((Number(memeWarState.mint_a_deposit) +
+        Number(memeWarState?.mint_a_risk_free_deposit)) /
+        mintARatio /
+        10 ** 6) *
+      Number(price)
+    );
   }, [memeWarState, price, mintARatio]);
 
-  const mintARiskFreeDeposited = useMemo(() => {
-    if (memeWarState) {
-      return Number(memeWarState?.mint_a_risk_free_deposit);
-    }
-    return 0;
-  }, [memeWarState]);
+  const mintBDepositedInDollar = useMemo(() => {
+    if (!memeWarState || !mintBRatio) return 0;
+    return (
+      ((Number(memeWarState.mint_b_deposit) +
+        Number(memeWarState?.mint_b_risk_free_deposit)) /
+        mintBRatio /
+        10 ** 6) *
+      Number(price)
+    );
+  }, [memeWarState, price, mintBRatio]);
+
+  const mintARiskFreeDeposited = useMemo(
+    () => Number(memeWarState?.mint_a_risk_free_deposit || 0),
+    [memeWarState]
+  );
+
+  const mintBRiskFreeDeposited = useMemo(
+    () => Number(memeWarState?.mint_b_risk_free_deposit || 0),
+    [memeWarState]
+  );
 
   const mintARFPercentage = useMemo(() => {
-    if (memeWarState) {
-      const riskFreeDeposited = Number(mintARiskFreeDeposited);
-      const totalDeposited = Number(memeWarState?.mint_a_deposit || 0);
-
-      return (
-        (riskFreeDeposited / (riskFreeDeposited + totalDeposited)) * 100 || 0
-      );
-    }
-    return 0;
-  }, [memeWarState, mintARiskFreeDeposited]);
-
-  const mintBRiskFreeDeposited = useMemo(() => {
-    if (memeWarState) {
-      return Number(memeWarState?.mint_a_risk_free_deposit);
-    }
-    return 0;
-  }, [memeWarState]);
+    const total = mintARiskFreeDeposited + Number(memeWarState?.mint_a_deposit || 0);
+    return total ? (mintARiskFreeDeposited / total) * 100 : 0;
+  }, [mintARiskFreeDeposited, memeWarState]);
 
   const mintBRFPercentage = useMemo(() => {
-    if (memeWarState) {
-      const riskFreeDeposited = Number(mintBRiskFreeDeposited);
-      const totalDeposited = Number(memeWarState?.mint_b_deposit || 0);
-
-      return (
-        (riskFreeDeposited / (riskFreeDeposited + totalDeposited)) * 100 || 0
-      );
-    }
-    return 0;
-  }, [memeWarState, mintBRiskFreeDeposited]);
+    const total = mintBRiskFreeDeposited + Number(memeWarState?.mint_b_deposit || 0);
+    return total ? (mintBRiskFreeDeposited / total) * 100 : 0;
+  }, [mintBRiskFreeDeposited, memeWarState]);
 
   const mintAPercentage = useMemo(() => {
-    if (memeWarState) {
-      return (
-        (mintADepositedRaw / (mintADepositedRaw + mintBDepositedRaw)) * 100
-      );
-    }
-    return 0;
-  }, [memeWarState, mintADepositedRaw, mintBDepositedRaw]);
+    const total = mintADepositedRaw + mintBDepositedRaw;
+    return total ? (mintADepositedRaw / total) * 100 : 0;
+  }, [mintADepositedRaw, mintBDepositedRaw]);
 
   const mintBPercentage = useMemo(() => {
-    if (memeWarState) {
-      return (
-        (mintBDepositedRaw / (mintADepositedRaw + mintBDepositedRaw)) * 100
-      );
-    }
-    return 0;
-  }, [memeWarState, mintADepositedRaw, mintBDepositedRaw]);
+    const total = mintADepositedRaw + mintBDepositedRaw;
+    return total ? (mintBDepositedRaw / total) * 100 : 0;
+  }, [mintADepositedRaw, mintBDepositedRaw]);
 
-  const mintAPrice = useMemo(() => {
-    if (memeWarState && mintARatio) {
-      return price / mintARatio;
-    }
-    return 0;
-  }, [memeWarState, price, mintARatio]);
-
-  const mintBPrice = useMemo(() => {
-    if (memeWarState && mintBRatio) {
-      return price / mintBRatio;
-    }
-    return 0;
-  }, [memeWarState, price, mintBRatio]);
+  const mintAPrice = useMemo(() => (mintARatio ? price / mintARatio : 0), [price, mintARatio]);
+  const mintBPrice = useMemo(() => (mintBRatio ? price / mintBRatio : 0), [price, mintBRatio]);
 
   const mintAExpectedPayout = useCallback(
     (pledgeAmount: number) => {
-      if (!memeWarState || !Number(mintADepositedInSol) || !mintARatio) {
-        return 0;
-      }
-
-      const aAmount =
-        Number(mintADepositedInSol) + Number(pledgeAmount) / mintARatio;
+      if (!memeWarState || !Number(mintADepositedInSol) || !mintARatio) return 0;
+      const aAmount = Number(mintADepositedInSol) + pledgeAmount / mintARatio;
       const bAmount = Number(mintBDepositedInSol);
-
-      const payout = (bAmount / aAmount) * 100;
-      return Math.min(payout, 100);
+      return Math.min((bAmount / aAmount) * 100, 100);
     },
     [memeWarState, mintADepositedInSol, mintBDepositedInSol, mintARatio]
   );
 
   const mintBExpectedPayout = useCallback(
     (pledgeAmount: number) => {
-      if (!memeWarState || !Number(mintBDepositedInSol) || !mintBRatio) {
-        return 0;
-      }
-
+      if (!memeWarState || !Number(mintBDepositedInSol) || !mintBRatio) return 0;
+      const bAmount = Number(mintBDepositedInSol) + pledgeAmount / mintBRatio;
       const aAmount = Number(mintADepositedInSol);
-      const bAmount =
-        Number(mintBDepositedInSol) + Number(pledgeAmount) / mintBRatio;
-
-      const payout = (aAmount / bAmount) * 100;
-      console.log(aAmount, bAmount, payout);
-      return Math.min(payout, 100);
+      return Math.min((aAmount / bAmount) * 100, 100);
     },
     [memeWarState, mintADepositedInSol, mintBDepositedInSol, mintBRatio]
   );
@@ -338,13 +243,3 @@ export const useMemeWarCalculations = (
     mintBExpectedPayout,
   };
 };
-
-// Usage example:
-// const {
-//   mintADeposited,
-//   mintBDeposited,
-//   mintADepositedInSol,
-//   mintBDepositedInSol,
-//   mintAPercentage,
-//   mintBPercentage
-// } = useMemeWarCalculations();
