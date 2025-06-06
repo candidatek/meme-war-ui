@@ -34,7 +34,7 @@ export function LayoutClient({
                   <WalletModalProvider>
                     <div className="flex flex-col min-h-screen">
                       <Header />
-                      <LiveFeedCarousel />
+                      {/* <LiveFeedCarousel /> */}
                       <main className="flex-1">
                         <div className="min-h-screen bg-background/95 backdrop-blur-sm">
                           {children}
