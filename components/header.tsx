@@ -87,7 +87,7 @@ export function Header() {
             <Button
               variant="outline"
               size="sm"
-              onClick={handleProfileClick}
+              // onClick={handleProfileClick}
               disabled={!connected}
               className="flex items-center gap-1 h-8 sm:h-10 text-xs sm:text-sm"
               title={
@@ -95,7 +95,7 @@ export function Header() {
               }
             >
               <User className="h-4 w-4" />
-              <span className="hidden sm:inline">Profile</span>
+              <span className="hidden sm:inline">Profile - coming soon</span>
             </Button>
 
             {/* Show the wallet button but smaller on mobile */}
